@@ -7,7 +7,8 @@ set(NLANG_PARSER_SOURCES
         scanner.cpp)
 
 set(NLANG_PARSER_HEADERS
-        scanner.hpp)
+        scanner.hpp
+        tokens.hpp)
 
 add_library(nlang_parser ${NLANG_PARSER_HEADERS} ${NLANG_PARSER_SOURCES})
 target_include_directories(nlang_parser PUBLIC .)
