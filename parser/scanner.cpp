@@ -6,8 +6,6 @@
 
 namespace nlang {
 
-
-
 std::vector<Scanner::Token> Scanner::ExtractTokens(const std::string_view &sv) {
     std::vector<Token> extracted;
 
@@ -21,7 +19,7 @@ std::vector<Scanner::Token> Scanner::ExtractTokens(const std::string_view &sv) {
 
         if (!buf.empty()) {
             if (auto it = Tokens::tokens.find(buf); it != Tokens::tokens.end()) {
-                extracted.emplace_back(Token{it->second, it->first});
+                extracted.emplace_back(Token { it->second, it->first });
                 offset += buf.size();
                 continue;
             }
@@ -31,7 +29,7 @@ std::vector<Scanner::Token> Scanner::ExtractTokens(const std::string_view &sv) {
         for (auto &[regex, token] : Tokens::regex_tokens) {
             std::cmatch match;
             if (std::regex_search(sv.data() + offset, match, regex)) {
-                extracted.emplace_back(Token{token, match.str()});
+                extracted.emplace_back(Token { token, match.str() });
                 if (token == Tokens::TokenType::THE_EOF) return extracted;
                 offset += match.position() + match.length();
                 found = true;
@@ -40,7 +38,7 @@ std::vector<Scanner::Token> Scanner::ExtractTokens(const std::string_view &sv) {
         }
 
         if (!found) {
-            extracted.emplace_back(Token{Tokens::TokenType::INVALID, buf});
+            extracted.emplace_back(Token { Tokens::TokenType::INVALID, buf });
             offset += buf.size();
         }
     }

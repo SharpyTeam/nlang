@@ -25,10 +25,7 @@ private:
 
 public:
     explicit Scanner(const std::string_view &source) noexcept
-        : tokens(ExtractTokens(source))
-    {
-
-    }
+        : tokens(ExtractTokens(source)) {}
 
 private:
     static std::vector<Token> ExtractTokens(const std::string_view &sv);
