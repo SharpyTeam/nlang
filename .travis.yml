@@ -1,0 +1,24 @@
+os: linux
+dist: bionic
+
+language: cpp
+
+compiler:
+  - clang
+  - gcc
+
+addons:
+  apt:
+    update: true
+    packages:
+      - cmake
+      - gcc
+      - g++
+      - clang
+
+script:
+  - mkdir build
+  - cd build
+  - cmake ..
+  - cmake --build .
+  - ctest
