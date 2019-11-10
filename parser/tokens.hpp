@@ -74,7 +74,7 @@ public:
                      regex_flags),                                              TokenType::OPERATOR_OR_PUNCTUATION },
         { std::regex(R"(^\b[a-zA-Z][a-zA-Z0-9_]*\b)", regex_flags), TokenType::IDENTIFIER },
         { std::regex(R"(^"[^"\\]*(?:\\.[^"\\]*)*")", regex_flags),  TokenType::STRING },
-        { std::regex(R"(^\b[0-9]+(\.[0-9]+)?\b)", regex_flags),        TokenType::NUMBER },
+        { std::regex(R"(^\b[0-9]+(\.[0-9]+)?\b)", regex_flags),     TokenType::NUMBER },
         { std::regex(R"(^\n)", regex_flags),                        TokenType::NEWLINE },
         { std::regex(R"(^[\s\t\r]+)", regex_flags),                 TokenType::SPACE },
         { std::regex(R"(^$)", regex_flags),                         TokenType::THE_EOF }
