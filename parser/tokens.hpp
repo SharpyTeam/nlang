@@ -64,14 +64,18 @@ public:
         TokenType::IDENTIFIER
     };
 
+    inline static constexpr const std::regex_constants::syntax_option_type regex_flags =
+        std::regex_constants::optimize | std::regex_constants::basic;
+
     inline static const std::vector<std::pair<std::regex, TokenType>> regex_tokens = {
-        { std::regex(R"(^((==|!=|>=|<=)|\(|\)|\{|\}|,|=|\*|\/|\+|\-|!|>|<))"), TokenType::OPERATOR_OR_PUNCTUATION },
-        { std::regex(R"(^\b[a-zA-Z][a-zA-Z0-9_]*\b)"),                         TokenType::IDENTIFIER },
-        { std::regex(R"(^"[^"]+")"),                                           TokenType::STRING },
-        { std::regex(R"(^\b[0-9]+\b)"),                                        TokenType::NUMBER },
-        { std::regex(R"(^\n)"),                                                TokenType::NEWLINE },
-        { std::regex(R"(^[\s\t\r]+)"),                                         TokenType::SPACE },
-        { std::regex(R"(^$)"),                                                 TokenType::THE_EOF }
+        { std::regex(R"(^((==|!=|>=|<=)|\(|\)|\{|\}|,|=|\*|\/|\+|\-|!|>|<))",
+                     regex_flags),                                  TokenType::OPERATOR_OR_PUNCTUATION },
+        { std::regex(R"(^\b[a-zA-Z][a-zA-Z0-9_]*\b)", regex_flags), TokenType::IDENTIFIER },
+        { std::regex(R"(^"[^"]+")", regex_flags),                   TokenType::STRING },
+        { std::regex(R"(^\b[0-9]+\b)", regex_flags),                TokenType::NUMBER },
+        { std::regex(R"(^\n)", regex_flags),                        TokenType::NEWLINE },
+        { std::regex(R"(^[\s\t\r]+)", regex_flags),                 TokenType::SPACE },
+        { std::regex(R"(^$)", regex_flags),                         TokenType::THE_EOF }
     };
 
     inline static const std::unordered_map<std::string, TokenType> tokens = {

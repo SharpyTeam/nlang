@@ -15,7 +15,7 @@ std::vector<Scanner::Token> Scanner::ExtractTokens(const std::string_view &sv) {
         bool found = false;
         for (auto &[regex, token] : Tokens::regex_tokens) {
             std::cmatch match;
-            if (std::regex_search(sv.data() + offset, match, regex)) {
+            if (std::regex_search(sv.data() + offset, match, regex, std::regex_constants::match_continuous)) {
                 extracted.emplace_back(Token { token, match.str() });
                 if (Tokens::regex_tokens_to_lookup_in_tokens.find(token) != Tokens::regex_tokens_to_lookup_in_tokens.end()) {
                     if (auto it = Tokens::tokens.find(match.str()); it != Tokens::tokens.end()) {
