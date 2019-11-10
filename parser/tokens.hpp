@@ -66,7 +66,7 @@ public:
 
     inline static const std::vector<std::pair<std::regex, TokenType>> regex_tokens = {
         { std::regex(R"(^((==|!=|>=|<=)|\(|\)|\{|\}|,|=|\*|\/|\+|\-|!|>|<))"), TokenType::OPERATOR_OR_PUNCTUATION },
-        { std::regex(R"(^\b[a-zA-Z][a-zA-Z0-9_]+\b)"),                         TokenType::IDENTIFIER },
+        { std::regex(R"(^\b[a-zA-Z][a-zA-Z0-9_]*\b)"),                         TokenType::IDENTIFIER },
         { std::regex(R"(^"[^"]+")"),                                           TokenType::STRING },
         { std::regex(R"(^\b[0-9]+\b)"),                                        TokenType::NUMBER },
         { std::regex(R"(^\n)"),                                                TokenType::NEWLINE },
