@@ -1,0 +1,20 @@
+image: Visual Studio 2017
+
+platform:
+  - x64
+  - x86
+
+configuration:
+  - Release
+  - Debug
+
+install:
+  - git submodule update --init --recursive
+
+build_script:
+  - call "C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Auxiliary\Build\vcvarsall.bat" %platform%
+  - mkdir build
+  - cd build
+  - cmake .. -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=%configuration%
+  - cmake --build . --config %configuration%
+  - ctest
