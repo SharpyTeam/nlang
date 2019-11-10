@@ -65,7 +65,7 @@ public:
     };
 
     inline static constexpr const std::regex_constants::syntax_option_type regex_flags =
-        std::regex_constants::optimize | std::regex_constants::basic;
+        std::regex_constants::optimize;
 
     inline static const std::vector<std::pair<std::regex, TokenType>> regex_tokens = {
         { std::regex(R"(^((==|!=|>=|<=)|\(|\)|\{|\}|,|=|\*|\/|\+|\-|!|>|<))",
