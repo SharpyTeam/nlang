@@ -13,6 +13,15 @@ std::vector<Scanner::Token> Scanner::ExtractTokens(const std::string_view &sv) {
 
     while (true) {
         bool found = false;
+
+        std::cmatch comment_match;
+        for (auto &comment_regex : Tokens::regex_comments) {
+            if (std::regex_search(sv.data() + offset, comment_match, comment_regex, std::regex_constants::match_continuous)) {
+                offset += comment_match.position() + comment_match.length();
+                continue;
+            }
+        }
+
         for (auto &[regex, token] : Tokens::regex_tokens) {
             std::cmatch match;
             if (std::regex_search(sv.data() + offset, match, regex, std::regex_constants::match_continuous)) {

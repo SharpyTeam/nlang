@@ -43,8 +43,10 @@ public:
         ADD,
         SUB,
 
+        THE_NULL,
         TRUE,
         FALSE,
+
         AND,
         OR,
         XOR,
@@ -65,14 +67,14 @@ public:
     };
 
     inline static constexpr const std::regex_constants::syntax_option_type regex_flags =
-        std::regex_constants::optimize;
+        std::regex_constants::optimize | std::regex_constants::ECMAScript;
 
     inline static const std::vector<std::pair<std::regex, TokenType>> regex_tokens = {
         { std::regex(R"(^((==|!=|>=|<=)|\(|\)|\{|\}|,|=|\*|\/|\+|\-|!|>|<))",
-                     regex_flags),                                  TokenType::OPERATOR_OR_PUNCTUATION },
+                     regex_flags),                                              TokenType::OPERATOR_OR_PUNCTUATION },
         { std::regex(R"(^\b[a-zA-Z][a-zA-Z0-9_]*\b)", regex_flags), TokenType::IDENTIFIER },
-        { std::regex(R"(^"[^"]+")", regex_flags),                   TokenType::STRING },
-        { std::regex(R"(^\b[0-9]+\b)", regex_flags),                TokenType::NUMBER },
+        { std::regex(R"(^"[^"\\]*(?:\\.[^"\\]*)*")", regex_flags),  TokenType::STRING },
+        { std::regex(R"(^\b[0-9]+(\.[0-9]+)?\b)", regex_flags),        TokenType::NUMBER },
         { std::regex(R"(^\n)", regex_flags),                        TokenType::NEWLINE },
         { std::regex(R"(^[\s\t\r]+)", regex_flags),                 TokenType::SPACE },
         { std::regex(R"(^$)", regex_flags),                         TokenType::THE_EOF }
@@ -99,8 +101,10 @@ public:
         { "+",     TokenType::ADD },
         { "-",     TokenType::SUB },
 
+        { "null",  TokenType::THE_NULL },
         { "true",  TokenType::TRUE },
         { "false", TokenType::FALSE },
+
         { "and",   TokenType::AND },
         { "or",    TokenType::OR },
         { "xor",   TokenType::XOR },
@@ -111,6 +115,11 @@ public:
         { ">=",    TokenType::GREATER_EQUALS },
         { "<",     TokenType::LESS },
         { "<=",    TokenType::LESS_EQUALS },
+    };
+
+    inline static const std::vector<std::regex> regex_comments = {
+            std::regex(R"(^\/\/.*?\n)", regex_flags),
+            std::regex(R"(^\/\*.*?\*\/)", regex_flags),
     };
 };
 
