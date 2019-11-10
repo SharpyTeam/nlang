@@ -6,6 +6,7 @@
 #define NLANG_TOKENS_HPP
 
 #include <unordered_map>
+#include <unordered_set>
 #include <string>
 #include <regex>
 
@@ -14,6 +15,7 @@ namespace nlang {
 class Tokens {
 public:
     enum class TokenType {
+        OPERATOR_OR_PUNCTUATION,
         IDENTIFIER,
         STRING,
         NUMBER,
@@ -57,15 +59,19 @@ public:
         INVALID
     };
 
-    inline static const std::regex any_space_character = std::regex(R"([\n\s\t\r])");
+    inline static const std::unordered_set<TokenType> regex_tokens_to_lookup_in_tokens = {
+        TokenType::OPERATOR_OR_PUNCTUATION,
+        TokenType::IDENTIFIER
+    };
 
     inline static const std::vector<std::pair<std::regex, TokenType>> regex_tokens = {
-        { std::regex(R"(^\b[a-zA-Z][a-zA-Z0-9_]+\b)"), TokenType::IDENTIFIER },
-        { std::regex(R"(^"[^"]+")"),                   TokenType::STRING },
-        { std::regex(R"(^\b[0-9]+\b)"),                TokenType::NUMBER },
-        { std::regex(R"(^\n)"),                        TokenType::NEWLINE },
-        { std::regex(R"(^[\s\t\r]+)"),                 TokenType::SPACE },
-        { std::regex(R"(^$)"),                         TokenType::THE_EOF }
+        { std::regex(R"(^((==|!=|>=|<=)|\(|\)|\{|\}|,|=|\*|\/|\+|\-|!|>|<))"), TokenType::OPERATOR_OR_PUNCTUATION },
+        { std::regex(R"(^\b[a-zA-Z][a-zA-Z0-9_]+\b)"),                         TokenType::IDENTIFIER },
+        { std::regex(R"(^"[^"]+")"),                                           TokenType::STRING },
+        { std::regex(R"(^\b[0-9]+\b)"),                                        TokenType::NUMBER },
+        { std::regex(R"(^\n)"),                                                TokenType::NEWLINE },
+        { std::regex(R"(^[\s\t\r]+)"),                                         TokenType::SPACE },
+        { std::regex(R"(^$)"),                                                 TokenType::THE_EOF }
     };
 
     inline static const std::unordered_map<std::string, TokenType> tokens = {
@@ -82,7 +88,6 @@ public:
         { "{",     TokenType::LEFT_BRACE },
         { "}",     TokenType::RIGHT_BRACE },
         { ",",     TokenType::COMMA },
-
 
         { "=",     TokenType::ASSIGN },
         { "*",     TokenType::MUL },
