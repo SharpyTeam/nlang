@@ -18,6 +18,8 @@ public:
     struct Token {
         Tokens::TokenType token;
         std::string value;
+        int row;
+        int column;
     };
 
 private:

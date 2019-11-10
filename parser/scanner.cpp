@@ -11,28 +11,31 @@ std::vector<Scanner::Token> Scanner::ExtractTokens(const std::string_view &sv) {
     size_t offset = 0;
     std::string invalid_buf;
 
+    size_t row = 1;
+    size_t column = 1;
+
     while (true) {
         bool found = false;
-
-        std::cmatch comment_match;
-        for (auto &comment_regex : Tokens::regex_comments) {
-            if (std::regex_search(sv.data() + offset, comment_match, comment_regex, std::regex_constants::match_continuous)) {
-                offset += comment_match.position() + comment_match.length();
-                continue;
-            }
-        }
 
         for (auto &[regex, token] : Tokens::regex_tokens) {
             std::cmatch match;
             if (std::regex_search(sv.data() + offset, match, regex, std::regex_constants::match_continuous)) {
-                extracted.emplace_back(Token { token, match.str() });
+                auto str = match.str();
+                extracted.emplace_back(Token { token, str, int(row), int(column) });
                 if (Tokens::regex_tokens_to_lookup_in_tokens.find(token) != Tokens::regex_tokens_to_lookup_in_tokens.end()) {
-                    if (auto it = Tokens::tokens.find(match.str()); it != Tokens::tokens.end()) {
+                    if (auto it = Tokens::tokens.find(str); it != Tokens::tokens.end()) {
                         extracted[extracted.size() - 1].token = it->second;
                     }
                 }
                 if (token == Tokens::TokenType::THE_EOF) return extracted;
-                offset += match.position() + match.length();
+                for (char i : str) {
+                    ++column;
+                    if (i == '\n') {
+                        row++;
+                        column = 1;
+                    }
+                }
+                offset += str.length();
                 found = true;
                 break;
             }

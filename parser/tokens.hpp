@@ -15,12 +15,13 @@ namespace nlang {
 class Tokens {
 public:
     enum class TokenType {
+        COMMENT,
         OPERATOR_OR_PUNCTUATION,
         IDENTIFIER,
         STRING,
         NUMBER,
-        SPACE,
         NEWLINE,
+        SPACE,
         THE_EOF,
 
         IF,
@@ -69,7 +70,10 @@ public:
     inline static constexpr const std::regex_constants::syntax_option_type regex_flags =
         std::regex_constants::optimize | std::regex_constants::ECMAScript;
 
+    // Comments should go first cause order matters (or scanner will scan two / signs instead of comment)
     inline static const std::vector<std::pair<std::regex, TokenType>> regex_tokens = {
+        { std::regex(R"(^\/\/.*?\n)", regex_flags),                 TokenType::COMMENT },
+        { std::regex(R"(^\/\*.*?\*\/)", regex_flags),               TokenType::COMMENT },
         { std::regex(R"(^((==|!=|>=|<=)|\(|\)|\{|\}|,|=|\*|\/|\+|\-|!|>|<))",
                      regex_flags),                                              TokenType::OPERATOR_OR_PUNCTUATION },
         { std::regex(R"(^\b[a-zA-Z][a-zA-Z0-9_]*\b)", regex_flags), TokenType::IDENTIFIER },
@@ -115,11 +119,6 @@ public:
         { ">=",    TokenType::GREATER_EQUALS },
         { "<",     TokenType::LESS },
         { "<=",    TokenType::LESS_EQUALS },
-    };
-
-    inline static const std::vector<std::regex> regex_comments = {
-            std::regex(R"(^\/\/.*?\n)", regex_flags),
-            std::regex(R"(^\/\*.*?\*\/)", regex_flags),
     };
 };
 

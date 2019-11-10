@@ -11,7 +11,8 @@
 void printTokens(const std::string &input) {
     nlang::Scanner sc(input);
     for (auto &token : sc.GetTokens()) {
-        std::cout << "'" << token.value << "'" << " [" << static_cast<int>(token.token)  << "]" << std::endl;
+        std::cout << "'" << token.value << "'" << " [" << static_cast<int>(token.token)  << "]:"
+            << token.row << ":" << token.column << std::endl;
     }
 }
 
@@ -27,18 +28,15 @@ int main(int argc, char *argv[]) {
 
             std::string input(argv[2]);
             printTokens(input);
-        }
-        else {
+        } else {
             std::cout << "Unknown argument '" << std::string(argv[1]) << "'." << std::endl;
         }
-    }
-    else {
+    } else {
         std::cout << "Interactive mode. Type 'exit' to exit.\nThis mode only prints tokens at the moment." << std::endl;
         std::string input;
         std::cout << "> " << std::flush;
 
-        while (std::getline(std::cin, input) && input != "exit")
-        {
+        while (std::getline(std::cin, input) && input != "exit") {
             printTokens(input);
             std::cout << "> " << std::flush;
         }
