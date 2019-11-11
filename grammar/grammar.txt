@@ -1,0 +1,19 @@
+file: (statement | NEWLINE)* THE_EOF
+
+expr: bit_or_expr
+bit_or_expr: bit_xor_expr (BIT_OR bit_xor_expr)*
+bit_xor_expr: bit_and_expr (BIT_XOR bit_and_expr)*
+bit_and_expr: shift_expr (BIT_AND shift_expr)*
+shift_expr: add_expr ((LEFT_SHIFT | RIGHT_SHIFT) add_expr)*
+add_expr: mul_expr ((ADD | SUB) mul_expr)*
+mul_expr: unary_expr ((MUL | DIV) unary_expr)*
+unary_expr: (ADD | SUB | TILDE) unary_expr | atom_expr
+atom_expr: IDENTIFIER | (NUMBER | STRING | THE_NULL | TRUE | FALSE)
+
+fn_expr: (FN [IDENTIFIER] LEFT_PAR fn_def_args RIGHT_PAR LEFT_BRACE 
+    statement*
+RIGHT_BRACE)
+
+fn_def_args: (IDENTIFIER (COMMA IDENTIFIER)*)* (COMMA IDENTIFIER ASSIGN expression)*
+fn_call_args: expression (COMMA expression)*
+fn_call_expr: (IDENTIFIER | (LEFT_PAR fn_expr RIGHT_PAR)) LEFT_PAR fn_call_args RIGHT_PAR
