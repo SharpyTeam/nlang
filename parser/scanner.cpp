@@ -4,7 +4,44 @@
 
 #include "scanner.hpp"
 
+#include <stdexcept>
+
 namespace nlang {
+
+Scanner::Scanner(const std::string_view &source) noexcept
+    : pos(0), tokens(ExtractTokens(source)) {}
+
+const std::vector<Scanner::Token> &Scanner::GetTokens() const {
+    return tokens;
+}
+
+void Scanner::AddMark() {
+    marks.push(pos);
+}
+
+void Scanner::Restore() {
+    if (marks.empty()) {
+        throw std::runtime_error("No marks left");
+    }
+    pos = marks.top();
+    marks.pop();
+}
+
+const Scanner::Token &Scanner::NextToken() {
+    if (pos == tokens.size()) {
+        throw std::runtime_error("No tokens left");
+    }
+    return tokens[pos++];
+}
+
+size_t Scanner::SkipTokens(Tokens::TokenType type) {
+    size_t count = 0;
+    while (pos < tokens.size() && tokens[pos].token == type) {
+        count++;
+        pos++;
+    }
+    return count;
+}
 
 std::vector<Scanner::Token> Scanner::ExtractTokens(const std::string_view &sv) {
     std::vector<Token> extracted;

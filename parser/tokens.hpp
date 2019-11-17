@@ -12,65 +12,77 @@
 
 namespace nlang {
 
+#define TOKENS_LIST                     \
+                                        \
+TOKEN(COMMENT, "")                      \
+TOKEN(OPERATOR_OR_PUNCTUATION, "")      \
+TOKEN(IDENTIFIER, "")                   \
+TOKEN(STRING, "")                       \
+TOKEN(NUMBER, "")                       \
+TOKEN(NEWLINE, "")                      \
+TOKEN(SPACE, "")                        \
+TOKEN(THE_EOF, "")                      \
+                                        \
+TOKEN(IF, "if")                         \
+TOKEN(ELSE, "else")                     \
+TOKEN(FOR, "for")                       \
+TOKEN(WHILE, "while")                   \
+TOKEN(LOOP, "loop")                     \
+TOKEN(FN, "fn")                         \
+TOKEN(LET, "let")                       \
+TOKEN(CONST, "const")                   \
+                                        \
+TOKEN(LEFT_PAR, "(")                    \
+TOKEN(RIGHT_PAR, ")")                   \
+TOKEN(LEFT_BRACE, "{")                  \
+TOKEN(RIGHT_BRACE, "}")                 \
+TOKEN(COMMA, ",")                       \
+TOKEN(SEMICOLON, ";")                   \
+                                        \
+TOKEN(ASSIGN, "=")                      \
+TOKEN(MUL, "*")                         \
+TOKEN(DIV, "/")                         \
+TOKEN(ADD, "+")                         \
+TOKEN(SUB, "-")                         \
+                                        \
+TOKEN(THE_NULL, "null")                 \
+TOKEN(TRUE, "true")                     \
+TOKEN(FALSE, "false")                   \
+                                        \
+TOKEN(BIT_OR, "|")                      \
+TOKEN(BIT_XOR, "^")                     \
+TOKEN(BIT_AND, "&")                     \
+TOKEN(TILDE, "~")                       \
+TOKEN(LEFT_SHIFT, "<<")                 \
+TOKEN(RIGHT_SHIFT, ">>")                \
+TOKEN(AND, "and")                       \
+TOKEN(OR, "or")                         \
+TOKEN(XOR, "xor")                       \
+TOKEN(NOT, "not")                       \
+TOKEN(EQUALS, "==")                     \
+TOKEN(NOT_EQUALS, "!=")                 \
+TOKEN(GREATER, ">")                     \
+TOKEN(GREATER_EQUALS, ">=")             \
+TOKEN(LESS, "<")                        \
+TOKEN(LESS_EQUALS, "<=")                \
+                                        \
+TOKEN(INVALID, "")                      \
+
 class Tokens {
 public:
     enum class TokenType {
-        COMMENT,
-        OPERATOR_OR_PUNCTUATION,
-        IDENTIFIER,
-        STRING,
-        NUMBER,
-        NEWLINE,
-        SPACE,
-        THE_EOF,
-
-        IF,
-        ELSE,
-        FOR,
-        WHILE,
-        LOOP,
-        FN,
-        LET,
-        CONST,
-
-        LEFT_PAR,
-        RIGHT_PAR,
-        LEFT_BRACE,
-        RIGHT_BRACE,
-        COMMA,
-        SEMICOLON,
-
-        ASSIGN,
-        MUL,
-        DIV,
-        ADD,
-        SUB,
-
-        THE_NULL,
-        TRUE,
-        FALSE,
-
-        BIT_OR,
-        BIT_XOR,
-        BIT_AND,
-        TILDE,
-        LEFT_SHIFT,
-        RIGHT_SHIFT,
-        AND,
-        OR,
-        XOR,
-        NOT,
-        EQUALS,
-        NOT_EQUALS,
-        GREATER,
-        GREATER_EQUALS,
-        LESS,
-        LESS_EQUALS,
-
-        INVALID
+#define TOKEN(token, name) token,
+        TOKENS_LIST
+#undef TOKEN
     };
 
-    inline static const std::unordered_set<TokenType> regex_tokens_to_lookup_in_tokens = {
+    inline static const std::unordered_map<TokenType, std::string> token_to_string {
+#define TOKEN(token, name) { TokenType::token, name },
+        TOKENS_LIST
+#undef TOKEN
+    };
+
+    inline static const std::unordered_set<TokenType> regex_tokens_to_lookup_in_tokens {
         TokenType::OPERATOR_OR_PUNCTUATION,
         TokenType::IDENTIFIER
     };
@@ -79,7 +91,7 @@ public:
         std::regex_constants::optimize | std::regex_constants::ECMAScript;
 
     // Comments should go first cause order matters (or scanner will scan two / signs instead of comment)
-    inline static const std::vector<std::pair<std::regex, TokenType>> regex_tokens = {
+    inline static const std::vector<std::pair<std::regex, TokenType>> regex_tokens {
         { std::regex(R"(^\/\/.*?\n)", regex_flags),                 TokenType::COMMENT },
         { std::regex(R"(^\/\*.*?\*\/)", regex_flags),               TokenType::COMMENT },
         { std::regex(R"(^((==|!=|>=|<=|<<|>>)|\(|\)|\{|\}|;|,|=|\*|\/|\+|\-|!|>|<|\~|&|\||\^))",
@@ -92,49 +104,10 @@ public:
         { std::regex(R"(^$)", regex_flags),                         TokenType::THE_EOF }
     };
 
-    inline static const std::unordered_map<std::string, TokenType> tokens = {
-        { "if",    TokenType::IF },
-        { "else",  TokenType::ELSE },
-        { "for",   TokenType::FOR },
-        { "while", TokenType::WHILE },
-        { "loop",  TokenType::LOOP },
-        { "fn",    TokenType::FN },
-        { "let",   TokenType::LET },
-        { "const", TokenType::CONST },
-
-        { "(",     TokenType::LEFT_PAR },
-        { ")",     TokenType::RIGHT_PAR },
-        { "{",     TokenType::LEFT_BRACE },
-        { "}",     TokenType::RIGHT_BRACE },
-        { ",",     TokenType::COMMA },
-        { ";",     TokenType::SEMICOLON },
-
-        { "=",     TokenType::ASSIGN },
-        { "*",     TokenType::MUL },
-        { "/",     TokenType::DIV },
-        { "+",     TokenType::ADD },
-        { "-",     TokenType::SUB },
-
-        { "null",  TokenType::THE_NULL },
-        { "true",  TokenType::TRUE },
-        { "false", TokenType::FALSE },
-
-        { "|",     TokenType::BIT_OR },
-        { "^",     TokenType::BIT_XOR },
-        { "&",     TokenType::BIT_AND },
-        { "~",     TokenType::TILDE },
-        { "<<",    TokenType::LEFT_SHIFT },
-        { ">>",    TokenType::RIGHT_SHIFT },
-        { "and",   TokenType::AND },
-        { "or",    TokenType::OR },
-        { "xor",   TokenType::XOR },
-        { "!",     TokenType::NOT },
-        { "==",    TokenType::EQUALS },
-        { "!=",    TokenType::NOT_EQUALS },
-        { ">",     TokenType::GREATER },
-        { ">=",    TokenType::GREATER_EQUALS },
-        { "<",     TokenType::LESS },
-        { "<=",    TokenType::LESS_EQUALS },
+    inline static const std::unordered_map<std::string, TokenType> tokens {
+#define TOKEN(token, name) { name, TokenType::token },
+        TOKENS_LIST
+#undef TOKEN
     };
 };
 

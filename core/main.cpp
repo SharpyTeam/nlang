@@ -2,8 +2,10 @@
 // Created by ilya on 08.11.2019.
 //
 
+#include <memory>
 #include <scanner.hpp>
 #include <version.hpp>
+#include <parser.hpp>
 
 #include <iostream>
 #include <string>
@@ -38,6 +40,11 @@ int main(int argc, char *argv[]) {
 
         while (std::getline(std::cin, input) && input != "exit") {
             printTokens(input);
+
+            // Change it
+            nlang::Parser p(std::make_shared<nlang::Scanner>(input));
+            std::cout << p.ParseExpression()->ToString() << std::endl;
+
             std::cout << "> " << std::flush;
         }
     }

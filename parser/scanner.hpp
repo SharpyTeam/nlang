@@ -10,6 +10,7 @@
 #include <string>
 #include <string_view>
 #include <vector>
+#include <stack>
 
 namespace nlang {
 
@@ -23,15 +24,21 @@ public:
     };
 
 private:
+    size_t pos;
     std::vector<Token> tokens;
+    std::stack<size_t> marks;
 
 public:
-    explicit Scanner(const std::string_view &source) noexcept
-            : tokens(ExtractTokens(source)) {}
+    explicit Scanner(const std::string_view &source) noexcept;
 
-    const std::vector<Token> &GetTokens() const {
-        return tokens;
-    }
+    [[nodiscard]]
+    const std::vector<Token> &GetTokens() const;
+
+    void AddMark();
+    void Restore();
+
+    const Token &NextToken();
+    size_t SkipTokens(Tokens::TokenType type);
 
 private:
     static std::vector<Token> ExtractTokens(const std::string_view &sv);
