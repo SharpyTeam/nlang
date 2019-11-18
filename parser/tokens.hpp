@@ -12,6 +12,7 @@
 
 namespace nlang {
 
+// TODO: Add human-readable token names as 3rd macro argument
 #define TOKENS_LIST                     \
                                         \
 TOKEN(COMMENT, "")                      \
@@ -71,13 +72,19 @@ TOKEN(INVALID, "")                      \
 class Tokens {
 public:
     enum class TokenType {
-#define TOKEN(token, name) token,
+#define TOKEN(token, value) token,
+        TOKENS_LIST
+#undef TOKEN
+    };
+
+    inline static const std::unordered_map<TokenType, std::string> token_names {
+#define TOKEN(token, name) { TokenType::token, #token },
         TOKENS_LIST
 #undef TOKEN
     };
 
     inline static const std::unordered_map<TokenType, std::string> token_to_string {
-#define TOKEN(token, name) { TokenType::token, name },
+#define TOKEN(token, value) { TokenType::token, value },
         TOKENS_LIST
 #undef TOKEN
     };

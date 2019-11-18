@@ -13,7 +13,7 @@
 void printTokens(const std::string &input) {
     nlang::Scanner sc(input);
     for (auto &token : sc.GetTokens()) {
-        std::cout << "'" << token.value << "'" << " [" << static_cast<int>(token.token)  << "]:"
+        std::cout << "'" << token.value << "'" << " [" << std::string(nlang::Tokens::token_names.at(token.token)) << ", " << static_cast<int>(token.token)  << "]:"
             << token.row << ":" << token.column << std::endl;
     }
 }

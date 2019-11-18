@@ -13,6 +13,8 @@
 namespace nlang {
 
 class Parser {
+    // TODO: Move definitions to .cpp?
+    // TODO: Implement all binary operators
 public:
     explicit Parser(const std::shared_ptr<Scanner> &scanner)
         : scanner(scanner)
@@ -46,7 +48,9 @@ private:
                 scanner->Restore();
                 return ParseParExpression();
         }
-        // TODO
+
+        // TODO: Replace with more generalized parser error reporting function
+        throw std::runtime_error("Unexpected " + std::string(Tokens::token_names.at(token.token)) + " at line " + std::to_string(token.row) + ", " + std::to_string(token.column));
     }
 
     std::shared_ptr<Expression> ParseUnaryExpression() {
