@@ -5,7 +5,7 @@
 #ifndef NLANG_SCANNER_HPP
 #define NLANG_SCANNER_HPP
 
-#include "tokens.hpp"
+#include <tokens.hpp>
 
 #include <string>
 #include <string_view>

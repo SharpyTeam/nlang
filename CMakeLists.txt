@@ -16,6 +16,7 @@ else ()
     set(GIT_REVISION "dev")
 endif ()
 
+add_subdirectory(common)
 add_subdirectory(parser)
 add_subdirectory(compiler)
 add_subdirectory(vm)

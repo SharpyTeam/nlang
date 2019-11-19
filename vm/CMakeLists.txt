@@ -11,4 +11,4 @@ set(NLANG_VM_HEADERS
 
 add_library(nlang_vm ${NLANG_VM_HEADERS} ${NLANG_VM_SOURCES})
 target_include_directories(nlang_vm PUBLIC .)
-target_link_libraries(nlang_vm nlang_compiler)
+target_link_libraries(nlang_vm nlang_common)

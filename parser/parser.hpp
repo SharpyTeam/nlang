@@ -6,7 +6,7 @@
 #define NLANG_PARSER_HPP
 
 #include "scanner.hpp"
-#include "ast.hpp"
+#include <ast.hpp>
 
 #include <memory>
 

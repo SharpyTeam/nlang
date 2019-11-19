@@ -11,4 +11,4 @@ set(NLANG_COMPILER_HEADERS
 
 add_library(nlang_compiler ${NLANG_COMPILER_HEADERS} ${NLANG_COMPILER_SOURCES})
 target_include_directories(nlang_compiler PUBLIC .)
-target_link_libraries(nlang_compiler nlang_parser)
+target_link_libraries(nlang_compiler nlang_common)
