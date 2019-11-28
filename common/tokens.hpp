@@ -27,11 +27,19 @@ TOKEN(THE_EOF, "")                      \
 TOKEN(IF, "if")                         \
 TOKEN(ELSE, "else")                     \
 TOKEN(FOR, "for")                       \
+TOKEN(IN, "in")                         \
+TOKEN(DOWNTO, "downto")                 \
+TOKEN(UNTIL, "until")                   \
+TOKEN(STEP, "step")                     \
+TOKEN(BREAK, "break")                   \
+TOKEN(CONTINUE, "continue")             \
 TOKEN(WHILE, "while")                   \
 TOKEN(LOOP, "loop")                     \
 TOKEN(FN, "fn")                         \
 TOKEN(LET, "let")                       \
 TOKEN(CONST, "const")                   \
+                                        \
+TOKEN(TO, "..")                         \
                                         \
 TOKEN(LEFT_PAR, "(")                    \
 TOKEN(RIGHT_PAR, ")")                   \
@@ -39,6 +47,7 @@ TOKEN(LEFT_BRACE, "{")                  \
 TOKEN(RIGHT_BRACE, "}")                 \
 TOKEN(COMMA, ",")                       \
 TOKEN(SEMICOLON, ";")                   \
+TOKEN(COLON, ":")                       \
                                         \
 TOKEN(ASSIGN, "=")                      \
 TOKEN(MUL, "*")                         \
@@ -101,7 +110,7 @@ public:
     inline static const std::vector<std::pair<std::regex, TokenType>> regex_tokens {
         { std::regex(R"(^\/\/.*?\n)", regex_flags),                 TokenType::COMMENT },
         { std::regex(R"(^\/\*.*?\*\/)", regex_flags),               TokenType::COMMENT },
-        { std::regex(R"(^((==|!=|>=|<=|<<|>>)|\(|\)|\{|\}|;|,|=|\*|\/|\+|\-|!|>|<|\~|&|\||\^))",
+        { std::regex(R"(^((==|!=|>=|<=|<<|>>)|\(|\)|\{|\}|;|,|=|:|\*|\/|\+|\-|!|>|<|\~|&|\||\^))",
                      regex_flags),                                        TokenType::OPERATOR_OR_PUNCTUATION },
         { std::regex(R"(^\b[a-zA-Z][a-zA-Z0-9_]*\b)", regex_flags), TokenType::IDENTIFIER },
         { std::regex(R"(^"[^"\\]*(?:\\.[^"\\]*)*")", regex_flags),  TokenType::STRING },

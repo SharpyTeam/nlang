@@ -1,6 +1,6 @@
 file: (statement | NEWLINE)* THE_EOF
 
-expr: bit_or_expr
+expr: bit_or_expr | fn_expr | range_expr | if_expr | for_expr | loop_expr | assign_expr
 bit_or_expr: bit_xor_expr (BIT_OR bit_xor_expr)*
 bit_xor_expr: bit_and_expr (BIT_XOR bit_and_expr)*
 bit_and_expr: shift_expr (BIT_AND shift_expr)*
@@ -10,10 +10,45 @@ mul_expr: unary_expr ((MUL | DIV) unary_expr)*
 unary_expr: (ADD | SUB | TILDE) unary_expr | atom_expr
 atom_expr: IDENTIFIER | (NUMBER | STRING | THE_NULL | TRUE | FALSE)
 
-fn_expr: (FN [IDENTIFIER] LEFT_PAR fn_def_args RIGHT_PAR LEFT_BRACE 
-    statement*
-RIGHT_BRACE)
+type: IDENTIFIER
 
-fn_def_args: (IDENTIFIER (COMMA IDENTIFIER)*)* (COMMA IDENTIFIER ASSIGN expression)*
-fn_call_args: expression (COMMA expression)*
+assign_expr: IDENTIFIER ASSIGN expr (COMMA IDENTIFIER ASSIGN expr)*
+const_var_def_statement: CONST IDENTIFIER [COLON type] ASSIGN expr (COMMA IDENTIFIER [COLON type] ASSIGN expr)*
+bare_var_def_statement: LET IDENTIFIER [COLON type]
+multiple_var_def_statement: bare_var_def_statement (COMMA IDENTIFIER [COLON type])*
+var_def_assign_statement: LET IDENTIFIER [COLON type] ASSIGN expr (COMMA IDENTIFIER [COLON type] ASSIGN expr)*
+var_def_statement: const_var_def_statement | multiple_var_def_statement | var_def_assign_statement
+
+expr_statement: expr
+break_statement: BREAK [expr]
+return_statement: RETURN [expr]
+statement: expr_statement | var_def_statement | (return_statement | break_statement | CONTINUE) NEWLINE | THE_EOF
+
+fn_expr: (FN [IDENTIFIER] LEFT_PAR fn_def_args RIGHT_PAR (LEFT_BRACE
+    statement*
+RIGHT_BRACE) | statement)
+
+fn_def_args: (IDENTIFIER (COMMA IDENTIFIER)*)* (COMMA IDENTIFIER ASSIGN expr)*
+fn_call_args: expr (COMMA expr)*
 fn_call_expr: (IDENTIFIER | (LEFT_PAR fn_expr RIGHT_PAR)) LEFT_PAR fn_call_args RIGHT_PAR
+
+range_expr: bit_or_expr TO | DOWNTO | UNTIL bit_or_expr [STEP bit_or_expr]
+
+for_expr: (FOR LEFT_PAR bare_var_def IN range_expr RIGHT_PAR (LEFT_BRACE
+    statement*
+RIGHT_BRACE) | statement)
+
+loop_expr: (LOOP (LEFT_BRACE
+    statement*
+RIGHT_BRACE) | statement)
+
+if_main_expr: (IF LEFT_PAR expr RIGHT_PAR (LEFT_BRACE
+    statement*
+RIGHT_BRACE) | statement)
+
+else_expr: ELSE (LEFT_BRACE
+    statement*
+RIGHT_BRACE) | statement)
+
+if_expr: if_main_expr [else_expr]
+

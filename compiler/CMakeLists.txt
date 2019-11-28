@@ -4,10 +4,14 @@ project(nlang_compiler)
 set(CMAKE_CXX_STANDARD 17)
 
 set(NLANG_COMPILER_SOURCES
-        compiler.cpp)
+        compiler.cpp
+        assembler.cpp
+        disassembler.cpp)
 
 set(NLANG_COMPILER_HEADERS
-        compiler.hpp)
+        compiler.hpp
+        assembler.hpp
+        disassembler.hpp)
 
 add_library(nlang_compiler ${NLANG_COMPILER_HEADERS} ${NLANG_COMPILER_SOURCES})
 target_include_directories(nlang_compiler PUBLIC .)

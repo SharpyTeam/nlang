@@ -4,12 +4,15 @@ project(nlang_common)
 set(CMAKE_CXX_STANDARD 17)
 
 set(NLANG_COMMON_SOURCES
-        stub.cpp)
+        stub.cpp
+        bytecode.cpp)
 
 set(NLANG_COMMON_HEADERS
         tokens.hpp
         ast.hpp
-        opcodes.hpp)
+        opcodes.hpp
+        bytecode.hpp
+        conversion_utils.hpp)
 
 add_library(nlang_common ${NLANG_COMMON_HEADERS} ${NLANG_COMMON_SOURCES})
 target_include_directories(nlang_common PUBLIC .)
