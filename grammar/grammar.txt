@@ -1,54 +1,49 @@
 file: (statement | NEWLINE)* THE_EOF
 
-expr: bit_or_expr | fn_expr | range_expr | if_expr | for_expr | loop_expr | assign_expr
-bit_or_expr: bit_xor_expr (BIT_OR bit_xor_expr)*
-bit_xor_expr: bit_and_expr (BIT_XOR bit_and_expr)*
-bit_and_expr: shift_expr (BIT_AND shift_expr)*
-shift_expr: add_expr ((LEFT_SHIFT | RIGHT_SHIFT) add_expr)*
-add_expr: mul_expr ((ADD | SUB) mul_expr)*
-mul_expr: unary_expr ((MUL | DIV) unary_expr)*
-unary_expr: (ADD | SUB | TILDE) unary_expr | atom_expr
-atom_expr: IDENTIFIER | (NUMBER | STRING | THE_NULL | TRUE | FALSE)
+// utility
+newline: '\n'
+eof: '\0'
+assign_operator: '=' | '+=' | '-=' | '*=' | '/=' | '%='
+equality_operator: '==' | '!='
+comparison_operator: '<=' | '>=' | '<' | '>'
+identifier: // TODO add identifier regex here
+number: // TODO
+string: // TODO
+literal: number | string | 'null' | 'true' | 'false'
+additive_operator: '+' | '-'
+multiplicative_operator: '*' | '/' | '%'
+unary_prefix: '+' | '-' | '++' | '--'
+unary_postfix: '++' | '--' | call_postfix | indexed_access_postfix | member_access_postfix
+call_postfix: '(' function_call_arguments ')'
+type_hint: ':' identifier
+argument: identifier type_hint?
+function_def_arguments: (argument (',' argument)*)?  (',' argument '=' expression)*
+function_call_arguments: (expression (',' expression)*)?
 
-type: IDENTIFIER
+// expressions
+expression: assign_expression | function_expression
+assign_expression: disjunction_expression (assign_operator disjunction_expression)*
+disjunction_expression: conjunction_expression ('or' conjunction_expression)*
+conjunction_expression: equality_expression ('and' equality_expression)*
+equality_expression: comparison_expression (equality_operator comparison_expression)*
+comparison_expression: function_as_operator_expression (comparison_operator function_as_operator_expression)*
+function_as_operator_expression: range_expression (identifier range_expression)*
+range_expression: additive_expression ('..' | 'downto' | 'until' additive_expression ('step' additive_expression)?)?
+additive_expression: multiplicative_expression (additive_operator multiplicative_expression)*
+multiplicative_expression: prefix_expression (multiplicative_operator prefix_expression)*
+prefix_unary_expression: unary_prefix* postfix_unary_expression
+postfix_unary_expression: basic_expression unary_postfix*
+basic_expression: parenthesized_expression | identifier | literal
+parenthesized_expression: '(' expression ')'
+function_expression: 'fn' identifier? '(' function_def_arguments ')'  type_hint? (block_statement | ('=' expression))
 
-assign_expr: IDENTIFIER ASSIGN expr (COMMA IDENTIFIER ASSIGN expr)*
-const_var_def_statement: CONST IDENTIFIER [COLON type] ASSIGN expr (COMMA IDENTIFIER [COLON type] ASSIGN expr)*
-bare_var_def_statement: LET IDENTIFIER [COLON type]
-multiple_var_def_statement: bare_var_def_statement (COMMA IDENTIFIER [COLON type])*
-var_def_assign_statement: LET IDENTIFIER [COLON type] ASSIGN expr (COMMA IDENTIFIER [COLON type] ASSIGN expr)*
-var_def_statement: const_var_def_statement | multiple_var_def_statement | var_def_assign_statement
+// statements
+statements: (statement (statement_delimiter+ statement)* statement_delimiter*)?
+statement_delimiter: ';' | newline | eof
+expression_statement: expression
+break_statement: 'break' expression?
+return_statement: 'return' expression?
 
-expr_statement: expr
-break_statement: BREAK [expr]
-return_statement: RETURN [expr]
-statement: expr_statement | var_def_statement | (return_statement | break_statement | CONTINUE) NEWLINE | THE_EOF
+statement: expression_statement | var_def_statement | return_statement | break_statement | 'continue' | block_statement
 
-fn_expr: (FN [IDENTIFIER] LEFT_PAR fn_def_args RIGHT_PAR (LEFT_BRACE
-    statement*
-RIGHT_BRACE) | statement)
-
-fn_def_args: (IDENTIFIER (COMMA IDENTIFIER)*)* (COMMA IDENTIFIER ASSIGN expr)*
-fn_call_args: expr (COMMA expr)*
-fn_call_expr: (IDENTIFIER | (LEFT_PAR fn_expr RIGHT_PAR)) LEFT_PAR fn_call_args RIGHT_PAR
-
-range_expr: bit_or_expr TO | DOWNTO | UNTIL bit_or_expr [STEP bit_or_expr]
-
-for_expr: (FOR LEFT_PAR bare_var_def IN range_expr RIGHT_PAR (LEFT_BRACE
-    statement*
-RIGHT_BRACE) | statement)
-
-loop_expr: (LOOP (LEFT_BRACE
-    statement*
-RIGHT_BRACE) | statement)
-
-if_main_expr: (IF LEFT_PAR expr RIGHT_PAR (LEFT_BRACE
-    statement*
-RIGHT_BRACE) | statement)
-
-else_expr: ELSE (LEFT_BRACE
-    statement*
-RIGHT_BRACE) | statement)
-
-if_expr: if_main_expr [else_expr]
-
+block_statement: '{' statements '}'
