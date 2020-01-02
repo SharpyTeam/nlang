@@ -2,20 +2,26 @@
 // Created by ilya on 08.11.2019.
 //
 
-#include <memory>
 #include <scanner.hpp>
 #include <version.hpp>
 #include <parser.hpp>
+#include <char_stream.hpp>
 
 #include <iostream>
 #include <string>
 
-void printTokens(const std::string &input) {
-    nlang::Scanner sc(input);
-    for (auto &token : sc.GetTokens()) {
-        std::cout << "'" << token.value << "'" << " [" << std::string(nlang::Tokens::token_names.at(token.token)) << ", " << static_cast<int>(token.token)  << "]:"
+void print(const std::string &input) {
+    auto sc = nlang::Scanner::Create(nlang::CharStream::Create<nlang::StringCharStream>(input));
+    auto mark = sc->Mark();
+    for (auto token = sc->NextToken(); token.token != nlang::Token::THE_EOF; token = sc->NextToken()) {
+        std::cout << "'" << token.source << "'" << " [" << std::string(nlang::TokenUtils::TokenToString(token.token)) << ", " << static_cast<int>(token.token)  << "]:"
             << token.row << ":" << token.column << std::endl;
     }
+    mark.Apply();
+    auto parser = nlang::Parser::Create(sc);
+    nlang::ASTStringifier stringifier;
+    parser->ParseExpression()->Accept(stringifier);
+    std::cout << stringifier.ToString() << std::endl;
 }
 
 int main(int argc, char *argv[]) {
@@ -29,7 +35,7 @@ int main(int argc, char *argv[]) {
             }
 
             std::string input(argv[2]);
-            printTokens(input);
+            print(input);
         } else {
             std::cout << "Unknown argument '" << std::string(argv[1]) << "'." << std::endl;
         }
@@ -39,12 +45,7 @@ int main(int argc, char *argv[]) {
         std::cout << "> " << std::flush;
 
         while (std::getline(std::cin, input) && input != "exit") {
-            printTokens(input);
-
-            // Change it
-            nlang::Parser p(std::make_shared<nlang::Scanner>(input));
-            std::cout << p.ParseExpression()->ToString() << std::endl;
-
+            print(input);
             std::cout << "> " << std::flush;
         }
     }

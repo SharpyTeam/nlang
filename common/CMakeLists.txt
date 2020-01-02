@@ -8,7 +8,7 @@ set(NLANG_COMMON_SOURCES
         bytecode.cpp)
 
 set(NLANG_COMMON_HEADERS
-        tokens.hpp
+        token.hpp
         ast.hpp
         opcodes.hpp
         bytecode.hpp

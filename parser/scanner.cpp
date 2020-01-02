@@ -8,63 +8,61 @@
 
 namespace nlang {
 
-Scanner::Scanner(const std::string_view &source) noexcept
-    : pos(0), tokens(ExtractTokens(source)) {}
+Scanner::ScannerImpl::ScannerImpl(std::shared_ptr<CharStream> char_stream)
+    : row(1)
+    , column(1)
+    , char_stream_cache_offset(0)
+    , char_stream(std::move(char_stream))
+    , current_iterator(this)
+    , end_iterator(this, -1)
+{
 
-const std::vector<Scanner::Token> &Scanner::GetTokens() const {
-    return tokens;
 }
 
-void Scanner::AddMark() {
-    marks.push(pos);
-}
+TokenInstance Scanner::ScannerImpl::NextToken() {
+    static constexpr const std::regex_constants::syntax_option_type regex_flags =
+        std::regex_constants::optimize | std::regex_constants::ECMAScript;
 
-void Scanner::Restore() {
-    if (marks.empty()) {
-        throw std::runtime_error("No marks left");
+    static const std::vector<std::pair<std::regex, Token>> regex_tokens {
+        { std::regex(R"(^[\s\t\r]+)", regex_flags),                 Token::SPACE },
+        { std::regex(R"(^\/\/.*?\n)", regex_flags),                 Token::COMMENT },
+        { std::regex(R"(^\/\*.*?\*\/)", regex_flags),               Token::COMMENT },
+        { std::regex(R"(^((\+\+|\-\-|==|!=|>=|<=|<<|>>)|\(|\)|\{|\}|;|,|=|\*|\/|\+|\-|!|>|<|\~|&|\||\^))",
+                     regex_flags),                                        Token::OPERATOR_OR_PUNCTUATION },
+        { std::regex(R"(^\b[a-zA-Z][a-zA-Z0-9_]*\b)", regex_flags), Token::IDENTIFIER },
+        { std::regex(R"(^"[^"\\]*(?:\\.[^"\\]*)*")", regex_flags),  Token::STRING },
+        { std::regex(R"(^[0-9]+(\.[0-9]+)?\b)", regex_flags),       Token::NUMBER },
+        { std::regex(R"(^\n)", regex_flags),                        Token::NEWLINE }
+    };
+
+    if (char_stream_cache.size() >= 256) {
+        CutCharCache(current_iterator.pos);
     }
-    pos = marks.top();
-    marks.pop();
-}
 
-const Scanner::Token &Scanner::NextToken() {
-    if (pos == tokens.size()) {
-        throw std::runtime_error("No tokens left");
-    }
-    return tokens[pos++];
-}
-
-size_t Scanner::SkipTokens(Tokens::TokenType type) {
-    size_t count = 0;
-    while (pos < tokens.size() && tokens[pos].token == type) {
-        count++;
-        pos++;
-    }
-    return count;
-}
-
-std::vector<Scanner::Token> Scanner::ExtractTokens(const std::string_view &sv) {
-    std::vector<Token> extracted;
-    size_t offset = 0;
     std::string invalid_buf;
 
-    size_t row = 1;
-    size_t column = 1;
-
-    while (true) {
-        bool found = false;
-
-        for (auto &[regex, token] : Tokens::regex_tokens) {
-            std::cmatch match;
-            if (std::regex_search(sv.data() + offset, match, regex, std::regex_constants::match_continuous)) {
-                auto str = match.str();
-                extracted.emplace_back(Token { token, str, int(row), int(column) });
-                if (Tokens::regex_tokens_to_lookup_in_tokens.find(token) != Tokens::regex_tokens_to_lookup_in_tokens.end()) {
-                    if (auto it = Tokens::tokens.find(str); it != Tokens::tokens.end()) {
-                        extracted[extracted.size() - 1].token = it->second;
-                    }
+    while (current_iterator != end_iterator) {
+        for (auto &[regex, token] : regex_tokens) {
+            std::match_results<CachingCharStreamIterator> match;
+            if (std::regex_search(current_iterator, end_iterator, match, regex, std::regex_constants::match_continuous)) {
+                if (!invalid_buf.empty()) {
+                    std::string ib;
+                    std::swap(ib, invalid_buf);
+                    return TokenInstance { Token::INVALID, row, column - invalid_buf.length(), ib };
                 }
-                if (token == Tokens::TokenType::THE_EOF) return extracted;
+
+                auto str = match.str();
+
+                Token actual_token = token;
+                if (token == Token::OPERATOR_OR_PUNCTUATION || token == Token::IDENTIFIER) {
+                    try {
+                        actual_token = TokenUtils::SourceToToken(str);
+                    } catch (...) {}
+                }
+
+                const size_t saved_row = row;
+                const size_t saved_column = column;
+
                 for (char i : str) {
                     ++column;
                     if (i == '\n') {
@@ -72,19 +70,80 @@ std::vector<Scanner::Token> Scanner::ExtractTokens(const std::string_view &sv) {
                         column = 1;
                     }
                 }
-                offset += str.length();
-                found = true;
-                break;
+
+                std::advance(current_iterator, str.length());
+                return TokenInstance { actual_token, saved_row, saved_column, str };
             }
         }
 
-        if (!found) {
-            invalid_buf += sv[offset++];
-        } else if (!invalid_buf.empty()) {
-            extracted.emplace(std::prev(extracted.end()), Token { Tokens::TokenType::INVALID, invalid_buf });
-            invalid_buf.clear();
-        }
+        invalid_buf += *current_iterator;
+        ++column;
+        ++current_iterator;
     }
+
+    return TokenInstance { Token::THE_EOF, row, column, "" };
+}
+
+const TokenInstance &Scanner::NextTokenAssert(Token token, AdvanceBehaviour advance_behaviour) {
+    auto mark = Mark();
+    auto &ts = NextToken(advance_behaviour);
+    if (ts.token != token) {
+        mark.Apply();
+        throw std::runtime_error("Expected " + TokenUtils::TokenToString(token) + ", found " + TokenUtils::TokenToString(ts.token));
+    }
+    return ts;
+}
+
+const TokenInstance &Scanner::NextToken(AdvanceBehaviour advance_behaviour) {
+    if (advance_behaviour == AdvanceBehaviour::NO_SKIP) {
+        return NextTokenWithoutSkip();
+    }
+    const TokenInstance *token;
+    do {
+        token = &NextTokenWithoutSkip();
+    } while (tokens_to_skip.find(token->token) != tokens_to_skip.end());
+    return *token;
+}
+
+const TokenInstance &Scanner::NextTokenWithoutSkip() {
+    if (pos == tokens.size()) {
+        if (!tokens.empty() && tokens[pos - 1].token == Token::THE_EOF) {
+            throw std::runtime_error("No tokens left");
+        }
+        tokens.emplace_back(impl.NextToken());
+    }
+    return tokens[pos++];
+}
+
+void Scanner::ResetSkip() {
+    tokens_to_skip.clear();
+}
+
+bool Scanner::IsSkipping(Token token) const {
+    return tokens_to_skip.find(token) != tokens_to_skip.end();
+}
+
+void Scanner::SetSkip(Token token) {
+    tokens_to_skip.emplace(token);
+}
+
+void Scanner::UnsetSkip(Token token) {
+    tokens_to_skip.erase(token);
+}
+
+std::shared_ptr<Scanner> Scanner::Create(const std::shared_ptr<CharStream> &char_stream) {
+    return std::shared_ptr<Scanner>(new Scanner(char_stream));
+}
+
+Scanner::Scanner(std::shared_ptr<CharStream> char_stream)
+    : impl(std::move(char_stream))
+    , pos(0)
+{
+
+}
+
+Scanner::BookMark Scanner::Mark() const {
+    return BookMark(const_cast<Scanner *>(this));
 }
 
 }
