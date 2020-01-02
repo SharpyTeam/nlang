@@ -3,6 +3,7 @@ cmake_minimum_required(VERSION 3.10)
 project(nlang VERSION 0.0.0)
 
 set(CMAKE_CXX_STANDARD 17)
+set(CXX_STANDARD_REQUIRED TRUE)
 
 find_package(Git)
 if (Git_FOUND)

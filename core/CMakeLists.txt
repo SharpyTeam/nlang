@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.10)
 project(nlang_core)
 
 set(CMAKE_CXX_STANDARD 17)
+set(CXX_STANDARD_REQUIRED TRUE)
 
 set(NLANG_CORE_SOURCES
         main.cpp)
