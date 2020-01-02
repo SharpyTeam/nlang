@@ -41,7 +41,7 @@ private:
 
 #define BINARY(name, next, ...)                                                                 \
     std::shared_ptr<Expression> name() {                                                        \
-        static std::unordered_set tokens { __VA_ARGS__ };                                       \
+        static std::unordered_set<Token> tokens { __VA_ARGS__ };                                       \
         auto expr = next();                                                                     \
         while (true) {                                                                          \
             auto mark = scanner->Mark();                                                        \
@@ -91,7 +91,7 @@ private:
     }
 
     std::shared_ptr<Expression> ParsePostfixUnaryExpression() {
-        static std::unordered_set tokens { Token::ADD_ADD, Token::SUB_SUB };
+        static std::unordered_set<Token> tokens { Token::ADD_ADD, Token::SUB_SUB };
         auto expr = ParseBasicExpression();
         while (true) {
             auto mark = scanner->Mark();
@@ -106,7 +106,7 @@ private:
     }
 
     std::shared_ptr<Expression> ParsePrefixUnaryExpression() {
-        static std::unordered_set tokens { Token::ADD, Token::SUB, Token::ADD_ADD, Token::SUB_SUB };
+        static std::unordered_set<Token> tokens { Token::ADD, Token::SUB, Token::ADD_ADD, Token::SUB_SUB };
         std::stack<Token> operators;
         while (true) {
             auto mark = scanner->Mark();
