@@ -22,6 +22,25 @@ public:
         return ParseAssignExpression();
     }
 
+    std::shared_ptr<Statement> ParseStatement() {
+        auto mark = scanner->Mark();
+        auto token = scanner->NextToken();
+        mark.Apply();
+        switch (token.token) {
+            case Token::LET:
+                return ParseVarDefStatement();
+
+            case Token::RETURN:
+                return ParseReturnStatement();
+
+            case Token::LEFT_BRACE:
+                return ParseBlockStatement();
+
+            default:
+                return ParseExpressionStatement();
+        }
+    }
+
     static std::shared_ptr<Parser> Create(const std::shared_ptr<Scanner> &scanner) {
         return std::shared_ptr<Parser>(new Parser(scanner));
     }
@@ -37,6 +56,80 @@ private:
         scanner->SetSkip(Token::SPACE);
         scanner->SetSkip(Token::COMMENT);
         scanner->SetSkip(Token::NEWLINE);
+    }
+
+    bool NextIsStatementBreak() {
+        bool skipping_newline = scanner->IsSkipping(Token::NEWLINE);
+        scanner->UnsetSkip(Token::NEWLINE);
+        auto mark = scanner->Mark();
+        auto token = scanner->NextToken();
+        if (skipping_newline) {
+            scanner->SetSkip(Token::NEWLINE);
+        }
+        mark.Apply();
+        return token.token == Token::NEWLINE || token.token == Token::SEMICOLON;
+    }
+
+    bool TryEatStatementBreak() {
+        if (!NextIsStatementBreak()) {
+            return false;
+        }
+        bool skipping_newline = scanner->IsSkipping(Token::NEWLINE);
+        scanner->UnsetSkip(Token::NEWLINE);
+        scanner->NextToken();
+        if (skipping_newline) {
+            scanner->SetSkip(Token::NEWLINE);
+        }
+        return true;
+    }
+
+    std::vector<std::shared_ptr<Statement>> ParseStatements() {
+        std::vector<std::shared_ptr<Statement>> statements;
+
+        while (true) {
+            auto mark = scanner->Mark();
+            auto token = scanner->NextToken();
+            mark.Apply();
+            if (token.token == Token::RIGHT_BRACE) {
+                break;
+            }
+            statements.emplace_back(ParseStatement());
+            if (!TryEatStatementBreak()) {
+                break;
+            }
+        }
+
+        return statements;
+    }
+
+    std::shared_ptr<Statement> ParseExpressionStatement() {
+        return std::make_shared<ExpressionStatement>(ParseExpression());
+    }
+
+    std::shared_ptr<Statement> ParseBlockStatement() {
+        scanner->NextTokenAssert(Token::LEFT_BRACE);
+        auto r = std::make_shared<BlockStatement>(ParseStatements());
+        scanner->NextTokenAssert(Token::RIGHT_BRACE);
+        return r;
+    }
+
+    std::shared_ptr<Statement> ParseVarDefStatement() {
+        scanner->NextTokenAssert(Token::LET);
+        const std::string identifier = scanner->NextTokenAssert(Token::IDENTIFIER).source;
+        auto mark = scanner->Mark();
+        if (scanner->NextToken().token != Token::ASSIGN) {
+            mark.Apply();
+            return std::make_shared<VarDefStatement>(identifier);
+        }
+        return std::make_shared<VarDefStatement>(identifier, ParseExpression());
+    }
+
+    std::shared_ptr<Statement> ParseReturnStatement() {
+        scanner->NextTokenAssert(Token::RETURN);
+        if (NextIsStatementBreak()) {
+            return std::make_shared<ReturnStatement>();
+        }
+        return std::make_shared<ReturnStatement>(ParseExpression());
     }
 
 #define BINARY(name, next, ...)                                                                 \
@@ -86,7 +179,7 @@ private:
                 return std::make_shared<LiteralExpression>(token.token);
 
             default:
-                throw std::runtime_error("Kek");
+                throw std::runtime_error("Unexpected token \"" + token.source + "\" at [" + std::to_string(token.row) + ":" + std::to_string(token.column) + "]");
         }
     }
 
@@ -128,6 +221,7 @@ private:
     BINARY(ParseAdditiveExpression, ParseMultiplicativeExpression, Token::ADD, Token::SUB)
 
     std::shared_ptr<Expression> ParseRangeExpression() {
+        // TODO maybe add range syntax later
         return ParseAdditiveExpression();
     }
 
@@ -137,6 +231,8 @@ private:
     BINARY(ParseConjunctionExpression, ParseEqualityExpression, Token::AND)
     BINARY(ParseDisjunctionExpression, ParseConjunctionExpression, Token::OR)
     BINARY(ParseAssignExpression, ParseDisjunctionExpression, Token::ASSIGN, Token::ASSIGN_ADD, Token::ASSIGN_SUB, Token::ASSIGN_MUL, Token::ASSIGN_DIV, Token::ASSIGN_REMAINDER)
+
+#undef BINARY
 
     /*std::shared_ptr<Statement> ParseFunctionDeclarationStatement() {
         std::string name;

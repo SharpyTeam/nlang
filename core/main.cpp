@@ -20,7 +20,7 @@ void print(const std::string &input) {
     mark.Apply();
     auto parser = nlang::Parser::Create(sc);
     nlang::ASTStringifier stringifier;
-    parser->ParseExpression()->Accept(stringifier);
+    parser->ParseStatement()->Accept(stringifier);
     std::cout << stringifier.ToString() << std::endl;
 }
 

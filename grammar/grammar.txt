@@ -1,4 +1,4 @@
-file: (statement | NEWLINE)* THE_EOF
+file: statements eof
 
 // utility
 newline: '\n'
@@ -38,8 +38,8 @@ parenthesized_expression: '(' expression ')'
 function_expression: 'fn' identifier? '(' function_def_arguments ')'  type_hint? (block_statement | ('=' expression))
 
 // statements
-statements: (statement (statement_delimiter+ statement)* statement_delimiter*)?
-statement_delimiter: ';' | newline | eof
+statements: (statement (statement_delimiter statement)* statement_delimiter?)?
+statement_delimiter: (';' | newline+)
 expression_statement: expression
 break_statement: 'break' expression?
 return_statement: 'return' expression?
@@ -47,3 +47,5 @@ return_statement: 'return' expression?
 statement: expression_statement | var_def_statement | return_statement | break_statement | 'continue' | block_statement
 
 block_statement: '{' statements '}'
+
+var_def_statement: 'let' argument ('=' expression)?

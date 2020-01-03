@@ -34,6 +34,7 @@ T(LOOP, "loop")                     \
 T(FN, "fn")                         \
 T(LET, "let")                       \
 T(CONST, "const")                   \
+T(RETURN, "return")                 \
                                     \
 T(LEFT_PAR, "(")                    \
 T(RIGHT_PAR, ")")                   \

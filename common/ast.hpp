@@ -21,6 +21,13 @@ class IdentifierExpression;
 class BinaryExpression;
 class UnaryExpression;
 class PostfixExpression;
+class ExpressionStatement;
+class ReturnStatement;
+class BlockStatement;
+class VarDefStatement;
+class FunctionCallExpression;
+class FunctionDefExpression;
+
 
 class ASTVisitor {
 public:
@@ -32,6 +39,12 @@ public:
     virtual void Visit(BinaryExpression&) = 0;
     virtual void Visit(UnaryExpression&) = 0;
     virtual void Visit(PostfixExpression&) = 0;
+    virtual void Visit(ExpressionStatement&) = 0;
+    virtual void Visit(ReturnStatement&) = 0;
+    virtual void Visit(BlockStatement&) = 0;
+    virtual void Visit(VarDefStatement&) = 0;
+    virtual void Visit(FunctionCallExpression&) = 0;
+    virtual void Visit(FunctionDefExpression&) = 0;
 };
 
 #define VISITOR_ACCEPT                          \
@@ -151,7 +164,67 @@ public:
     }
 };
 
-/*class FunctionCallExpression : public Expression {
+class Statement : public ASTNode {
+public:
+    VISITOR_ACCEPT
+};
+
+class ExpressionStatement : public Statement {
+public:
+    VISITOR_ACCEPT
+
+    const std::shared_ptr<Expression> expression;
+
+    explicit ExpressionStatement(std::shared_ptr<Expression> expression)
+        : expression(std::move(expression))
+    {
+
+    }
+};
+
+class ReturnStatement : public Statement {
+public:
+    VISITOR_ACCEPT
+
+    const std::shared_ptr<Expression> return_expression;
+
+    explicit ReturnStatement(std::shared_ptr<Expression> return_expression = nullptr)
+        : return_expression(std::move(return_expression))
+    {
+
+    }
+};
+
+class BlockStatement : public Statement {
+public:
+    VISITOR_ACCEPT
+
+    const std::vector<std::shared_ptr<Statement>> statements;
+
+    explicit BlockStatement(std::vector<std::shared_ptr<Statement>> statements)
+        : statements(std::move(statements))
+    {
+
+    }
+};
+
+class VarDefStatement : public Statement {
+public:
+    VISITOR_ACCEPT
+
+    const std::string identifier;
+    const std::shared_ptr<Expression> expression;
+
+    explicit VarDefStatement(std::string identifier, std::shared_ptr<Expression> expression = nullptr)
+        : identifier(std::move(identifier))
+        , expression(std::move(expression))
+    {
+
+    }
+};
+
+
+class FunctionCallExpression : public Expression {
 public:
     const std::shared_ptr<Expression> expression;
     const std::vector<std::shared_ptr<Expression>> arguments;
@@ -162,21 +235,24 @@ public:
     {
 
     }
+};
 
-    [[nodiscard]]
-    std::string ToString() const override {
-        std::string r = expression->ToString() + "(";
-        for (size_t i = 0; i < arguments.size(); ++i) {
-            r += arguments[i]->ToString();
-            if (i < arguments.size() - 1) {
-                r += ",";
-            }
-        }
-        return r;
+class FunctionDefExpression : public Expression {
+public:
+    const std::string name;
+    const std::vector<std::string> args_list;
+    const std::shared_ptr<BlockStatement> body;
+
+    FunctionDefExpression(std::string name, std::vector<std::string> args_list, std::shared_ptr<BlockStatement> body)
+        : name(std::move(name))
+        , args_list(std::move(args_list))
+        , body(std::move(body))
+    {
+
     }
 };
 
-class MemberAccessExpression : public Expression {
+/*class MemberAccessExpression : public Expression {
 public:
     const std::shared_ptr<Expression> expression;
     const std::string identifier;
@@ -191,59 +267,6 @@ public:
     [[nodiscard]]
     std::string ToString() const override {
         return expression->ToString() + "." + identifier;
-    }
-};
-
-
-class Statement : public ASTNode {
-
-};
-
-class ExpressionStatement : public Statement {
-public:
-    const std::shared_ptr<Expression> expression;
-
-    explicit ExpressionStatement(std::shared_ptr<Expression> expression)
-        : expression(expression)
-    {
-
-    }
-};
-
-class ReturnStatement : public Statement {
-public:
-    const std::shared_ptr<Expression> return_expression;
-
-    explicit ReturnStatement(std::shared_ptr<Expression> return_expression = nullptr)
-        : return_expression(std::move(return_expression))
-    {
-
-    }
-};
-
-class BlockStatement : public Statement {
-public:
-    const std::vector<std::shared_ptr<Statement>> statements;
-
-    explicit BlockStatement(std::vector<std::shared_ptr<Statement>> statements)
-        : statements(std::move(statements))
-    {
-
-    }
-};
-
-class FunctionDeclarationStatement : public Statement {
-public:
-    const std::string name;
-    const std::vector<std::string> args_list;
-    const std::shared_ptr<BlockStatement> body;
-
-    FunctionDeclarationStatement(std::string name, std::vector<std::string> args_list, std::shared_ptr<ReturnableBlockStatement> body)
-        : name(std::move(name))
-        , args_list(std::move(args_list))
-        , body(std::move(body))
-    {
-
     }
 };*/
 
@@ -293,12 +316,61 @@ public:
         str += ")";
     }
 
+    void Visit(ExpressionStatement& es) {
+        str += std::string(indent, ' ');
+        es.expression->Accept(*this);
+        str += '\n';
+    }
+
+    void Visit(ReturnStatement& rs) {
+        str += std::string(indent, ' ');
+        str += "return ";
+        rs.return_expression->Accept(*this);
+        str += '\n';
+    }
+
+    void Visit(BlockStatement& bs) {
+        str += std::string(indent, ' ');
+        str += "{\n";
+        indent += 4;
+        for (auto& s : bs.statements) {
+            s->Accept(*this);
+        }
+        indent -= 4;
+        str += std::string(indent, ' ');
+        str += "}\n";
+    }
+
+    void Visit(VarDefStatement& vds) {
+        str += std::string(indent, ' ');
+        str += "let " + vds.identifier + " = ";
+        vds.expression->Accept(*this);
+        str += '\n';
+    }
+
+    void Visit(FunctionCallExpression& fce) {
+        fce.expression->Accept(*this);
+        str += "(";
+        for (size_t i = 0; i < fce.arguments.size(); ++i) {
+            fce.arguments[i]->Accept(*this);
+            if (i < fce.arguments.size() - 1) {
+                str += ",";
+            }
+        }
+        str += ")";
+    }
+
+    void Visit(FunctionDefExpression& fde) {
+
+    }
+
     const std::string& ToString() const {
         return str;
     }
 
 private:
     std::string str;
+    size_t indent = 0;
 };
 
 }
