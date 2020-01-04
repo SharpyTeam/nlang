@@ -8,7 +8,7 @@ set(NLANG_PARSER_SOURCES
 
 set(NLANG_PARSER_HEADERS
         scanner.hpp
-        parser.hpp char_stream.hpp error_reporter.hpp)
+        parser.hpp char_stream.hpp error_reporter.hpp ast_interpreter.hpp)
 
 add_library(nlang_parser ${NLANG_PARSER_HEADERS} ${NLANG_PARSER_SOURCES})
 target_include_directories(nlang_parser PUBLIC .)

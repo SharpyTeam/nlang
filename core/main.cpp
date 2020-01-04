@@ -9,6 +9,7 @@
 
 #include <iostream>
 #include <string>
+#include <ast_interpreter.hpp>
 
 void print(const std::string &input) {
     auto sc = nlang::Scanner::Create(nlang::CharStream::Create<nlang::StringCharStream>(input));
@@ -25,6 +26,14 @@ void print(const std::string &input) {
 }
 
 int main(int argc, char *argv[]) {
+    if (argc == 2) {
+        auto scanner = nlang::Scanner::Create(nlang::CharStream::Create<nlang::FileCharStream>(argv[1]));
+        auto parser = nlang::Parser::Create(scanner);
+        nlang::ast_interpreter::Interpreter interpreter(parser->ParseFile());
+        interpreter.Run();
+        return 0;
+    }
+
     if (argc > 1) {
         if (std::string(argv[1]) == "print-ast") {
             if (argc < 3) {

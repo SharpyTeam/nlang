@@ -1,4 +1,11 @@
-let a = 5 + 10
-fn kek(a, b) {
-    return 12
+fn foo(a) {
+    return fn(b) {
+        print(a + " captured, " + b + " passed");
+    }
 }
+
+print("kek");
+let func = foo(333);
+foo(4)(11);
+func(131);
+print(false or true);

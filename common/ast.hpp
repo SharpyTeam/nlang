@@ -57,7 +57,16 @@ virtual void Accept(ASTVisitor& visitor) {      \
 class ASTNode {
 public:
     VISITOR_ACCEPT
+
+    ASTNode(const ASTNode&) = delete;
+    ASTNode(ASTNode&&) = delete;
+    ASTNode& operator=(const ASTNode&) = delete;
+    ASTNode& operator=(ASTNode&&) = delete;
+
     virtual ~ASTNode() = default;
+
+protected:
+    ASTNode() {};
 };
 
 class Expression : public ASTNode {

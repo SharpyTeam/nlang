@@ -25,7 +25,7 @@ TokenInstance Scanner::ScannerImpl::NextToken() {
 
     static const std::vector<std::pair<std::regex, Token>> regex_tokens {
         { std::regex(R"(^[ \t\r]+)", regex_flags),                 Token::SPACE },
-        { std::regex(R"(^\/\/.*?\n)", regex_flags),                 Token::COMMENT },
+        { std::regex(R"(^\/\/.*?[\n$])", regex_flags),                 Token::COMMENT },
         { std::regex(R"(^\/\*.*?\*\/)", regex_flags),               Token::COMMENT },
         { std::regex(R"(^((\+\+|\-\-|==|!=|>=|<=|<<|>>)|\(|\)|\{|\}|;|,|=|\*|\/|\+|\-|!|>|<|\~|&|\||\^))",
                      regex_flags),                                        Token::OPERATOR_OR_PUNCTUATION },
@@ -72,6 +72,9 @@ TokenInstance Scanner::ScannerImpl::NextToken() {
                 }
 
                 std::advance(current_iterator, str.length());
+                if (actual_token == Token::STRING) {
+                    str = str.substr(1, str.size() - 2);
+                }
                 return TokenInstance { actual_token, saved_row, saved_column, str };
             }
         }
