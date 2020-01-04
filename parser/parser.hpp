@@ -33,6 +33,18 @@ public:
             case Token::RETURN:
                 return ParseReturnStatement();
 
+            case Token::CONTINUE:
+                return ParseContinueStatement();
+
+            case Token::BREAK:
+                return ParseBreakStatement();
+
+            case Token::IF:
+                return ParseIfStatement();
+
+            case Token::WHILE:
+                return ParseWhileStatement();
+
             case Token::LEFT_BRACE:
                 return ParseBlockStatement();
 
@@ -133,6 +145,45 @@ private:
             return std::make_shared<ReturnStatement>();
         }
         return std::make_shared<ReturnStatement>(ParseExpression());
+    }
+
+    std::shared_ptr<Statement> ParseBreakStatement() {
+        scanner->NextTokenAssert(Token::BREAK);
+        return std::make_shared<BreakStatement>();
+    }
+
+    std::shared_ptr<Statement> ParseContinueStatement() {
+        scanner->NextTokenAssert(Token::CONTINUE);
+        return std::make_shared<ContinueStatement>();
+    }
+
+    std::shared_ptr<Statement> ParseIfStatement() {
+        std::vector<std::pair<std::shared_ptr<Expression>, std::shared_ptr<Statement>>> ifs;
+        std::shared_ptr<Statement> else_statement;
+        while (true) {
+            scanner->NextTokenAssert(Token::IF);
+            scanner->NextTokenAssert(Token::LEFT_PAR);
+            auto expr = ParseExpression();
+            scanner->NextTokenAssert(Token::RIGHT_PAR);
+            auto body = ParseBlockStatement();
+            ifs.emplace_back(expr, body);
+            if (!scanner->TrySkipToken(Token::ELSE)) {
+                break;
+            }
+            if (scanner->NextTokenLookahead().token != Token::IF) {
+                else_statement = ParseBlockStatement();
+                break;
+            }
+        }
+        return std::make_shared<IfStatement>(ifs, else_statement);
+    }
+
+    std::shared_ptr<Statement> ParseWhileStatement() {
+        scanner->NextTokenAssert(Token::WHILE);
+        scanner->NextTokenAssert(Token::LEFT_PAR);
+        auto expr = ParseExpression();
+        scanner->NextTokenAssert(Token::RIGHT_PAR);
+        return std::make_shared<WhileStatement>(expr, ParseBlockStatement());
     }
 
 #define BINARY(name, next, ...)                                                                 \

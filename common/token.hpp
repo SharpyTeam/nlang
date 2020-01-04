@@ -35,6 +35,8 @@ T(FN, "fn")                         \
 T(LET, "let")                       \
 T(CONST, "const")                   \
 T(RETURN, "return")                 \
+T(CONTINUE, "continue")             \
+T(BREAK, "break")                   \
                                     \
 T(LEFT_PAR, "(")                    \
 T(RIGHT_PAR, ")")                   \

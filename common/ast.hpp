@@ -28,6 +28,10 @@ class BlockStatement;
 class VarDefStatement;
 class FunctionCallExpression;
 class FunctionDefExpression;
+class IfStatement;
+class WhileStatement;
+class BreakStatement;
+class ContinueStatement;
 
 
 class ASTVisitor {
@@ -47,6 +51,10 @@ public:
     virtual void Visit(VarDefStatement&) = 0;
     virtual void Visit(FunctionCallExpression&) = 0;
     virtual void Visit(FunctionDefExpression&) = 0;
+    virtual void Visit(IfStatement&) = 0;
+    virtual void Visit(WhileStatement&) = 0;
+    virtual void Visit(BreakStatement&) = 0;
+    virtual void Visit(ContinueStatement&) = 0;
 };
 
 #define VISITOR_ACCEPT                          \
@@ -280,6 +288,51 @@ public:
     }
 };
 
+class IfStatement : public Statement {
+public:
+    VISITOR_ACCEPT
+
+    const std::vector<std::pair<std::shared_ptr<Expression>, std::shared_ptr<Statement>>> if_else_if_statement;
+    const std::shared_ptr<Statement> else_statement;
+
+    IfStatement(std::vector<std::pair<std::shared_ptr<Expression>, std::shared_ptr<Statement>>> if_else_if_statement, std::shared_ptr<Statement> else_statement)
+        : if_else_if_statement(std::move(if_else_if_statement))
+        , else_statement(std::move(else_statement))
+    {
+
+    }
+};
+
+class WhileStatement : public Statement {
+public:
+    VISITOR_ACCEPT
+
+    const std::shared_ptr<Expression> condition;
+    const std::shared_ptr<Statement> body;
+
+    WhileStatement(std::shared_ptr<Expression> condition, std::shared_ptr<Statement> body)
+        : condition(std::move(condition))
+        , body(std::move(body))
+    {
+
+    }
+};
+
+class BreakStatement : public Statement {
+public:
+    VISITOR_ACCEPT
+
+    explicit BreakStatement() {}
+};
+
+class ContinueStatement : public Statement {
+public:
+    VISITOR_ACCEPT
+
+    explicit ContinueStatement() {}
+};
+
+
 /*class MemberAccessExpression : public Expression {
 public:
     const std::shared_ptr<Expression> expression;
@@ -401,6 +454,42 @@ public:
         }
         str += ")\n";
         fde.body->Accept(*this);
+    }
+
+    void Visit(IfStatement& is) {
+        for (auto& p : is.if_else_if_statement) {
+            str += std::string(indent, ' ');
+            str += "if (";
+            p.first->Accept(*this);
+            str += ")\n";
+            p.second->Accept(*this);
+            str += "else";
+        }
+        if (is.else_statement) {
+            is.else_statement->Accept(*this);
+        } else {
+            str.resize(str.size() - 4);
+        }
+    }
+
+    void Visit(WhileStatement& ws) {
+        str += std::string(indent, ' ');
+        str += "while (";
+        ws.condition->Accept(*this);
+        str += ")\n";
+        ws.body->Accept(*this);
+    }
+
+    void Visit(BreakStatement& bs) {
+        str += std::string(indent, ' ');
+        str += "break";
+        str += '\n';
+    }
+
+    void Visit(ContinueStatement& cs) {
+        str += std::string(indent, ' ');
+        str += "break";
+        str += '\n';
     }
 
     void Visit(FileNode& fn) {

@@ -44,8 +44,11 @@ expression_statement: expression
 break_statement: 'break' expression?
 return_statement: 'return' expression?
 
-statement: expression_statement | var_def_statement | return_statement | break_statement | 'continue' | block_statement
+statement: expression_statement | var_def_statement | return_statement | break_statement | 'continue' | block_statement | while_statement | if_statement
 
 block_statement: '{' statements '}'
 
 var_def_statement: 'let' argument ('=' expression)?
+
+while_statement: 'while' '(' expression ')' block_statement
+if_statement: 'if' '(' expression ')' block_statement ('else' 'if' '(' expression ')' block_statement)* ('else' block_statement)?

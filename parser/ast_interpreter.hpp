@@ -226,6 +226,20 @@ Function& Object::AsFunction() {
     return static_cast<Function&>(*this);
 }
 
+struct ReturnException : public std::exception {
+    std::shared_ptr<Object> result;
+
+    ReturnException(std::shared_ptr<Object> result = nullptr) : result(std::move(result)) {}
+};
+
+struct BreakException : public std::exception {
+
+};
+
+struct ContinueException : public std::exception {
+
+};
+
 class ASTExecutor : public ASTVisitor {
 public:
     std::shared_ptr<Scope> current_scope;
@@ -425,10 +439,10 @@ public:
 
     void Visit(ReturnStatement &statement) override {
         if (!statement.return_expression) {
-            throw Object::GetNull();
+            throw ReturnException { Object::GetNull() };
         }
         statement.return_expression->Accept(*this);
-        throw expression_result;
+        throw ReturnException { expression_result };
     }
 
     void Visit(BlockStatement &statement) override {
@@ -459,6 +473,43 @@ public:
     }
 
     void Visit(FunctionDefExpression &expression) override;
+
+    void Visit(IfStatement& is) {
+        for (auto& p : is.if_else_if_statement) {
+            p.first->Accept(*this);
+            if (expression_result->GetBool()) {
+                p.second->Accept(*this);
+                return;
+            }
+        }
+        if (is.else_statement) {
+            is.else_statement->Accept(*this);
+        }
+    }
+
+    void Visit(WhileStatement& ws) {
+        while (true) {
+            ws.condition->Accept(*this);
+            if (!expression_result->GetBool()) {
+                break;
+            }
+            try {
+                ws.body->Accept(*this);
+            } catch (ContinueException&) {
+                continue;
+            } catch (BreakException&) {
+                break;
+            }
+        }
+    }
+
+    void Visit(BreakStatement& bs) {
+        throw BreakException();
+    }
+
+    void Visit(ContinueStatement& cs) {
+        throw ContinueException();
+    }
 };
 
 class ASTFunction : public Function {
@@ -487,8 +538,8 @@ public:
                 s->Accept(executor);
             }
             executor.current_scope = c;
-        } catch (std::shared_ptr<Object>& ret) {
-            return ret;
+        } catch (ReturnException& ret) {
+            return ret.result;
         }
         return Object::GetNull();
     }

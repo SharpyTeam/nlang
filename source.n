@@ -1,11 +1,17 @@
-fn foo(a) {
-    return fn(b) {
-        print(a + " captured, " + b + " passed");
-    }
+let a = 3;
+
+if (a > 3) {
+    print("1");
+} else if (a < 3) {
+    print(2);
+} else {
+    print(3);
 }
 
-print("kek");
-let func = foo(333);
-foo(4)(11);
-func(131);
-print(false or true);
+while (true) {
+    a += 1;
+    if (a >= 200) {
+        break;
+    }
+    print(a);
+}

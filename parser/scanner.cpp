@@ -27,7 +27,7 @@ TokenInstance Scanner::ScannerImpl::NextToken() {
         { std::regex(R"(^[ \t\r]+)", regex_flags),                 Token::SPACE },
         { std::regex(R"(^\/\/.*?[\n$])", regex_flags),                 Token::COMMENT },
         { std::regex(R"(^\/\*.*?\*\/)", regex_flags),               Token::COMMENT },
-        { std::regex(R"(^((\+\+|\-\-|==|!=|>=|<=|<<|>>)|\(|\)|\{|\}|;|,|=|\*|\/|\+|\-|!|>|<|\~|&|\||\^))",
+        { std::regex(R"(^((\+\+|\-\-|\+=|-=|\*=|\/=|\%=|==|!=|>=|<=|<<|>>)|\(|\)|\{|\}|;|,|=|\*|\/|\+|\-|!|>|<|\~|&|\||\^))",
                      regex_flags),                                        Token::OPERATOR_OR_PUNCTUATION },
         { std::regex(R"(^\b[a-zA-Z][a-zA-Z0-9_]*\b)", regex_flags), Token::IDENTIFIER },
         { std::regex(R"(^"[^"\\]*(?:\\.[^"\\]*)*")", regex_flags),  Token::STRING },
