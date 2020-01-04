@@ -383,6 +383,7 @@ public:
 
         if (l->type == Object::Type::NUMBER && r->type == Object::Type::NUMBER) {
             process_binary_arithmetic();
+            return;
         }
 
         auto a = l->GetBool();
