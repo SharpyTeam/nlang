@@ -19,14 +19,14 @@ namespace nlang {
 class Parser {
 public:
     std::shared_ptr<Expression> ParseExpression() {
+        if (scanner->NextTokenLookahead().token == Token::FN) {
+            return ParseFunctionDefExpression();
+        }
         return ParseAssignExpression();
     }
 
     std::shared_ptr<Statement> ParseStatement() {
-        auto mark = scanner->Mark();
-        auto token = scanner->NextToken();
-        mark.Apply();
-        switch (token.token) {
+        switch (scanner->NextTokenLookahead().token) {
             case Token::LET:
                 return ParseVarDefStatement();
 
@@ -41,6 +41,12 @@ public:
         }
     }
 
+    std::shared_ptr<FileNode> ParseFile() {
+        auto statements = ParseStatements();
+        scanner->NextTokenAssert(Token::THE_EOF);
+        return std::make_shared<FileNode>(statements);
+    }
+
     static std::shared_ptr<Parser> Create(const std::shared_ptr<Scanner> &scanner) {
         return std::shared_ptr<Parser>(new Parser(scanner));
     }
@@ -52,34 +58,36 @@ private:
     explicit Parser(const std::shared_ptr<Scanner> &scanner)
         : scanner(scanner)
     {
-        scanner->ResetSkip();
-        scanner->SetSkip(Token::SPACE);
-        scanner->SetSkip(Token::COMMENT);
-        scanner->SetSkip(Token::NEWLINE);
+        scanner->ResetIgnore();
+        scanner->SetIgnore(Token::SPACE);
+        scanner->SetIgnore(Token::COMMENT);
+        scanner->SetIgnore(Token::NEWLINE);
     }
 
     bool NextIsStatementBreak() {
-        bool skipping_newline = scanner->IsSkipping(Token::NEWLINE);
-        scanner->UnsetSkip(Token::NEWLINE);
-        auto mark = scanner->Mark();
-        auto token = scanner->NextToken();
-        if (skipping_newline) {
-            scanner->SetSkip(Token::NEWLINE);
+        if (auto token = scanner->NextTokenLookahead(); token.token == Token::SEMICOLON || token.token == Token::THE_EOF) {
+            return true;
         }
-        mark.Apply();
-        return token.token == Token::NEWLINE || token.token == Token::SEMICOLON;
+        bool ignoring_newline = scanner->IsIgnoring(Token::NEWLINE);
+        scanner->SetIgnore(Token::NEWLINE, false);
+        bool has_newline = scanner->NextTokenLookahead().token == Token::NEWLINE;
+        scanner->SetIgnore(Token::NEWLINE, ignoring_newline);
+        return has_newline;
     }
 
     bool TryEatStatementBreak() {
         if (!NextIsStatementBreak()) {
             return false;
         }
-        bool skipping_newline = scanner->IsSkipping(Token::NEWLINE);
-        scanner->UnsetSkip(Token::NEWLINE);
-        scanner->NextToken();
-        if (skipping_newline) {
-            scanner->SetSkip(Token::NEWLINE);
+        if (scanner->TrySkipToken(Token::SEMICOLON) || scanner->NextTokenLookahead().token == Token::THE_EOF) {
+            return true;
         }
+        bool ignoring_newline = scanner->IsIgnoring(Token::NEWLINE);
+        scanner->SetIgnore(Token::NEWLINE, false);
+        while (scanner->TrySkipToken(Token::NEWLINE)) {
+
+        }
+        scanner->SetIgnore(Token::NEWLINE, ignoring_newline);
         return true;
     }
 
@@ -87,10 +95,7 @@ private:
         std::vector<std::shared_ptr<Statement>> statements;
 
         while (true) {
-            auto mark = scanner->Mark();
-            auto token = scanner->NextToken();
-            mark.Apply();
-            if (token.token == Token::RIGHT_BRACE) {
+            if (auto token = scanner->NextTokenLookahead(); token.token == Token::RIGHT_BRACE || token.token == Token::THE_EOF) {
                 break;
             }
             statements.emplace_back(ParseStatement());
@@ -116,12 +121,10 @@ private:
     std::shared_ptr<Statement> ParseVarDefStatement() {
         scanner->NextTokenAssert(Token::LET);
         const std::string identifier = scanner->NextTokenAssert(Token::IDENTIFIER).source;
-        auto mark = scanner->Mark();
-        if (scanner->NextToken().token != Token::ASSIGN) {
-            mark.Apply();
-            return std::make_shared<VarDefStatement>(identifier);
+        if (scanner->TrySkipToken(Token::ASSIGN)) {
+            return std::make_shared<VarDefStatement>(identifier, ParseExpression());
         }
-        return std::make_shared<VarDefStatement>(identifier, ParseExpression());
+        return std::make_shared<VarDefStatement>(identifier);
     }
 
     std::shared_ptr<Statement> ParseReturnStatement() {
@@ -134,7 +137,7 @@ private:
 
 #define BINARY(name, next, ...)                                                                 \
     std::shared_ptr<Expression> name() {                                                        \
-        static std::unordered_set<Token> tokens { __VA_ARGS__ };                                       \
+        static std::unordered_set<Token> tokens { __VA_ARGS__ };                                \
         auto expr = next();                                                                     \
         while (true) {                                                                          \
             auto mark = scanner->Mark();                                                        \
@@ -149,7 +152,6 @@ private:
     }
 
     std::shared_ptr<Expression> ParseParenthesizedExpression() {
-        auto mark = scanner->Mark();
         scanner->NextTokenAssert(Token::LEFT_PAR);
         auto expr = ParseExpression();
         scanner->NextTokenAssert(Token::RIGHT_PAR);
@@ -190,6 +192,20 @@ private:
             auto mark = scanner->Mark();
             if (auto token = scanner->NextToken(); tokens.find(token.token) != tokens.end()) {
                 expr = std::make_shared<PostfixExpression>(token.token, expr);
+            } else if (token.token == Token::LEFT_PAR) {
+                std::vector<std::shared_ptr<Expression>> arguments;
+                while (true) {
+                    if (scanner->TrySkipToken(Token::RIGHT_PAR)) {
+                        break;
+                    }
+                    arguments.emplace_back(ParseExpression());
+                    if (scanner->TrySkipToken(Token::COMMA)) {
+                        if (scanner->NextTokenLookahead().token == Token::RIGHT_PAR) {
+                            throw std::runtime_error("Expected arg, found par");
+                        }
+                    }
+                }
+                expr = std::make_shared<FunctionCallExpression>(expr, arguments);
             } else {
                 mark.Apply();
                 break;
@@ -234,39 +250,29 @@ private:
 
 #undef BINARY
 
-    /*std::shared_ptr<Statement> ParseFunctionDeclarationStatement() {
+    std::shared_ptr<Expression> ParseFunctionDefExpression() {
         std::string name;
         std::vector<std::string> args_list;
         std::vector<std::shared_ptr<Statement>> body;
         scanner->NextTokenAssert(Token::FN);
-        auto mark = scanner->Mark();
-        auto tok = scanner->NextToken();
-        if (tok.token == Token::IDENTIFIER) {
-            name = tok.source;
-        } else {
-            mark.Apply();
+        if (scanner->NextTokenLookahead().token == Token::IDENTIFIER) {
+            name = scanner->NextToken().source;
         }
         scanner->NextTokenAssert(Token::LEFT_PAR);
         while (true) {
-            mark = scanner->Mark();
-            if (scanner->NextToken().token == Token::RIGHT_PAR) {
+            if (scanner->TrySkipToken(Token::RIGHT_PAR)) {
                 break;
             }
-            mark.Apply();
             args_list.emplace_back(scanner->NextTokenAssert(Token::IDENTIFIER).source);
-            scanner->NextTokenAssert(Token::COMMA);
-        }
-        scanner->NextTokenAssert(Token::LEFT_BRACE);
-        while (true) {
-            mark = scanner->Mark();
-            if (scanner->NextToken().token == Token::RIGHT_BRACE) {
-                break;
+            if (scanner->TrySkipToken(Token::COMMA)) {
+                if (scanner->NextTokenLookahead().token == Token::RIGHT_PAR) {
+                    throw std::runtime_error("Expected arg, found par");
+                }
             }
-            mark.Apply();
-            body.emplace_back(ParseSimpleStatement());
         }
-        return std::make_shared<FunctionDeclarationStatement>(name, args_list, body);
-    }*/
+
+        return std::make_shared<FunctionDefExpression>(name, args_list, ParseBlockStatement());
+    }
 };
 
 }

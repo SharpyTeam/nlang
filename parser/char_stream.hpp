@@ -63,22 +63,27 @@ public:
     explicit FileCharStream(const std::string& path) : path(path) {}
 
     bool HasNextChar() override {
+        OpenFile();
         return !file->eof();
     }
 
     char NextChar() override {
-        if (!file) {
-            file->open(path);
-            if (file->fail()) {
-                throw std::runtime_error("failed to open file \"" + path + "\"");
-            }
-        }
+        OpenFile();
         char c;
         *file >> std::noskipws >> c;
         return c;
     }
 
 private:
+    void OpenFile() {
+        if (!file) {
+            file = std::fstream(path);
+            if (file->fail()) {
+                throw std::runtime_error("failed to open file \"" + path + "\"");
+            }
+        }
+    }
+
     const std::string path;
     std::optional<std::fstream> file;
 };

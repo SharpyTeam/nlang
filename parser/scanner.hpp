@@ -158,31 +158,32 @@ public:
 
     enum class AdvanceBehaviour {
         DEFAULT,
-        NO_SKIP
+        NO_IGNORE
     };
 
+    bool TrySkipToken(Token token, AdvanceBehaviour advance_behaviour = AdvanceBehaviour::DEFAULT);
     const TokenInstance& NextTokenAssert(Token token, AdvanceBehaviour advance_behaviour = AdvanceBehaviour::DEFAULT);
+    const TokenInstance& NextTokenLookahead(AdvanceBehaviour advance_behaviour = AdvanceBehaviour::DEFAULT);
     const TokenInstance& NextToken(AdvanceBehaviour advance_behaviour = AdvanceBehaviour::DEFAULT);
 
     BookMark Mark() const;
 
-    void ResetSkip();
-    bool IsSkipping(Token token) const;
-    void SetSkip(Token token);
-    void UnsetSkip(Token token);
+    void ResetIgnore();
+    bool IsIgnoring(Token token) const;
+    void SetIgnore(Token token, bool ignore = true);
 
     static std::shared_ptr<Scanner> Create(const std::shared_ptr<CharStream>& char_stream);
 
 private:
     explicit Scanner(std::shared_ptr<CharStream> char_stream);
 
-    const TokenInstance& NextTokenWithoutSkip();
+    const TokenInstance& NextTokenWithoutIgnore();
 
     ScannerImpl impl;
     size_t pos;
     std::vector<TokenInstance> tokens;
 
-    std::unordered_set<Token> tokens_to_skip;
+    std::unordered_set<Token> tokens_to_ignore;
 };
 
 }

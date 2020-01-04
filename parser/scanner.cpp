@@ -24,7 +24,7 @@ TokenInstance Scanner::ScannerImpl::NextToken() {
         std::regex_constants::optimize | std::regex_constants::ECMAScript;
 
     static const std::vector<std::pair<std::regex, Token>> regex_tokens {
-        { std::regex(R"(^[\s\t\r]+)", regex_flags),                 Token::SPACE },
+        { std::regex(R"(^[ \t\r]+)", regex_flags),                 Token::SPACE },
         { std::regex(R"(^\/\/.*?\n)", regex_flags),                 Token::COMMENT },
         { std::regex(R"(^\/\*.*?\*\/)", regex_flags),               Token::COMMENT },
         { std::regex(R"(^((\+\+|\-\-|==|!=|>=|<=|<<|>>)|\(|\)|\{|\}|;|,|=|\*|\/|\+|\-|!|>|<|\~|&|\||\^))",
@@ -84,6 +84,16 @@ TokenInstance Scanner::ScannerImpl::NextToken() {
     return TokenInstance { Token::THE_EOF, row, column, "" };
 }
 
+bool Scanner::TrySkipToken(Token token, Scanner::AdvanceBehaviour advance_behaviour) {
+    auto mark = Mark();
+    auto &t = NextToken(advance_behaviour);
+    if (t.token == token) {
+        return true;
+    }
+    mark.Apply();
+    return false;
+}
+
 const TokenInstance &Scanner::NextTokenAssert(Token token, AdvanceBehaviour advance_behaviour) {
     auto mark = Mark();
     auto &ts = NextToken(advance_behaviour);
@@ -94,18 +104,25 @@ const TokenInstance &Scanner::NextTokenAssert(Token token, AdvanceBehaviour adva
     return ts;
 }
 
+const TokenInstance &Scanner::NextTokenLookahead(Scanner::AdvanceBehaviour advance_behaviour) {
+    auto mark = Mark();
+    auto &ts = NextToken(advance_behaviour);
+    mark.Apply();
+    return ts;
+}
+
 const TokenInstance &Scanner::NextToken(AdvanceBehaviour advance_behaviour) {
-    if (advance_behaviour == AdvanceBehaviour::NO_SKIP) {
-        return NextTokenWithoutSkip();
+    if (advance_behaviour == AdvanceBehaviour::NO_IGNORE) {
+        return NextTokenWithoutIgnore();
     }
     const TokenInstance *token;
     do {
-        token = &NextTokenWithoutSkip();
-    } while (tokens_to_skip.find(token->token) != tokens_to_skip.end());
+        token = &NextTokenWithoutIgnore();
+    } while (tokens_to_ignore.find(token->token) != tokens_to_ignore.end());
     return *token;
 }
 
-const TokenInstance &Scanner::NextTokenWithoutSkip() {
+const TokenInstance &Scanner::NextTokenWithoutIgnore() {
     if (pos == tokens.size()) {
         if (!tokens.empty() && tokens[pos - 1].token == Token::THE_EOF) {
             throw std::runtime_error("No tokens left");
@@ -115,20 +132,20 @@ const TokenInstance &Scanner::NextTokenWithoutSkip() {
     return tokens[pos++];
 }
 
-void Scanner::ResetSkip() {
-    tokens_to_skip.clear();
+void Scanner::ResetIgnore() {
+    tokens_to_ignore.clear();
 }
 
-bool Scanner::IsSkipping(Token token) const {
-    return tokens_to_skip.find(token) != tokens_to_skip.end();
+bool Scanner::IsIgnoring(Token token) const {
+    return tokens_to_ignore.find(token) != tokens_to_ignore.end();
 }
 
-void Scanner::SetSkip(Token token) {
-    tokens_to_skip.emplace(token);
-}
-
-void Scanner::UnsetSkip(Token token) {
-    tokens_to_skip.erase(token);
+void Scanner::SetIgnore(Token token, bool ignore) {
+    if (ignore) {
+        tokens_to_ignore.emplace(token);
+    } else {
+        tokens_to_ignore.erase(token);
+    }
 }
 
 std::shared_ptr<Scanner> Scanner::Create(const std::shared_ptr<CharStream> &char_stream) {

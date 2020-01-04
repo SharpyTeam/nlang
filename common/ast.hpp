@@ -14,6 +14,7 @@
 namespace nlang {
 
 class ASTNode;
+class FileNode;
 class LiteralExpression;
 class NumberLiteralExpression;
 class StringLiteralExpression;
@@ -32,6 +33,7 @@ class FunctionDefExpression;
 class ASTVisitor {
 public:
     virtual void Visit(ASTNode&) = 0;
+    virtual void Visit(FileNode&) = 0;
     virtual void Visit(LiteralExpression&) = 0;
     virtual void Visit(NumberLiteralExpression&) = 0;
     virtual void Visit(StringLiteralExpression&) = 0;
@@ -195,6 +197,19 @@ public:
     }
 };
 
+class FileNode : public ASTNode {
+public:
+    VISITOR_ACCEPT
+
+    const std::vector<std::shared_ptr<Statement>> statements;
+
+    explicit FileNode(std::vector<std::shared_ptr<Statement>> statements)
+        : statements(std::move(statements))
+    {
+
+    }
+};
+
 class BlockStatement : public Statement {
 public:
     VISITOR_ACCEPT
@@ -226,6 +241,8 @@ public:
 
 class FunctionCallExpression : public Expression {
 public:
+    VISITOR_ACCEPT
+
     const std::shared_ptr<Expression> expression;
     const std::vector<std::shared_ptr<Expression>> arguments;
 
@@ -239,11 +256,13 @@ public:
 
 class FunctionDefExpression : public Expression {
 public:
+    VISITOR_ACCEPT
+
     const std::string name;
     const std::vector<std::string> args_list;
-    const std::shared_ptr<BlockStatement> body;
+    const std::shared_ptr<Statement> body;
 
-    FunctionDefExpression(std::string name, std::vector<std::string> args_list, std::shared_ptr<BlockStatement> body)
+    FunctionDefExpression(std::string name, std::vector<std::string> args_list, std::shared_ptr<Statement> body)
         : name(std::move(name))
         , args_list(std::move(args_list))
         , body(std::move(body))
@@ -324,8 +343,11 @@ public:
 
     void Visit(ReturnStatement& rs) {
         str += std::string(indent, ' ');
-        str += "return ";
-        rs.return_expression->Accept(*this);
+        str += "return";
+        if (rs.return_expression) {
+            str += " ";
+            rs.return_expression->Accept(*this);
+        }
         str += '\n';
     }
 
@@ -354,14 +376,28 @@ public:
         for (size_t i = 0; i < fce.arguments.size(); ++i) {
             fce.arguments[i]->Accept(*this);
             if (i < fce.arguments.size() - 1) {
-                str += ",";
+                str += ", ";
             }
         }
         str += ")";
     }
 
     void Visit(FunctionDefExpression& fde) {
+        str += "fn " + fde.name + "(";
+        for (size_t i = 0; i < fde.args_list.size(); ++i) {
+            str += fde.args_list[i];
+            if (i < fde.args_list.size() - 1) {
+                str += ", ";
+            }
+        }
+        str += ")\n";
+        fde.body->Accept(*this);
+    }
 
+    void Visit(FileNode& fn) {
+        for (auto& s : fn.statements) {
+            s->Accept(*this);
+        }
     }
 
     const std::string& ToString() const {

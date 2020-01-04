@@ -20,15 +20,24 @@ void print(const std::string &input) {
     mark.Apply();
     auto parser = nlang::Parser::Create(sc);
     nlang::ASTStringifier stringifier;
-    parser->ParseStatement()->Accept(stringifier);
+    parser->ParseFile()->Accept(stringifier);
     std::cout << stringifier.ToString() << std::endl;
 }
 
 int main(int argc, char *argv[]) {
-    std::cout << "nlang " NLANG_VERSION " (" NLANG_BUILD_GIT_REVISION ", " NLANG_BUILD_PROCESSOR ",  " __DATE__ " " __TIME__  ")" << std::endl;
-    std::cout << "[" << ((NLANG_BUILD_COMPILER_ID == "GNU") ? "GCC" : NLANG_BUILD_COMPILER_ID) << " " NLANG_BUILD_COMPILER_VERSION << "]" << std::endl;
     if (argc > 1) {
-        if (std::string(argv[1]) == std::string("--extract-tokens")) {
+        if (std::string(argv[1]) == "print-ast") {
+            if (argc < 3) {
+                std::cout << "No input was provided.";
+                exit(-1);
+            }
+
+            auto scanner = nlang::Scanner::Create(nlang::CharStream::Create<nlang::FileCharStream>(argv[2]));
+            auto parser = nlang::Parser::Create(scanner);
+            nlang::ASTStringifier stringifier;
+            parser->ParseFile()->Accept(stringifier);
+            std::cout << stringifier.ToString() << std::endl;
+        } else if (std::string(argv[1]) == std::string("extract-tokens")) {
             if (argc < 3) {
                 std::cout << "No input was provided.";
                 exit(-1);
@@ -40,6 +49,9 @@ int main(int argc, char *argv[]) {
             std::cout << "Unknown argument '" << std::string(argv[1]) << "'." << std::endl;
         }
     } else {
+        std::cout << "nlang " NLANG_VERSION " (" NLANG_BUILD_GIT_REVISION ", " NLANG_BUILD_PROCESSOR ",  " __DATE__ " " __TIME__  ")" << std::endl;
+        std::cout << "[" << ((NLANG_BUILD_COMPILER_ID == "GNU") ? "GCC" : NLANG_BUILD_COMPILER_ID) << " " NLANG_BUILD_COMPILER_VERSION << "]" << std::endl;
+
         std::cout << "Interactive mode. Type 'exit' to exit.\nThis mode only prints tokens at the moment." << std::endl;
         std::string input;
         std::cout << "> " << std::flush;
