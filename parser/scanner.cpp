@@ -35,7 +35,7 @@ TokenInstance Scanner::ScannerImpl::NextToken() {
         { std::regex(R"(^\n)", regex_flags),                        Token::NEWLINE }
     };
 
-    if (char_stream_cache.size() >= 256) {
+    if (char_stream_cache.size() >= 4096) {
         CutCharCache(current_iterator.pos);
     }
 

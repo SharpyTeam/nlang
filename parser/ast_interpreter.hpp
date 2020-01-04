@@ -212,7 +212,7 @@ bool Object::GetBool() const {
             return false;
 
         case Type::NUMBER:
-            return AsNumber().number == 0.0;
+            return AsNumber().number != 0.0;
 
         case Type::STRING:
             return !AsString().string.empty();

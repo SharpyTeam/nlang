@@ -104,7 +104,7 @@ private:
 
         [[nodiscard]]
         inline char GetCharFromCache(size_t index) const {
-            return char_stream_cache.at(index + char_stream_cache_offset);
+            return char_stream_cache.at(index - char_stream_cache_offset);
         }
 
         inline void CutCharCache(size_t index_to) {
