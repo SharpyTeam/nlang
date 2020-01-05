@@ -18,6 +18,8 @@ addons:
       - gcc
       - g++
       - clang
+      - openjdk-11-jdk
+      - libatk-wrapper-java-jni
 
 jobs:
   include:
@@ -30,7 +32,7 @@ jobs:
       compiler: gcc
       arch: amd64
       env:
-        - MATRIX_EVAL="brew install gcc"
+        - MATRIX_EVAL="brew install gcc && brew tap adoptopenjdk/openjdk && brew cask install adoptopenjdk11"
 
 
 script:
