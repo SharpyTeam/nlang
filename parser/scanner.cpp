@@ -29,7 +29,7 @@ TokenInstance Scanner::ScannerImpl::NextToken() {
         { std::regex(R"(^\/\*.*?\*\/)", regex_flags),               Token::COMMENT },
         { std::regex(R"(^((\+\+|\-\-|\+=|-=|\*=|\/=|\%=|==|!=|>=|<=|<<|>>)|\(|\)|\{|\}|;|,|=|\*|\/|\+|\-|!|>|<|\~|&|\||\^))",
                      regex_flags),                                        Token::OPERATOR_OR_PUNCTUATION },
-        { std::regex(R"(^\b[a-zA-Z][a-zA-Z0-9_]*\b)", regex_flags), Token::IDENTIFIER },
+        { std::regex(R"(^([^\x00-\x7F]|[a-zA-Z])([^\x00-\x7F]|[a-zA-Z0-9_])*)", regex_flags), Token::IDENTIFIER },
         { std::regex(R"(^"[^"\\]*(?:\\.[^"\\]*)*")", regex_flags),  Token::STRING },
         { std::regex(R"(^[0-9]+(\.[0-9]+)?\b)", regex_flags),       Token::NUMBER },
         { std::regex(R"(^\n)", regex_flags),                        Token::NEWLINE }
@@ -39,6 +39,7 @@ TokenInstance Scanner::ScannerImpl::NextToken() {
         CutCharCache(current_iterator.pos);
     }
 
+    size_t invalid_pos = 0;
     std::string invalid_buf;
 
     while (current_iterator != end_iterator) {
@@ -48,7 +49,7 @@ TokenInstance Scanner::ScannerImpl::NextToken() {
                 if (!invalid_buf.empty()) {
                     std::string ib;
                     std::swap(ib, invalid_buf);
-                    return TokenInstance { Token::INVALID, row, column - invalid_buf.length(), ib };
+                    return TokenInstance { Token::INVALID, invalid_pos, row, column - invalid_buf.length(), ib };
                 }
 
                 auto str = match.str();
@@ -71,20 +72,30 @@ TokenInstance Scanner::ScannerImpl::NextToken() {
                     }
                 }
 
+                size_t pos_in_string = current_iterator.pos;
                 std::advance(current_iterator, str.length());
                 if (actual_token == Token::STRING) {
                     str = str.substr(1, str.size() - 2);
                 }
-                return TokenInstance { actual_token, saved_row, saved_column, str };
+                return TokenInstance { actual_token, pos_in_string, saved_row, saved_column, str };
             }
         }
 
+        if (invalid_buf.empty()) {
+            invalid_pos = current_iterator.pos;
+        }
         invalid_buf += *current_iterator;
         ++column;
         ++current_iterator;
     }
 
-    return TokenInstance { Token::THE_EOF, row, column, "" };
+    if (!invalid_buf.empty()) {
+        std::string ib;
+        std::swap(ib, invalid_buf);
+        return TokenInstance { Token::INVALID, invalid_pos, row, column - invalid_buf.length(), ib };
+    }
+
+    return TokenInstance { Token::THE_EOF, current_iterator.pos, row, column, "" };
 }
 
 bool Scanner::TrySkipToken(Token token, Scanner::AdvanceBehaviour advance_behaviour) {

@@ -1,0 +1,23 @@
+<idea-plugin>
+    <id>org.nlang</id>
+    <name>nlang support</name>
+    <vendor email="" url="">SharpyTeam</vendor>
+
+    <description><![CDATA[
+    Nothing for now.
+    ]]></description>
+
+    <!-- please see http://www.jetbrains.org/intellij/sdk/docs/basics/getting_started/plugin_compatibility.html
+         on how to target different products -->
+    <depends>com.intellij.modules.platform</depends>
+
+    <extensions defaultExtensionNs="com.intellij">
+        <fileType name="nlang file" implementationClass="org.nlang.NLangFileType" fieldName="INSTANCE"
+                  language="nlang" extensions="n"/>
+        <lang.syntaxHighlighterFactory language="nlang" implementationClass="org.nlang.NLangHighlighterFactory"/>
+    </extensions>
+
+    <actions>
+        <!-- Add your actions here -->
+    </actions>
+</idea-plugin>

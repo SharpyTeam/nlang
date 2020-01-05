@@ -90,6 +90,7 @@ enum class Token : uint8_t {
 
 struct TokenInstance {
     Token token;
+    size_t pos;
     size_t row;
     size_t column;
     std::string source;
