@@ -38,7 +38,7 @@ static size_t utf32_to_utf8(uint8_t* buffer, uint32_t code) {
     return 0;
 }
 
-void Java_org_nlang_JNI_tokenize(JNIEnv* env, jclass, jobject source, jint start, jint end, jobject tokens_map) {
+extern "C" JNIEXPORT void JNICALL Java_org_nlang_JNI_tokenize(JNIEnv* env, jclass, jobject source, jint start, jint end, jobject tokens_map) {
     jclass CharSequence_class = env->FindClass("java/lang/CharSequence");
     jmethodID CharSequence_length = env->GetMethodID(CharSequence_class, "length", "()I");
     jmethodID CharSequence_charAt = env->GetMethodID(CharSequence_class, "charAt", "(I)C");
