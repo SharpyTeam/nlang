@@ -24,4 +24,7 @@ add_subdirectory(parser)
 add_subdirectory(compiler)
 add_subdirectory(vm)
 add_subdirectory(core)
-add_subdirectory(ide/jni)
+
+if (ENABLE_JNI_TOOLS)
+    add_subdirectory(ide/jni)
+endif ()
