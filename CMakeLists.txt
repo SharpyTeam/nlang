@@ -21,9 +21,21 @@ endif ()
 
 add_subdirectory(common)
 add_subdirectory(parser)
-add_subdirectory(compiler)
-add_subdirectory(vm)
-add_subdirectory(core)
+add_subdirectory(interpreter)
+
+set(NLANG_CORE_SOURCES
+        main.cpp)
+
+set(NLANG_CORE_HEADERS
+        main.hpp)
+
+configure_file(version.hpp.in "${CMAKE_CURRENT_SOURCE_DIR}/version.hpp")
+
+add_executable(nlang ${NLANG_CORE_HEADERS} ${NLANG_CORE_SOURCES})
+target_include_directories(nlang PUBLIC .)
+target_link_libraries(nlang nlang_common)
+target_link_libraries(nlang nlang_parser)
+target_link_libraries(nlang nlang_interpreter)
 
 if (ENABLE_JNI_TOOLS)
     add_subdirectory(ide/jni)

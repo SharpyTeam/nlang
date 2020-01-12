@@ -1,2 +1,5 @@
-cmake-build*/
 .idea/
+
+# CMake-generated files
+version.hpp
+cmake-build*/
