@@ -264,7 +264,7 @@ public:
 
     void MarkAchievableSlot(ObjectSlot*& slot) {
         for (size_t i = 0; i < 2; ++i) {
-            if (storage[(void*) (size_t(slot) / page_size * page_size)].TryMarkAchievableSlot(slot)) {
+            if (storage.at((void*) (size_t(slot) / page_size * page_size)).TryMarkAchievableSlot(slot)) {
                 break;
             }
         }

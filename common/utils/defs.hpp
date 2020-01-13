@@ -7,13 +7,13 @@
 
 #if defined(__clang__)
 #define NLANG_COMPILER_CLANG
-#define NLANG_FORCE_INLINE __attribute__((always_inline))
+#define NLANG_FORCE_INLINE inline __attribute__((always_inline))
 #elif defined(__GNUC__)
 #define NLANG_COMPILER_GCC
-#define NLANG_FORCE_INLINE __attribute__((always_inline))
+#define NLANG_FORCE_INLINE inline __attribute__((always_inline))
 #elif defined(_MSC_VER)
 #define NLANG_COMPILER_MSVC
-#define NLANG_FORCE_INLINE __forceinline
+#define NLANG_FORCE_INLINE inline __forceinline
 #endif
 
 #if defined(__APPLE__)

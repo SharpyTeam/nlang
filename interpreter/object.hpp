@@ -196,7 +196,7 @@ struct StringKey {
         return *this;
     }
 
-    NLANG_FORCE_INLINE bool operator==(const StringKey& other) {
+    NLANG_FORCE_INLINE bool operator==(const StringKey& other) const {
         if (is_string) {
             if (other.is_string) {
                 return *string == *other.string;
@@ -212,7 +212,7 @@ struct StringKey {
         }
     }
 
-    NLANG_FORCE_INLINE bool operator<(const StringKey& other) {
+    NLANG_FORCE_INLINE bool operator<(const StringKey& other) const {
         if (is_string) {
             if (other.is_string) {
                 return *string < *other.string;
