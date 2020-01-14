@@ -20,6 +20,9 @@
 #include <unistd.h>
 #include <sys/mman.h>
 #elif defined(NLANG_PLATFORM_WINDOWS)
+// Sets minimal API level requirement to Windows 7
+#define WINVER 0x0601
+#define _WIN32_WINNT 0x0601
 #include <Windows.h>
 #endif
 
@@ -138,11 +141,17 @@ private:
         }
 
         NLANG_FORCE_INLINE static size_t GetPageSize() {
-#ifdef NLANG_PLATFORM_LINUX
-            return getpagesize();
+            static size_t page_size;
+#if defined(NLANG_PLATFORM_LINUX)
+            page_size = getpagesize();
+#elif defined(NLANG_PLATFORM_WINDOWS)
+            SYSTEM_INFO info;
+            GetNativeSystemInfo(&info);
+            page_size = info.dwPageSize;
 #else
-            return 4096;
+            page_size = 4096;
 #endif
+            return page_size;
         }
 
     protected:
