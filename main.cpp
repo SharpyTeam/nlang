@@ -10,6 +10,7 @@
 #include <iostream>
 #include <string>
 #include <ast_interpreter.hpp>
+#include <interpreter/heap.hpp>
 
 void print(const std::string &input) {
     auto sc = nlang::Scanner::Create(nlang::CharStream::Create<nlang::StringCharStream>(input));
@@ -25,7 +26,51 @@ void print(const std::string &input) {
     std::cout << stringifier.ToString() << std::endl;
 }
 
+void print_heap_state(nlang::Heap& heap) {
+    std::cout << "----------" << std::endl;
+    std::cout << "Pages: " << heap.GetPagesCount() << std::endl;
+    std::cout << "Occupied slots: " << heap.GetOccupiedSlotsCount() << std::endl;
+    std::cout << "Free slots: " << heap.GetFreeSlotsCount() << std::endl;
+    std::cout << "----------" << std::endl;
+}
+
 int main(int argc, char *argv[]) {
+    nlang::Heap heap;
+
+    std::vector<nlang::ObjectSlot*> slots;
+    for (int i = 1; i < 151346; ++i) {
+        slots.emplace_back(heap.Store(nlang::Address(i)));
+    }
+
+    print_heap_state(heap);
+
+    heap.PreGC();
+    heap.MarkOrUpdateAchievableSlot(slots[0]);
+    heap.MarkOrUpdateAchievableSlot(slots[slots.size() - 1]);
+    heap.PostGC();
+
+    print_heap_state(heap);
+    std::cout << int(slots[0]->Get()) << " " << int(slots[slots.size() - 1]->Get()) << " " << slots[0] << " " << slots[slots.size() - 1] << std::endl;
+
+    heap.PreGC();
+    heap.MarkOrUpdateAchievableSlot(slots[0]);
+    heap.MarkOrUpdateAchievableSlot(slots[slots.size() - 1]);
+    heap.PostGC();
+
+    print_heap_state(heap);
+    std::cout << int(slots[0]->Get()) << " " << int(slots[slots.size() - 1]->Get()) << " " << slots[0] << " " << slots[slots.size() - 1] << std::endl;
+
+    heap.PreGC();
+    heap.PostGC();
+
+    print_heap_state(heap);
+
+    heap.PreGC();
+    heap.PostGC();
+
+    print_heap_state(heap);
+
+
     if (argc == 2) {
         auto scanner = nlang::Scanner::Create(nlang::CharStream::Create<nlang::FileCharStream>(argv[1]));
         auto parser = nlang::Parser::Create(scanner);
