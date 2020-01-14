@@ -76,53 +76,56 @@ private:
         Page& operator=(const Page&) = delete;
 
         NLANG_FORCE_INLINE Page(Page&& other) noexcept {
-            data = other.data;
-            size = other.size;
-            other.data = nullptr;
-            other.size = 0;
+            raw_data_ = other.raw_data_;
+            raw_size_ = other.raw_size_;
+            other.raw_data_ = nullptr;
+            other.raw_size_ = 0;
         }
 
         NLANG_FORCE_INLINE Page& operator=(Page&& other) noexcept {
-            data = other.data;
-            size = other.size;
-            other.data = nullptr;
-            other.size = 0;
+            if (this == &other) {
+                return *this;
+            }
+            raw_data_ = other.raw_data_;
+            raw_size_ = other.raw_size_;
+            other.raw_data_ = nullptr;
+            other.raw_size_ = 0;
             return *this;
         }
 
         NLANG_FORCE_INLINE Page()
-            : data(nullptr)
-            , size(GetPageSize())
+            : raw_data_(nullptr)
+            , raw_size_(GetPageSize())
         {
 #ifdef NLANG_PLATFORM_LINUX
-            data = mmap(nullptr, size, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
-            if (data == MAP_FAILED) {
+            raw_data_ = mmap(nullptr, raw_size_, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+            if (raw_data_ == MAP_FAILED) {
                 throw std::bad_alloc();
             }
 #else
-            data = std::aligned_alloc(size, size);
-            if (!data) {
+            raw_data_ = std::aligned_alloc(raw_size_, raw_size_);
+            if (!raw_data_) {
                 throw std::bad_alloc();
             }
 #endif
         }
 
         NLANG_FORCE_INLINE ~Page() {
-            if (data) {
+            if (raw_data_) {
 #ifdef NLANG_PLATFORM_LINUX
-                munmap(data, size);
+                munmap(raw_data_, raw_size_);
 #else
-                std::free(data);
+                std::free(raw_data_);
 #endif
             }
         }
 
-        [[nodiscard]] NLANG_FORCE_INLINE void* GetData() const {
-            return data;
+        [[nodiscard]] NLANG_FORCE_INLINE void* raw_data() const {
+            return raw_data_;
         }
 
-        [[nodiscard]] NLANG_FORCE_INLINE size_t GetSize() const {
-            return size;
+        [[nodiscard]] NLANG_FORCE_INLINE size_t raw_size() const {
+            return raw_size_;
         }
 
         NLANG_FORCE_INLINE static size_t GetPageSize() {
@@ -134,8 +137,8 @@ private:
         }
 
     protected:
-        void* data;
-        size_t size;
+        void* raw_data_;
+        size_t raw_size_;
     };
 
     template<typename T, bool default_construct_destruct = true>
@@ -144,32 +147,28 @@ private:
         TypedPage(const TypedPage&) = delete;
         TypedPage& operator=(const TypedPage&) = delete;
 
-        NLANG_FORCE_INLINE TypedPage(TypedPage&& other) noexcept {
-            data = other.data;
-            size = other.size;
+        NLANG_FORCE_INLINE TypedPage(TypedPage&& other) noexcept : Page(std::move(other)) {
             typed_data = other.typed_data;
             typed_size = other.typed_size;
-            other.data = nullptr;
-            other.size = 0;
             other.typed_data = nullptr;
             other.typed_size = 0;
         }
 
         NLANG_FORCE_INLINE TypedPage& operator=(TypedPage&& other) noexcept {
-            data = other.data;
-            size = other.size;
+            if (this == &other) {
+                return *this;
+            }
             typed_data = other.typed_data;
             typed_size = other.typed_size;
-            other.data = nullptr;
-            other.size = 0;
             other.typed_data = nullptr;
             other.typed_size = 0;
+            Page::operator=(std::move(other));
             return *this;
         }
 
         NLANG_FORCE_INLINE TypedPage() : Page() {
-            void* aligned_data = data;
-            size_t aligned_size = size;
+            void* aligned_data = raw_data_;
+            size_t aligned_size = raw_size_;
             if (!std::align(alignof(T), sizeof(T), aligned_data, aligned_size)) {
                 throw std::bad_alloc();
             }
@@ -193,12 +192,36 @@ private:
             }
         }
 
-        [[nodiscard]] NLANG_FORCE_INLINE T* GetTypedData() const {
+        [[nodiscard]] NLANG_FORCE_INLINE T* data() const {
             return typed_data;
         }
 
-        [[nodiscard]] NLANG_FORCE_INLINE size_t GetTypedSize() const {
+        [[nodiscard]] NLANG_FORCE_INLINE size_t size() const {
             return typed_size;
+        }
+
+        NLANG_FORCE_INLINE T& operator[](size_t index) {
+            return typed_data[index];
+        }
+
+        NLANG_FORCE_INLINE const T& operator[](size_t index) const {
+            return typed_data[index];
+        }
+
+        NLANG_FORCE_INLINE T* begin() {
+            return typed_data;
+        }
+
+        [[nodiscard]] NLANG_FORCE_INLINE T* const begin() const {
+            return typed_data;
+        }
+
+        NLANG_FORCE_INLINE T* end() {
+            return typed_data + typed_size;
+        }
+
+        [[nodiscard]] NLANG_FORCE_INLINE T* const end() const {
+            return typed_data + typed_size;
         }
 
     protected:
@@ -206,29 +229,35 @@ private:
         size_t typed_size;
     };
 
-    class PageOfSlots {
+    class PageOfSlots : public TypedPage<ObjectSlot> {
         friend class Heap;
 
     public:
         PageOfSlots(const PageOfSlots&) = delete;
         PageOfSlots& operator=(const PageOfSlots&) = delete;
 
-        PageOfSlots(PageOfSlots&& other) noexcept {
-            *this = std::move(other);
-        }
-
-        PageOfSlots& operator=(PageOfSlots&& other) noexcept {
-            page = std::move(other.page);
+        PageOfSlots(PageOfSlots&& other) noexcept : TypedPage<ObjectSlot>(std::move(other)) {
             free_ranges = std::move(other.free_ranges);
             marks = std::move(other.marks);
             will_be_collected = other.will_be_collected;
             other.will_be_collected = false;
+        }
+
+        PageOfSlots& operator=(PageOfSlots&& other) noexcept {
+            if (this == &other) {
+                return *this;
+            }
+            free_ranges = std::move(other.free_ranges);
+            marks = std::move(other.marks);
+            will_be_collected = other.will_be_collected;
+            other.will_be_collected = false;
+            TypedPage<ObjectSlot>::operator=(std::move(other));
             return *this;
         }
 
         explicit PageOfSlots()
-            : free_ranges({ { page.GetTypedData(), page.GetTypedSize() } })
-            , marks(page.GetTypedSize(), false)
+            : free_ranges({ {data(), size() } })
+            , marks(size(), false)
             , will_be_collected(false)
         {
 
@@ -253,7 +282,7 @@ private:
         }
 
         NLANG_FORCE_INLINE void Reset(ObjectSlot* slot) {
-            if (slot < page.GetTypedData() || slot >= page.GetTypedData() + page.GetTypedSize()) {
+            if (slot < data() || slot >= data() + size()) {
                 throw std::out_of_range("slot not from this page");
             }
             if (slot->IsEmpty()) {
@@ -296,7 +325,7 @@ private:
         }
 
         NLANG_FORCE_INLINE bool TryMarkOrUpdateAchievableSlot(ObjectSlot*& slot) {
-            if (slot < page.GetTypedData() || slot >= page.GetTypedData() + page.GetTypedSize()) {
+            if (slot < data() || slot >= data() + size()) {
                 throw std::out_of_range("slot not from this page");
             }
             if (slot->IsEmpty()) {
@@ -307,20 +336,20 @@ private:
                 slot = reinterpret_cast<ObjectSlot*>(slot->Get());
                 return false;
             }
-            marks[slot - page.GetTypedData()] = true;
+            marks[slot - data()] = true;
             return true;
         }
 
         NLANG_FORCE_INLINE void ResetUnmarkedSlots() {
-            for (size_t i = 0; i < page.GetTypedSize(); ++i) {
-                if (!marks[i] && !page.GetTypedData()[i].IsEmpty()) {
-                    Reset(page.GetTypedData() + i);
+            for (size_t i = 0; i < size(); ++i) {
+                if (!marks[i] && !data()[i].IsEmpty()) {
+                    Reset(data() + i);
                 }
             }
         }
 
         [[nodiscard]] NLANG_FORCE_INLINE bool IsEmpty() const {
-            return free_ranges.size() == 1 && free_ranges.begin()->second == page.GetTypedSize();
+            return free_ranges.size() == 1 && free_ranges.begin()->second == size();
         }
 
         [[nodiscard]] NLANG_FORCE_INLINE bool IsFull() const {
@@ -336,11 +365,10 @@ private:
         }
 
         [[nodiscard]] NLANG_FORCE_INLINE size_t GetOccupiedSlotsCount() const {
-            return page.GetTypedSize() - GetFreeSlotsCount();
+            return size() - GetFreeSlotsCount();
         }
 
     private:
-        TypedPage<ObjectSlot> page;
         std::map<ObjectSlot*, size_t> free_ranges;
 
         std::vector<bool> marks;
@@ -370,7 +398,7 @@ public:
             }
         }
         PageOfSlots page;
-        auto result = storage.emplace(page.page.GetData(), std::move(page));
+        auto result = storage.emplace(page.raw_data(), std::move(page));
         if (result.second) {
             return result.first->second.Store(location);
         }
@@ -426,11 +454,10 @@ private:
                 continue;
             }
             PageOfSlots& page_from = copy_from_it->second;
-            if (free_slots >= page_from.page.GetTypedSize()) {
+            if (free_slots >= page_from.size()) {
                 free_slots -= page_from.GetFreeSlotsCount();
                 page_from.will_be_collected = true;
-                for (size_t i = 0; i < page_from.page.GetTypedSize(); ++i) {
-                    ObjectSlot& slot = page_from.page.GetTypedData()[i];
+                for (auto& slot : page_from) {
                     if (slot.IsEmpty()) {
                         continue;
                     }
