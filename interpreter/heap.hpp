@@ -33,13 +33,13 @@ class ObjectSlot {
 
 public:
     NLANG_FORCE_INLINE ObjectSlot()
-        : location(reinterpret_cast<Address>(nullptr))
+        : location((Address) nullptr)
     {
 
     }
 
     [[nodiscard]] NLANG_FORCE_INLINE bool IsEmpty() const {
-        return location == reinterpret_cast<Address>(nullptr);
+        return location == (Address) nullptr;
     }
 
     NLANG_FORCE_INLINE Object& operator->() {
@@ -63,7 +63,7 @@ public:
     }
 
 private:
-    NLANG_FORCE_INLINE void Reset(Address location = reinterpret_cast<Address>(nullptr)) {
+    NLANG_FORCE_INLINE void Reset(Address location = (Address) nullptr) {
         this->location = location;
     }
 
@@ -273,7 +273,7 @@ private:
         }
 
         NLANG_FORCE_INLINE ObjectSlot* Store(Address location) {
-            if (location == reinterpret_cast<Address>(nullptr)) {
+            if (location == (Address) nullptr) {
                 throw std::runtime_error("storing empty address has no sense");
             }
             if (IsFull()) {
