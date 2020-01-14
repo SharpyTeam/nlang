@@ -103,7 +103,7 @@ private:
                 throw std::bad_alloc();
             }
 #else
-            raw_data_ = std::aligned_alloc(raw_size_, raw_size_);
+            raw_data_ = aligned_alloc(raw_size_, raw_size_);
             if (!raw_data_) {
                 throw std::bad_alloc();
             }
@@ -115,7 +115,7 @@ private:
 #ifdef NLANG_PLATFORM_LINUX
                 munmap(raw_data_, raw_size_);
 #else
-                std::free(raw_data_);
+                free(raw_data_);
 #endif
             }
         }
