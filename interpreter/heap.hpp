@@ -16,9 +16,11 @@
 #include <cstdlib>
 #include <new>
 
-#ifdef NLANG_PLATFORM_LINUX
+#if defined(NLANG_PLATFORM_LINUX)
 #include <unistd.h>
 #include <sys/mman.h>
+#elif defined(NLANG_PLATFORM_WINDOWS)
+#include <Windows.h>
 #endif
 
 
@@ -31,13 +33,13 @@ class ObjectSlot {
 
 public:
     NLANG_FORCE_INLINE ObjectSlot()
-        : location(Address(nullptr))
+        : location(reinterpret_cast<Address>(nullptr))
     {
 
     }
 
     [[nodiscard]] NLANG_FORCE_INLINE bool IsEmpty() const {
-        return location == Address(nullptr);
+        return location == reinterpret_cast<Address>(nullptr);
     }
 
     NLANG_FORCE_INLINE Object& operator->() {
@@ -61,7 +63,7 @@ public:
     }
 
 private:
-    NLANG_FORCE_INLINE void Reset(Address location = Address(nullptr)) {
+    NLANG_FORCE_INLINE void Reset(Address location = reinterpret_cast<Address>(nullptr)) {
         this->location = location;
     }
 
@@ -97,9 +99,14 @@ private:
             : raw_data_(nullptr)
             , raw_size_(GetPageSize())
         {
-#ifdef NLANG_PLATFORM_LINUX
+#if defined(NLANG_PLATFORM_LINUX)
             raw_data_ = mmap(nullptr, raw_size_, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
             if (raw_data_ == MAP_FAILED) {
+                throw std::bad_alloc();
+            }
+#elif defined(NLANG_PLATFORM_WINDOWS)
+            raw_data_= VirtualAlloc(NULL, raw_size_, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
+            if (!raw_data_) {
                 throw std::bad_alloc();
             }
 #else
@@ -112,8 +119,10 @@ private:
 
         NLANG_FORCE_INLINE ~Page() {
             if (raw_data_) {
-#ifdef NLANG_PLATFORM_LINUX
+#if defined(NLANG_PLATFORM_LINUX)
                 munmap(raw_data_, raw_size_);
+#elif defined(NLANG_PLATFORM_WINDOWS)
+                VirtualFree(raw_data_, 0, MEM_RELEASE);
 #else
                 free(raw_data_);
 #endif
@@ -264,7 +273,7 @@ private:
         }
 
         NLANG_FORCE_INLINE ObjectSlot* Store(Address location) {
-            if (location == Address(nullptr)) {
+            if (location == reinterpret_cast<Address>(nullptr)) {
                 throw std::runtime_error("storing empty address has no sense");
             }
             if (IsFull()) {
@@ -405,11 +414,11 @@ public:
         return nullptr;
     }
 
-    size_t GetPagesCount() const {
+    [[nodiscard]] size_t GetPagesCount() const {
         return storage.size();
     }
 
-    size_t GetOccupiedSlotsCount() const {
+    [[nodiscard]] size_t GetOccupiedSlotsCount() const {
         size_t occupied_slots = 0;
         for (auto& [ptr, page] : storage) {
             occupied_slots += page.GetOccupiedSlotsCount();
@@ -417,7 +426,7 @@ public:
         return occupied_slots;
     }
 
-    size_t GetFreeSlotsCount() const {
+    [[nodiscard]] size_t GetFreeSlotsCount() const {
         size_t free_slots = 0;
         for (auto& [ptr, page] : storage) {
             free_slots += page.GetFreeSlotsCount();
