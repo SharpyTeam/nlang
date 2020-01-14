@@ -11,6 +11,7 @@
 #include <string>
 #include <ast_interpreter.hpp>
 #include <interpreter/heap.hpp>
+#include <library/thread/thread_pool.hpp>
 
 void print(const std::string &input) {
     auto sc = nlang::Scanner::Create(nlang::CharStream::Create<nlang::StringCharStream>(input));

@@ -19,9 +19,12 @@ else ()
     set(GIT_REVISION "dev")
 endif ()
 
+find_package(Threads REQUIRED)
+
 add_subdirectory(common)
 add_subdirectory(parser)
 add_subdirectory(interpreter)
+add_subdirectory(library)
 
 set(NLANG_CORE_SOURCES
         main.cpp)
@@ -36,6 +39,7 @@ target_include_directories(nlang PUBLIC .)
 target_link_libraries(nlang nlang_common)
 target_link_libraries(nlang nlang_parser)
 target_link_libraries(nlang nlang_interpreter)
+target_link_libraries(nlang Threads::Threads)
 
 if (ENABLE_JNI_TOOLS)
     add_subdirectory(ide/jni)
