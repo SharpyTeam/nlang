@@ -12,6 +12,7 @@
 #include <vector>
 #include <cstdint>
 #include <memory>
+#include <map>
 #include <unordered_map>
 #include <cstdlib>
 #include <new>

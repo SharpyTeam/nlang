@@ -21,10 +21,22 @@ endif ()
 
 find_package(Threads REQUIRED)
 
+include(TestBigEndian)
+TEST_BIG_ENDIAN(IS_BIG_ENDIAN)
+
+if (${IS_BIG_ENDIAN})
+    message(FATAL_ERROR "Big-Endian architectures are not supported.")
+endif ()
+
+add_subdirectory(${CMAKE_SOURCE_DIR}/deps/Catch2)
+add_subdirectory(library/intrusive_ptr)
+
 add_subdirectory(common)
 add_subdirectory(parser)
 add_subdirectory(interpreter)
 add_subdirectory(library)
+
+add_subdirectory(tests)
 
 set(NLANG_CORE_SOURCES
         main.cpp)
