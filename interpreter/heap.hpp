@@ -16,6 +16,7 @@
 #include <unordered_map>
 #include <cstdlib>
 #include <new>
+#include <optional>
 
 #if defined(NLANG_PLATFORM_LINUX)
 #include <unistd.h>
