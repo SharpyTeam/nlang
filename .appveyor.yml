@@ -17,4 +17,5 @@ build_script:
   - cd build
   - cmd: IF "%platform%" == "x64" ( cmake .. -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=%configuration% -DENABLE_JNI_TOOLS=TRUE ) ELSE ( cmake .. -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=%configuration% )
   - cmake --build . --config %configuration%
+  - cd tests
   - ctest
