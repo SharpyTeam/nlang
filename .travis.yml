@@ -42,4 +42,5 @@ script:
   - cd build
   - cmake .. `if [ "$TRAVIS_CPU_ARCH" != "arm64" ]; then echo "-DENABLE_JNI_TOOLS=TRUE"; fi`
   - cmake --build .
+  - cd tests
   - ctest
