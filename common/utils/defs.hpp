@@ -8,12 +8,18 @@
 #if defined(__clang__)
 #define NLANG_COMPILER_CLANG
 #define NLANG_FORCE_INLINE inline __attribute__((always_inline))
+#define NLANG_LIKELY(x)      __builtin_expect(!!(x), 1)
+#define NLANG_UNLIKELY(x)    __builtin_expect(!!(x), 0)
 #elif defined(__GNUC__)
 #define NLANG_COMPILER_GCC
 #define NLANG_FORCE_INLINE inline __attribute__((always_inline))
+#define NLANG_LIKELY(x)      __builtin_expect(!!(x), 1)
+#define NLANG_UNLIKELY(x)    __builtin_expect(!!(x), 0)
 #elif defined(_MSC_VER)
 #define NLANG_COMPILER_MSVC
 #define NLANG_FORCE_INLINE inline __forceinline
+#define NLANG_LIKELY(x)      x
+#define NLANG_UNLIKELY(x)    x
 #endif
 
 #if defined(__APPLE__)
