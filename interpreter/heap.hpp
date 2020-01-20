@@ -5,8 +5,6 @@
 #ifndef NLANG_HEAP_HPP
 #define NLANG_HEAP_HPP
 
-#include "object.hpp"
-
 #include <utils/defs.hpp>
 
 #include <vector>
