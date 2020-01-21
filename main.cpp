@@ -6,6 +6,7 @@
 #include <version.hpp>
 #include <parser.hpp>
 #include <char_stream.hpp>
+#include <page.hpp>
 
 #include <iostream>
 #include <string>
