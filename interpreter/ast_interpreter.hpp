@@ -269,8 +269,10 @@ public:
             case Token::TRUE:
                 expression_result = Object::GetTrue();
                 return;
+
+            default:
+                throw std::runtime_error("1");
         }
-        throw std::runtime_error("1");
     }
 
     void Visit(NumberLiteralExpression &expression) override {
@@ -474,7 +476,7 @@ public:
 
     void Visit(FunctionDefExpression &expression) override;
 
-    void Visit(IfStatement& is) {
+    void Visit(IfStatement& is) override {
         for (auto& p : is.if_else_if_statement) {
             p.first->Accept(*this);
             if (expression_result->GetBool()) {
@@ -487,7 +489,7 @@ public:
         }
     }
 
-    void Visit(WhileStatement& ws) {
+    void Visit(WhileStatement& ws) override {
         while (true) {
             ws.condition->Accept(*this);
             if (!expression_result->GetBool()) {
@@ -503,11 +505,11 @@ public:
         }
     }
 
-    void Visit(BreakStatement& bs) {
+    void Visit(BreakStatement& bs) override {
         throw BreakException();
     }
 
-    void Visit(ContinueStatement& cs) {
+    void Visit(ContinueStatement& cs) override {
         throw ContinueException();
     }
 };
