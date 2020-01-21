@@ -10,12 +10,11 @@
 #include <cstddef>
 #include <type_traits>
 
-#if defined(NLANG_PLATFORM_LINUX)
+#if defined(NLANG_PLATFORM_LINUX) || defined(NLANG_PLATFORM_MACOS)
 #include <unistd.h>
 #include <sys/mman.h>
 #include <new>
 #include <stdexcept>
-
 #elif defined(NLANG_PLATFORM_WINDOWS)
 // Sets minimal API level requirement to Windows 7
 #define WINVER 0x0601
