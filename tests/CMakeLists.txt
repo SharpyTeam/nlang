@@ -7,7 +7,7 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 set(NLANG_TESTS_SOURCES
         tests_main.cpp
-        interpreter-heap.cpp)
+        page_allocation.cpp)
 
 include(CTest)
 include(${CMAKE_SOURCE_DIR}/deps/Catch2/contrib/Catch.cmake)
