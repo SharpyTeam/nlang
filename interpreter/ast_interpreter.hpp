@@ -27,15 +27,15 @@ class Object {
 public:
     enum class Type {
         THE_NULL,
-        TRUE,
-        FALSE,
+        THE_TRUE,
+        THE_FALSE,
         NUMBER,
         STRING,
         FUNCTION
     };
     const Type type;
 
-    std::string ToString() const;
+    [[nodiscard]] std::string ToString() const;
 
     bool GetBool() const;
 
@@ -55,12 +55,12 @@ public:
     }
 
     static std::shared_ptr<Object> GetFalse() {
-        static auto instance = std::shared_ptr<Object>(new Object(Type::FALSE));
+        static auto instance = std::shared_ptr<Object>(new Object(Type::THE_FALSE));
         return instance;
     }
 
     static std::shared_ptr<Object> GetTrue() {
-        static auto instance = std::shared_ptr<Object>(new Object(Type::TRUE));
+        static auto instance = std::shared_ptr<Object>(new Object(Type::THE_TRUE));
         return instance;
     }
 
@@ -173,10 +173,10 @@ private:
 
 std::string Object::ToString() const {
     switch (type) {
-        case Object::Type::TRUE:
+        case Object::Type::THE_TRUE:
             return "true";
 
-        case Object::Type::FALSE:
+        case Object::Type::THE_FALSE:
             return "false";
 
         case Object::Type::THE_NULL:
@@ -208,7 +208,7 @@ std::shared_ptr<Object> Object::GetString(const std::string &string) {
 bool Object::GetBool() const {
     switch (type) {
         case Type::THE_NULL:
-        case Type::FALSE:
+        case Type::THE_FALSE:
             return false;
 
         case Type::NUMBER:
@@ -262,11 +262,11 @@ public:
                 expression_result = Object::GetNull();
                 return;
 
-            case Token::FALSE:
+            case Token::THE_FALSE:
                 expression_result = Object::GetFalse();
                 return;
 
-            case Token::TRUE:
+            case Token::THE_TRUE:
                 expression_result = Object::GetTrue();
                 return;
 

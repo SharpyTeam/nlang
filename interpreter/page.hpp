@@ -8,7 +8,9 @@
 #include <utils/defs.hpp>
 
 #include <cstddef>
+#include <stdexcept>
 #include <type_traits>
+#include <new>
 
 #if defined(NLANG_PLATFORM_LINUX) || defined(NLANG_PLATFORM_MACOS)
 #include <unistd.h>

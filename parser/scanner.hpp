@@ -23,15 +23,15 @@ class Scanner {
 private:
     class ScannerImpl {
     public:
-        class CachingCharStreamIterator : public std::iterator<
-            std::bidirectional_iterator_tag,
-            char,
-            ptrdiff_t,
-            const char *,
-            char>
-        {
+        class CachingCharStreamIterator {
             friend class ScannerImpl;
         public:
+            using iterator_category = std::bidirectional_iterator_tag;
+            using value_type = char;
+            using difference_type = ptrdiff_t;
+            using pointer = const char *;
+            using reference = char;
+
             explicit CachingCharStreamIterator(ScannerImpl* scanner_impl = nullptr, size_t pos = 0)
                 : scanner_impl(scanner_impl)
                 , pos(pos)

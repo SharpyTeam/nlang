@@ -227,8 +227,8 @@ private:
                 return std::make_shared<StringLiteralExpression>(token.source);
 
             case Token::THE_NULL:
-            case Token::TRUE:
-            case Token::FALSE:
+            case Token::THE_TRUE:
+            case Token::THE_FALSE:
                 return std::make_shared<LiteralExpression>(token.token);
 
             default:

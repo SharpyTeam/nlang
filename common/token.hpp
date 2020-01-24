@@ -60,8 +60,8 @@ T(ADD_ADD, "++")                    \
 T(SUB_SUB, "--")                    \
                                     \
 T(THE_NULL, "null")                 \
-T(TRUE, "true")                     \
-T(FALSE, "false")                   \
+T(THE_TRUE, "true")                 \
+T(THE_FALSE, "false")               \
                                     \
 T(BIT_OR, "|")                      \
 T(BIT_XOR, "^")                     \
