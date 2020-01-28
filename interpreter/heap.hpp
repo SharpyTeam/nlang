@@ -6,33 +6,21 @@
 #define NLANG_HEAP_HPP
 
 #include <utils/defs.hpp>
-
-#include <vector>
 #include <cstdint>
-#include <memory>
-#include <map>
-#include <unordered_map>
-#include <cstdlib>
-#include <new>
-#include <optional>
-#include <atomic>
-#include <iostream>
-
-#if defined(NLANG_PLATFORM_LINUX)
-#include <unistd.h>
-#include <sys/mman.h>
-#elif defined(NLANG_PLATFORM_WINDOWS)
-// Sets minimal API level requirement to Windows 7
-#define WINVER 0x0601
-#define _WIN32_WINNT 0x0601
-#include <Windows.h>
-#endif
 
 
 namespace nlang {
 
+class HeapValue;
+
 class Heap {
 public:
+    struct HeapEntry {
+        HeapValue* value;
+        uintptr_t type;
+    };
+
+
     template<typename T>
     static T* GetHeapObjectPointer(void* cell_ptr) {
         return *reinterpret_cast<T**>(cell_ptr);

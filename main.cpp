@@ -12,6 +12,7 @@
 #include <string>
 #include <ast_interpreter.hpp>
 #include <value.hpp>
+#include <object.hpp>
 #include <cmath>
 
 void print(const std::string &input) {
@@ -34,16 +35,15 @@ int main(int argc, char *argv[]) {
     using namespace nlang;
 
     Handle<Value> handle = Number::New(12351);
-    std::cout << handle->Is<Number>() << std::endl;
-    std::cout << handle->Is<FastInt>() << std::endl;
-    // Non-copying downcast way, good for fast checks
-    std::cout << handle->As<Number>().Value() << std::endl;
-    handle = FastInt::New(555);
-    std::cout << handle->Is<Number>() << std::endl;
-    std::cout << handle->Is<FastInt>() << std::endl;
-    // Copying downcast way for creating typed handles
-    Handle<FastInt> fast_int_handle = handle.As<FastInt>();
-    std::cout << fast_int_handle->Value() << std::endl;
+    std::cout << handle.Is<Number>() << std::endl;
+    std::cout << handle.Is<Int32>() << std::endl;
+    std::cout << handle.As<Number>()->Value() << std::endl;
+    handle = Int32::New(555);
+    std::cout << handle.Is<Number>() << std::endl;
+    std::cout << handle.Is<Int32>() << std::endl;
+    Handle<Int32> int32_handle = handle.As<Int32>();
+    std::cout << int32_handle->Value() << std::endl;
+    std::cout << int32_handle.Is<Object>() << std::endl;
 
     if (argc == 2) {
         auto scanner = nlang::Scanner::Create(nlang::CharStream::Create<nlang::FileCharStream>(argv[1]));

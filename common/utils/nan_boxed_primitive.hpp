@@ -13,6 +13,8 @@
 
 namespace nlang {
 
+class FakeNanBoxedPrimitive;
+
 class NanBoxedPrimitive {
 public:
     static_assert((sizeof(void*) == 8) && std::numeric_limits<double>::is_iec559, "nan boxing is only supported on 64-bit platforms with IEEE754 doubles");
@@ -30,7 +32,7 @@ public:
     }
 
     NLANG_FORCE_INLINE NanBoxedPrimitive(int32_t value_) {
-        SetFastInt(value_);
+        SetInt32(value_);
     }
 
     NLANG_FORCE_INLINE NanBoxedPrimitive(void* ptr) {
@@ -40,6 +42,8 @@ public:
     NLANG_FORCE_INLINE NanBoxedPrimitive(const NanBoxedPrimitive&) = default;
     NLANG_FORCE_INLINE NanBoxedPrimitive& operator=(const NanBoxedPrimitive&) = default;
 
+    NLANG_FORCE_INLINE NanBoxedPrimitive(const FakeNanBoxedPrimitive&);
+    NLANG_FORCE_INLINE NanBoxedPrimitive& operator=(const FakeNanBoxedPrimitive&);
 
     NLANG_FORCE_INLINE bool IsNull() const {
         return (value & type_mask) == null_signature;
@@ -61,8 +65,8 @@ public:
         return (value & signaling_nan_mask) != signaling_nan_signature;
     }
 
-    NLANG_FORCE_INLINE bool IsFastInt() const {
-        return (value & type_mask) == fast_int_signature;
+    NLANG_FORCE_INLINE bool IsInt32() const {
+        return (value & type_mask) == int32_signature;
     }
 
     NLANG_FORCE_INLINE bool IsPointer() const {
@@ -78,7 +82,7 @@ public:
         return reinterpret_cast<const double&>(value);
     }
 
-    NLANG_FORCE_INLINE int32_t GetFastInt() const {
+    NLANG_FORCE_INLINE int32_t GetInt32() const {
         return (uint32_t)(value & 0xFFFFFFFF);
     }
 
@@ -99,8 +103,8 @@ public:
         value = reinterpret_cast<uint64_t&>(value_);
     }
 
-    NLANG_FORCE_INLINE void SetFastInt(int32_t value_) {
-        value = fast_int_signature | reinterpret_cast<uint32_t&>(value_);
+    NLANG_FORCE_INLINE void SetInt32(int32_t value_) {
+        value = int32_signature | reinterpret_cast<uint32_t&>(value_);
     }
 
     NLANG_FORCE_INLINE void SetPointer(void* ptr) {
@@ -133,7 +137,7 @@ private:
 
     static constexpr uint64_t pointer_signature =       signaling_nan_signature | ((uint64_t)0x000 << (uint64_t)48);
     static constexpr uint64_t null_signature =          signaling_nan_signature | ((uint64_t)0x010 << (uint64_t)48);
-    static constexpr uint64_t fast_int_signature =      signaling_nan_signature | ((uint64_t)0x001 << (uint64_t)48);
+    static constexpr uint64_t int32_signature =         signaling_nan_signature | ((uint64_t)0x001 << (uint64_t)48);
 
     static constexpr uint64_t bool_mask =               signaling_nan_mask      | ((uint64_t)0x011 << (uint64_t)48);
 
@@ -141,6 +145,104 @@ private:
     static constexpr uint64_t bool_false_signature =    signaling_nan_signature | ((uint64_t)0x011 << (uint64_t)48);
     static constexpr uint64_t bool_true_signature =     signaling_nan_signature | ((uint64_t)0x111 << (uint64_t)48);
 };
+
+
+class FakeNanBoxedPrimitive {
+public:
+    NLANG_FORCE_INLINE FakeNanBoxedPrimitive() : ptr(nullptr) {}
+
+    NLANG_FORCE_INLINE FakeNanBoxedPrimitive(bool) {
+        throw std::runtime_error("not implemented in fake nan boxed primitive");
+    }
+
+    NLANG_FORCE_INLINE FakeNanBoxedPrimitive(double) {
+        throw std::runtime_error("not implemented in fake nan boxed primitive");
+    }
+
+    NLANG_FORCE_INLINE FakeNanBoxedPrimitive(int32_t) {
+        throw std::runtime_error("not implemented in fake nan boxed primitive");
+    }
+
+    NLANG_FORCE_INLINE FakeNanBoxedPrimitive(void* ptr) : ptr(ptr) {}
+
+    NLANG_FORCE_INLINE FakeNanBoxedPrimitive(const FakeNanBoxedPrimitive&) = default;
+    NLANG_FORCE_INLINE FakeNanBoxedPrimitive& operator=(const FakeNanBoxedPrimitive&) = default;
+
+    NLANG_FORCE_INLINE FakeNanBoxedPrimitive(const NanBoxedPrimitive& other) : ptr(other.GetPointer()) {}
+    NLANG_FORCE_INLINE FakeNanBoxedPrimitive& operator=(const NanBoxedPrimitive& other) {
+        SetPointer(other.GetPointer());
+        return *this;
+    }
+
+
+    NLANG_FORCE_INLINE bool IsNull() const {
+        return false;
+    }
+
+    NLANG_FORCE_INLINE bool IsBool() const {
+        return false;
+    }
+
+    NLANG_FORCE_INLINE bool IsFalse() const {
+        return false;
+    }
+
+    NLANG_FORCE_INLINE bool IsTrue() const {
+        return false;
+    }
+
+    NLANG_FORCE_INLINE bool IsNumber() const {
+        return false;
+    }
+
+    NLANG_FORCE_INLINE bool IsInt32() const {
+        return false;
+    }
+
+    NLANG_FORCE_INLINE bool IsPointer() const {
+        return true;
+    }
+
+
+    NLANG_FORCE_INLINE bool GetBool() const {
+        throw std::runtime_error("not implemented in fake nan boxed primitive");
+    }
+
+    NLANG_FORCE_INLINE double GetNumber() const {
+        throw std::runtime_error("not implemented in fake nan boxed primitive");
+    }
+
+    NLANG_FORCE_INLINE int32_t GetInt32() const {
+        throw std::runtime_error("not implemented in fake nan boxed primitive");
+    }
+
+    NLANG_FORCE_INLINE void* GetPointer() const {
+        return ptr;
+    }
+
+
+    NLANG_FORCE_INLINE void SetNull() {}
+    NLANG_FORCE_INLINE void SetBool(bool value_) {}
+    NLANG_FORCE_INLINE void SetNumber(double value_) {}
+    NLANG_FORCE_INLINE void SetInt32(int32_t value_) {}
+
+    NLANG_FORCE_INLINE void SetPointer(void* ptr_) {
+        ptr = ptr_;
+    }
+
+private:
+    void* ptr;
+};
+
+NLANG_FORCE_INLINE NanBoxedPrimitive::NanBoxedPrimitive(const FakeNanBoxedPrimitive& other) {
+    SetPointer(other.GetPointer());
+}
+
+NLANG_FORCE_INLINE NanBoxedPrimitive& NanBoxedPrimitive::operator=(const FakeNanBoxedPrimitive& other) {
+    SetPointer(other.GetPointer());
+    return *this;
+}
+
 
 }
 

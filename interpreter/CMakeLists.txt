@@ -10,7 +10,12 @@ set(NLANG_INTERPRETER_HEADERS
         ast_interpreter.hpp
         heap.hpp
         value.hpp
-        page.hpp)
+        page.hpp
+        handle.hpp
+        interpreter.hpp
+        class.hpp
+        object.hpp
+        function.hpp)
 
 add_library(nlang_interpreter ${NLANG_INTERPRETER_HEADERS} ${NLANG_INTERPRETER_SOURCES})
 target_include_directories(nlang_interpreter PUBLIC .)
