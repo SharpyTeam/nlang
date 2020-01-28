@@ -21,14 +21,6 @@ namespace nlang {
 // Base class for all objects
 class Value {
 public:
-    Value(const Value&) = delete;
-    Value(Value&&) = delete;
-    Value& operator=(const Value&) = delete;
-    Value& operator=(Value&&) = delete;
-
-protected:
-    Value() {}
-
     enum class Type : uintptr_t {
         THE_NULL,
         BOOL,
@@ -37,6 +29,14 @@ protected:
         STRING,
         OBJECT,
     };
+
+    Value(const Value&) = delete;
+    Value(Value&&) = delete;
+    Value& operator=(const Value&) = delete;
+    Value& operator=(Value&&) = delete;
+
+protected:
+    Value() {}
 };
 
 
@@ -113,7 +113,13 @@ NLANG_FORCE_INLINE Handle<Int32> Int32::New(int32_t value) {
 }
 
 
-class HeapValue : public Value {};
+class HeapValue : public Value {
+public:
+    const Type type;
+
+protected:
+    HeapValue(Type type) : type(type) {}
+};
 
 
 }

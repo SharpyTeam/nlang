@@ -7,12 +7,13 @@
 #include <parser.hpp>
 #include <char_stream.hpp>
 #include <page.hpp>
-
-#include <iostream>
-#include <string>
+#include <heap.hpp>
 #include <ast_interpreter.hpp>
 #include <value.hpp>
 #include <object.hpp>
+
+#include <iostream>
+#include <string>
 #include <cmath>
 
 void print(const std::string &input) {
@@ -33,6 +34,15 @@ void print(const std::string &input) {
 
 int main(int argc, char *argv[]) {
     using namespace nlang;
+
+    Heap heap;
+    heap.RegisterDeleterForType(Value::Type::OBJECT, [](HeapValue* value) {
+        delete static_cast<Object*>(value);
+    });
+    auto object_handle = heap.StoreValue(new Object);
+    std::cout << object_handle.Is<StackValue>() << std::endl;
+    std::cout << object_handle.Is<HeapValue>() << std::endl;
+    std::cout << object_handle.Is<Object>() << std::endl;
 
     Handle<Value> handle = Number::New(12351);
     std::cout << handle.Is<Number>() << std::endl;

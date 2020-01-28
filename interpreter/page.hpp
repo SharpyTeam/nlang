@@ -28,13 +28,12 @@ namespace nlang {
 
 class PageRange;
 
-template<typename T>
-class TypedPageHandle;
-
 class PageHandle {
     friend class Page;
 
 public:
+    PageHandle() : data_(nullptr) {}
+    PageHandle(void* data_) : data_(data_) {}
     PageHandle(const PageHandle&) = default;
     PageHandle& operator=(const PageHandle&) = default;
 
@@ -118,14 +117,10 @@ public:
         return *this;
     }
 
-    template<typename T>
-    TypedPageHandle<T> Typed() const;
-
 protected:
-    PageHandle(void* data_) : data_(data_) {}
-
     void* data_;
 };
+
 
 class Page {
 public:
@@ -169,105 +164,10 @@ protected:
     }
 };
 
-template<typename T>
-class TypedPageHandle : public PageHandle {
-    friend class PageHandle;
-
-public:
-    TypedPageHandle(const TypedPageHandle&) = default;
-    TypedPageHandle& operator=(const TypedPageHandle&) = default;
-
-    ~TypedPageHandle() = default;
-
-    size_t size() const {
-        return size_;
-    }
-
-    T* data() const {
-        return static_cast<T*>(data_);
-    }
-
-    T* begin() const {
-        return static_cast<T*>(data_);
-    }
-
-    T* end() const {
-        return static_cast<T*>(data_) + size_;
-    }
-
-    T& operator[](size_t index) {
-        return static_cast<T*>(data_)[index];
-    }
-
-    const T& operator[](size_t index) const {
-        return static_cast<T*>(data_)[index];
-    }
-
-    TypedPageHandle operator+(intptr_t count) const {
-        return TypedPageHandle((void*)((size_t)PageHandle::data_ + (intptr_t)PageHandle::size() * count));
-    }
-
-    TypedPageHandle operator-(intptr_t count) const {
-        return TypedPageHandle((void*)((size_t)PageHandle::data_ - (intptr_t)PageHandle::size() * count));
-    }
-
-    TypedPageHandle& operator+=(intptr_t count) {
-        data_ = (void*)((size_t)PageHandle::data_ + (intptr_t)PageHandle::size() * count);
-        return *this;
-    }
-
-    TypedPageHandle& operator-=(intptr_t count) {
-        data_ = (void*)((size_t)PageHandle::data_ - (intptr_t)PageHandle::size() * count);
-        return *this;
-    }
-
-    TypedPageHandle& operator++() {
-        *this += 1;
-        return *this;
-    }
-
-    TypedPageHandle& operator--() {
-        *this -= 1;
-        return *this;
-    }
-
-    TypedPageHandle operator++(int) {
-        TypedPageHandle p(data_);
-        *this += 1;
-        return p;
-    }
-
-    TypedPageHandle operator--(int) {
-        TypedPageHandle p(data_);
-        *this -= 1;
-        return p;
-    }
-
-    const TypedPageHandle& operator*() const {
-        return *this;
-    }
-
-    TypedPageHandle& operator*() {
-        return *this;
-    }
-
-private:
-    TypedPageHandle(void* data_) : PageHandle(data_) {}
-
-    static inline size_t size_ = Page::Size() / sizeof(T);
-};
-
 size_t PageHandle::size() const {
     return Page::Size();
 }
 
-template<typename T>
-TypedPageHandle<T> PageHandle::Typed() const {
-    return TypedPageHandle<T>(data_);
-}
-
-template<typename T>
-class TypedPageRange;
 
 class PageRange {
 public:
@@ -285,41 +185,10 @@ public:
         return Page::Distance(begin_, end_);
     }
 
-    template<typename T>
-    TypedPageRange<T> Typed() const;
-
 private:
     PageHandle begin_;
     PageHandle end_;
 };
-
-template<typename T>
-class TypedPageRange {
-public:
-    TypedPageRange(TypedPageHandle<T> a, TypedPageHandle<T> b) : begin_(a), end_(b) {}
-
-    TypedPageHandle<T> begin() const {
-        return begin_;
-    }
-
-    TypedPageHandle<T> end() const {
-        return end_;
-    }
-
-    size_t size() const {
-        return Page::Distance(begin_, end_);
-    }
-
-private:
-    TypedPageHandle<T> begin_;
-    TypedPageHandle<T> end_;
-};
-
-
-template<typename T>
-TypedPageRange<T> PageRange::Typed() const {
-    return TypedPageRange<T>(begin_.Typed<T>(), end_.Typed<T>());
-}
 
 
 PageRange Page::AllocateRange(size_t pages_count)  {
