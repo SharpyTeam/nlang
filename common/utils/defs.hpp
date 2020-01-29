@@ -5,6 +5,39 @@
 #ifndef NLANG_DEFS_HPP
 #define NLANG_DEFS_HPP
 
+
+#ifdef NDEBUG
+#define NLANG_RELEASE
+#else
+#define NLANG_DEBUG
+#endif
+
+
+#ifdef NLANG_DEBUG
+
+#include <backward.hpp>
+#include <cstdlib>
+#include <iostream>
+
+#define NLANG_ASSERT(...)                       \
+{                                               \
+    if (!static_cast<bool>(__VA_ARGS__)) {      \
+        fprintf(stderr, "Assertion \"%s\" failed\n", #__VA_ARGS__); \
+        using namespace backward;               \
+        StackTrace st; st.load_here(32);        \
+        Printer p;                              \
+        p.object = true;                        \
+        p.color_mode = ColorMode::always;       \
+        p.address = true;                       \
+        p.print(st, stderr);                    \
+        exit(1);                                \
+    }                                           \
+}
+
+#else
+#define NLANG_ASSERT(...) do {} while (0)
+#endif
+
 #if defined(__clang__)
 #define NLANG_COMPILER_CLANG
 #define NLANG_FORCE_INLINE inline __attribute__((always_inline))

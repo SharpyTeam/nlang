@@ -114,6 +114,8 @@ private:
     }
 
     NLANG_FORCE_INLINE T* Get() const {
+        NLANG_ASSERT(Is<T>());
+
         if constexpr (std::is_same_v<Value, T>) {
             throw std::runtime_error("can't dereference Value");
         } else if constexpr (std::is_base_of_v<HeapValue, T>) {

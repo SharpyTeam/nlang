@@ -7,6 +7,8 @@ set(CMAKE_CXX_STANDARD_REQUIRED 17)
 set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
+set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/deps/cmake")
+
 if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     # MATCHES cause on macOS it is AppleClang now
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror -pedantic")
@@ -64,4 +66,14 @@ target_link_libraries(nlang Threads::Threads)
 
 if (ENABLE_JNI_TOOLS)
     add_subdirectory(ide/jni)
+endif ()
+
+if (CMAKE_BUILD_TYPE STREQUAL "Debug")
+    find_package(LibDwarf)
+
+    add_subdirectory(deps/backward)
+    add_backward(nlang)
+
+    target_include_directories(nlang PUBLIC ${LIBDWARF_INCLUDE_DIRS})
+    target_link_libraries(nlang ${LIBDWARF_LIBRARIES})
 endif ()

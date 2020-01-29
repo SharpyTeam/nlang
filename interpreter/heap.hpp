@@ -57,9 +57,8 @@ private:
         }
 
         HeapEntry* ClaimEntry(HeapValue* value) {
-            if (IsFull()) {
-                throw std::runtime_error("can't claim entry on full page");
-            }
+            NLANG_ASSERT(!IsFull());
+
             auto entry = entry_empty_first;
             entry_empty_first = entry_empty_first->next;
             entry->value = value;
@@ -69,12 +68,18 @@ private:
 
     private:
         void ReleaseEntry(HeapEntry* entry, const std::unordered_map<Value::Type, std::function<void(HeapValue*)>>& deleters) {
-            if (!entry) {
-                throw std::runtime_error("null entry");
+#ifdef NLANG_DEBUG
+            {
+                HeapEntry* e = entry_empty_first;
+                while (e) {
+                    NLANG_ASSERT(e != entry);
+                    e = e->next;
+                }
             }
-            if (entry < begin() || entry >= end()) {
-                throw std::runtime_error("can't release entry not from this page");
-            }
+#endif
+            NLANG_ASSERT(entry != nullptr);
+            NLANG_ASSERT(entry >= begin() && entry < end());
+
             deleters.at(entry->value->type)(entry->value);
             entry->next = entry_empty_first;
             entry_empty_first = entry;
@@ -98,6 +103,7 @@ public:
     }
 
     void RegisterDeleterForType(Value::Type type, const std::function<void(HeapValue*)>& deleter) {
+        NLANG_ASSERT(deleters.find(type) == deleters.end());
         deleters[type] = deleter;
     }
 
@@ -116,6 +122,8 @@ private:
     }
 
     void RemovePage(PageHeader* page) {
+        NLANG_ASSERT(page != nullptr);
+
         auto prev = page->prev;
         auto next = page->next;
 
@@ -137,6 +145,8 @@ private:
     }
 
     void InsertPage(PageHeader* page, PageHeader* prev, PageHeader* next = nullptr) {
+        NLANG_ASSERT(page != nullptr);
+
         if (prev) {
             next = prev->next;
         } else if (next) {
