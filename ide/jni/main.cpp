@@ -4,7 +4,7 @@
 
 #include "org_nlang_JNI.h"
 
-#include <parser/include/parser/scanner.hpp>
+#include <parser/scanner.hpp>
 
 #include <jni.h>
 #include <cstdint>
