@@ -1,16 +1,13 @@
-//
-// Created by ilya on 08.11.2019.
-//
+#include "version.hpp"
 
-#include <scanner.hpp>
-#include <version.hpp>
-#include <parser.hpp>
-#include <char_stream.hpp>
-#include <page.hpp>
-#include <heap.hpp>
-#include <ast_interpreter.hpp>
-#include <value.hpp>
-#include <object.hpp>
+#include <parser/scanner.hpp>
+#include <parser/parser.hpp>
+#include <parser/char_stream.hpp>
+#include <interpreter/page.hpp>
+#include <interpreter/heap.hpp>
+#include <interpreter/ast_interpreter.hpp>
+#include <interpreter/value.hpp>
+#include <interpreter/object.hpp>
 
 #include <iostream>
 #include <string>

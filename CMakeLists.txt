@@ -11,8 +11,6 @@ if (NOT CMAKE_BUILD_TYPE OR CMAKE_BUILD_TYPE STREQUAL "")
     set(CMAKE_BUILD_TYPE "Debug" CACHE STRING "" FORCE)
 endif()
 
-set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/deps/cmake")
-
 if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     # MATCHES cause on macOS it is AppleClang now
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror -pedantic")
@@ -44,12 +42,11 @@ if (${IS_BIG_ENDIAN})
 endif ()
 
 add_subdirectory(${CMAKE_SOURCE_DIR}/deps/Catch2)
-add_subdirectory(library/intrusive_ptr)
 
+add_subdirectory(utils)
 add_subdirectory(common)
 add_subdirectory(parser)
 add_subdirectory(interpreter)
-add_subdirectory(library)
 
 add_subdirectory(tests)
 
@@ -57,12 +54,11 @@ set(NLANG_CORE_SOURCES
         main.cpp)
 
 set(NLANG_CORE_HEADERS
-        main.hpp)
+        )
 
 configure_file(version.hpp.in "${CMAKE_CURRENT_SOURCE_DIR}/version.hpp")
 
 add_executable(nlang ${NLANG_CORE_HEADERS} ${NLANG_CORE_SOURCES})
-target_include_directories(nlang PUBLIC .)
 target_link_libraries(nlang nlang_common)
 target_link_libraries(nlang nlang_parser)
 target_link_libraries(nlang nlang_interpreter)
@@ -70,14 +66,4 @@ target_link_libraries(nlang Threads::Threads)
 
 if (ENABLE_JNI_TOOLS)
     add_subdirectory(ide/jni)
-endif ()
-
-if (CMAKE_BUILD_TYPE MATCHES Debug AND NOT WIN32)
-    find_package(LibDwarf)
-
-    add_subdirectory(deps/backward)
-    add_backward(nlang)
-
-    target_include_directories(nlang PUBLIC ${LIBDWARF_INCLUDE_DIRS})
-    target_link_libraries(nlang ${LIBDWARF_LIBRARIES})
 endif ()

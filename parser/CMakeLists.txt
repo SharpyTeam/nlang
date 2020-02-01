@@ -4,13 +4,13 @@ project(nlang_parser)
 set(CMAKE_CXX_STANDARD 17)
 
 set(NLANG_PARSER_SOURCES
-        scanner.cpp)
+        src/scanner.cpp)
 
 set(NLANG_PARSER_HEADERS
-        scanner.hpp
-        parser.hpp
-        char_stream.hpp)
+        include/parser/scanner.hpp
+        include/parser/parser.hpp
+        include/parser/char_stream.hpp)
 
 add_library(nlang_parser ${NLANG_PARSER_HEADERS} ${NLANG_PARSER_SOURCES})
-target_include_directories(nlang_parser PUBLIC .)
+target_include_directories(nlang_parser PUBLIC include)
 target_link_libraries(nlang_parser nlang_common)

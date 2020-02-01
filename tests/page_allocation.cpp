@@ -2,7 +2,7 @@
 // Created by ilya on 17.01.2020.
 //
 
-#include <page.hpp>
+#include <interpreter/page.hpp>
 
 #include <catch2/catch.hpp>
 
