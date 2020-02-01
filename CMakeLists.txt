@@ -68,7 +68,7 @@ if (ENABLE_JNI_TOOLS)
     add_subdirectory(ide/jni)
 endif ()
 
-if (CMAKE_BUILD_TYPE STREQUAL "Debug")
+if (CMAKE_BUILD_TYPE STREQUAL "Debug" AND NOT WIN32)
     find_package(LibDwarf)
 
     add_subdirectory(deps/backward)

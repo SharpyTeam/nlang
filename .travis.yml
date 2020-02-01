@@ -10,10 +10,18 @@ compiler:
   - clang
   - gcc
 
+env:
+  - CONFIGURATION=Release
+  - CONFIGURATION=Debug
+
 addons:
   apt:
     update: true
     packages:
+      - binutils-dev
+      - libdw-dev
+      - libelf-dev
+      - libdwarf-dev
       - cmake
       - gcc
       - g++
@@ -28,19 +36,35 @@ jobs:
       compiler: clang
       arch: amd64
       env:
+        - CONFIGURATION=Debug
+        - MATRIX_EVAL="brew tap adoptopenjdk/openjdk && brew cask install adoptopenjdk11 && brew install dwarfutils binutils"
+    - os: osx
+      osx_image: xcode11.2
+      compiler: gcc
+      arch: amd64
+      env:
+        - CONFIGURATION=Debug
+        - MATRIX_EVAL="brew install gcc && brew tap adoptopenjdk/openjdk && brew cask install adoptopenjdk11 && brew install dwarfutils binutils"
+    - os: osx
+      osx_image: xcode11.2
+      compiler: clang
+      arch: amd64
+      env:
+        - CONFIGURATION=Release
         - MATRIX_EVAL="brew tap adoptopenjdk/openjdk && brew cask install adoptopenjdk11"
     - os: osx
       osx_image: xcode11.2
       compiler: gcc
       arch: amd64
       env:
+        - CONFIGURATION=Release
         - MATRIX_EVAL="brew install gcc && brew tap adoptopenjdk/openjdk && brew cask install adoptopenjdk11"
 
 
 script:
   - mkdir build
   - cd build
-  - cmake .. `if [ "$TRAVIS_CPU_ARCH" != "arm64" ]; then echo "-DENABLE_JNI_TOOLS=TRUE"; fi`
-  - cmake --build .
+  - cmake .. -DCMAKE_BUILD_TYPE=$CONFIGURATION `if [ "$TRAVIS_CPU_ARCH" != "arm64" ]; then echo "-DENABLE_JNI_TOOLS=TRUE"; fi`
+  - cmake --build . --config $CONFIGURATION
   - cd tests
   - ctest
