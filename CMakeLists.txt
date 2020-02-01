@@ -7,6 +7,10 @@ set(CMAKE_CXX_STANDARD_REQUIRED 17)
 set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
+if (NOT CMAKE_BUILD_TYPE OR CMAKE_BUILD_TYPE STREQUAL "")
+    set(CMAKE_BUILD_TYPE "Debug" CACHE STRING "" FORCE)
+endif()
+
 set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/deps/cmake")
 
 if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
@@ -68,7 +72,7 @@ if (ENABLE_JNI_TOOLS)
     add_subdirectory(ide/jni)
 endif ()
 
-if (CMAKE_BUILD_TYPE STREQUAL "Debug" AND NOT WIN32)
+if (CMAKE_BUILD_TYPE MATCHES Debug AND NOT WIN32)
     find_package(LibDwarf)
 
     add_subdirectory(deps/backward)
