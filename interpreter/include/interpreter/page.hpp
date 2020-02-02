@@ -119,12 +119,12 @@ protected:
 
 class Page {
 public:
-    static PageRange AllocateRange(size_t pages_count);
-    static PageHandle Allocate();
-    static void FreeRange(PageRange range);
-    static void Free(PageHandle handle);
+    inline static PageRange AllocateRange(size_t pages_count);
+    inline static PageHandle Allocate();
+    inline static void FreeRange(PageRange range);
+    inline static void Free(PageHandle handle);
 
-    static size_t Distance(PageHandle a, PageHandle b) {
+    inline static size_t Distance(PageHandle a, PageHandle b) {
         if (a > b) {
             return ((size_t)a.data_ - (size_t)b.data_) / Size();
         } else {
@@ -138,7 +138,7 @@ public:
     Page& operator=(Page&&) = delete;
     ~Page() = delete;
 
-    static size_t Size() {
+    inline static size_t Size() {
         static size_t size = SizeImpl();
         return size;
     }
@@ -146,7 +146,7 @@ public:
 protected:
     Page() = delete;
 
-    static size_t SizeImpl() {
+    inline static size_t SizeImpl() {
 #if defined(NLANG_PLATFORM_LINUX) || defined(NLANG_PLATFORM_MACOS)
         return getpagesize();
 #elif defined(NLANG_PLATFORM_WINDOWS)
@@ -159,7 +159,7 @@ protected:
     }
 };
 
-size_t PageHandle::size() const {
+inline size_t PageHandle::size() const {
     return Page::Size();
 }
 

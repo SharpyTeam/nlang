@@ -8,6 +8,7 @@
 #include <interpreter/ast_interpreter.hpp>
 #include <interpreter/value.hpp>
 #include <interpreter/object.hpp>
+#include <interpreter/string.hpp>
 
 #include <iostream>
 #include <string>
@@ -36,6 +37,9 @@ int main(int argc, char *argv[]) {
     heap.RegisterDeleterForType(Value::Type::OBJECT, [](HeapValue* value) {
         delete static_cast<Object*>(value);
     });
+    heap.RegisterDeleterForType(Value::Type::STRING, [](HeapValue* value) {
+        delete static_cast<String*>(value);
+    });
     auto object_handle = heap.StoreValue(new Object);
     std::cout << object_handle.Is<StackValue>() << std::endl;
     std::cout << object_handle.Is<HeapValue>() << std::endl;
@@ -51,6 +55,21 @@ int main(int argc, char *argv[]) {
     Handle<Int32> int32_handle = handle.As<Int32>();
     std::cout << int32_handle->Value() << std::endl;
     std::cout << int32_handle.Is<Object>() << std::endl;
+
+    Handle<String> result = String::New(heap, u"TEST🌲, ");//, std::string("kek, "), std::u32string(U"чебурек"));
+    typedef deletable_facet<std::codecvt<char32_t, char, std::mbstate_t>> facet_u32;
+    std::wstring_convert<facet_u32, char32_t> conv;
+    std::cout << conv.to_bytes(result->GetRawString()) << std::endl;
+
+    std::string a("w");
+    std::u32string b(U"й");
+    std::u16string c(u"m");
+    const char* d = "d";
+    const char16_t* e = u"ф";
+    const char32_t* f = U"ъ";
+    Handle<String> v = String::New(heap, a, b, c);
+    std::cout << "Length: " << v->GetLength() << std::endl;
+
 
     if (argc == 2) {
         auto scanner = nlang::Scanner::Create(nlang::CharStream::Create<nlang::FileCharStream>(argv[1]));
