@@ -11,7 +11,8 @@ set(NLANG_UTILS_HEADERS
         include/utils/nan_boxed_primitive.hpp
         include/utils/traits.hpp
         include/utils/backtrace.hpp
-        include/utils/thread_pool.hpp)
+        include/utils/thread_pool.hpp
+        include/utils/string_converters.hpp)
 
 add_library(nlang_utils ${NLANG_UTILS_HEADERS} ${NLANG_UTILS_SOURCES})
 target_include_directories(nlang_utils PUBLIC include)

@@ -8,6 +8,8 @@
 #include "value.hpp"
 #include "heap.hpp"
 
+#include <utils/string_converters.hpp>
+
 #include <cstring>
 #include <tuple>
 #include <codecvt>
@@ -84,6 +86,7 @@ private:
     String(std::u32string&& string) : HeapValue(Type::STRING),
                                       data(std::move(string)),
                                       hash(std::hash<std::u32string>{}(string)) {}
+    template <typename T> std::string type_name();
 
     template<typename Str>
     static std::u32string ConvertAndConcat(Str&& s) {
@@ -98,18 +101,14 @@ private:
             std::wstring_convert<facet_u32, char32_t> u8_to_u32;
             return u8_to_u32.from_bytes(utf8);
         } else if constexpr (std::is_same_v<StrType, std::string>) {
-            std::wstring_convert<facet_u32, char32_t> u8_to_u32;
-            return u8_to_u32.from_bytes(s);
+            return utf8_to_utf32(s);
         } else if constexpr (std::is_same_v<StrType, String>) {
             return s.GetRawString();
         } else if constexpr (std::is_same_v<StrType, const char32_t*>) {
             return std::u32string(s);
         } else if constexpr (std::is_same_v<StrType, const char16_t*>) {
             std::u16string u16s(s);
-            std::wstring_convert<facet_u16, char16_t> u16_to_u8;
-            std::string utf8 = u16_to_u8.to_bytes(s);
-            std::wstring_convert<facet_u32, char32_t> u8_to_u32;
-            return u8_to_u32.from_bytes(utf8);
+            return utf8_to_utf32(utf16_to_utf8(s));
         } else if constexpr (std::is_same_v<StrType, const char*>) {
             std::wstring_convert<facet_u32, char32_t> u8_to_u32;
             return u8_to_u32.from_bytes(s);
