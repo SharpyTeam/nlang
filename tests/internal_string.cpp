@@ -12,30 +12,24 @@ TEST_CASE("string creation & manipulation") {
     std::u32string b(U"й");
     std::u32string w(U"q");
     std::u16string c(u"m");
-    const char *d = "d";
-    const char16_t *e = u"ф";
-    const char32_t *f = U"ъ";
+    const char* d = "d";
+    const char16_t* e = u"ф";
+    const char32_t* f = U"ъ";
 
-    heap.RegisterDeleterForType(Value::Type::STRING, [](HeapValue *value) {
-        delete static_cast<String *>(value);
+    heap.RegisterDeleterForType(Value::Type::STRING, [](HeapValue* value) {
+        delete static_cast<String*>(value);
     });
 
     SECTION("strings can be created from STL strings") {
         Handle<String> s = String::New(heap, a, b, c);
         REQUIRE(s->GetLength() == a.length() + b.length() + c.length());
-        REQUIRE(s->GetCharCodeAt(0)->Value() == (int32_t) U'w');
+        REQUIRE(s->GetCharCodeAt(0)->Value() == int32_t(U'w'));
     }
 
     SECTION("strings can be created from combination of STL strings, literals and internal strings") {
         Handle<String> s = String::New(heap, a, d, e, b, c, f);
-        REQUIRE(s->GetLength() ==
-                a.length() +
-                b.length() +
-                c.length() +
-                std::string(d).length() +
-                std::u16string(e).length() +
-                std::u32string(f).length()
-        );
+        REQUIRE(s->GetLength() == 6);
+        REQUIRE(s->GetCharCodeAt(2)->Value() == int32_t(U'ф'));
     }
 
     SECTION("hashes of equal strings are the same") {
