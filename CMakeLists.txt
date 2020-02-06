@@ -17,7 +17,8 @@ if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
 elseif (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror -pedantic")
 elseif (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
-
+    # remove default warning level from CMAKE_CXX_FLAGS_INIT
+    string(REGEX REPLACE "/W[0-4]" "/W4" CMAKE_CXX_FLAGS_INIT "${CMAKE_CXX_FLAGS_INIT}")
 endif()
 
 find_package(Git)

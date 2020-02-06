@@ -1,12 +1,8 @@
-//
-// Created by ilya on 20.01.2020.
-//
-
-#ifndef NLANG_STRING_HPP
-#define NLANG_STRING_HPP
+#pragma once
 
 #include "value.hpp"
 #include "heap.hpp"
+#include <utils/defs.hpp>
 
 #include <cstring>
 #include <tuple>
@@ -160,5 +156,3 @@ struct hash<nlang::Handle<nlang::String>> {
 };
 
 }
-
-#endif //NLANG_STRING_HPP

@@ -326,7 +326,7 @@ public:
 
                 case Token::ASSIGN_REMAINDER:
                 case Token::REMAINDER:
-                    expression_result = Number::Get(int64_t(a) % int64_t(b));
+                    expression_result = Number::Get((double)(int64_t(a) % int64_t(b)));
                     return;
 
                 case Token::LESS:
