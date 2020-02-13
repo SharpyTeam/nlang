@@ -117,7 +117,7 @@ private:
             return GetHeapPointerOfType<T>();
         } else if constexpr (std::is_base_of_v<StackValue, T>) {
             static_assert(std::is_base_of_v<BackingPrimitive, StackValue>);
-            return reinterpret_cast<T*>(const_cast<BackingPrimitive*>(&value));
+            return static_cast<T*>(const_cast<BackingPrimitive*>(&value));
         } else {
             static_assert(dependent_false_v<T>, "unexpected type");
         }

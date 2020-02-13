@@ -23,6 +23,7 @@ public:
         INT32,
         STRING,
         OBJECT,
+        FUNCTION
     };
 
     Value(const Value&) = delete;

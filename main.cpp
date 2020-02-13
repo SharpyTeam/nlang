@@ -12,7 +12,9 @@
 
 #include <iostream>
 #include <string>
+#include <cstring>
 #include <cmath>
+#include <interpreter/interpreter.hpp>
 
 void print(const std::string &input) {
     auto sc = nlang::Scanner::Create(nlang::CharStream::Create<nlang::StringCharStream>(input));
@@ -64,9 +66,6 @@ int main(int argc, char *argv[]) {
     std::string a("w");
     std::u32string b(U"й");
     std::u16string c(u"m");
-    const char* d = "d";
-    const char16_t* e = u"ф";
-    const char32_t* f = U"ъ";
     Handle<String> v = String::New(heap, a, b, c);
     std::cout << "Length: " << v->GetLength() << std::endl;
 
@@ -104,7 +103,7 @@ int main(int argc, char *argv[]) {
         }
     } else {
         std::cout << "nlang " NLANG_VERSION " (" NLANG_BUILD_GIT_REVISION ", " NLANG_BUILD_PROCESSOR ",  " __DATE__ " " __TIME__  ")" << std::endl;
-        std::cout << "[" << ((NLANG_BUILD_COMPILER_ID == "GNU") ? "GCC" : NLANG_BUILD_COMPILER_ID) << " " NLANG_BUILD_COMPILER_VERSION << "]" << std::endl;
+        std::cout << "[" << ((std::strcmp(NLANG_BUILD_COMPILER_ID, "GNU") == 0) ? "GCC" : NLANG_BUILD_COMPILER_ID) << " " NLANG_BUILD_COMPILER_VERSION << "]" << std::endl;
 
         std::cout << "Interactive mode. Type 'exit' to exit.\nThis mode only prints tokens at the moment." << std::endl;
         std::string input;

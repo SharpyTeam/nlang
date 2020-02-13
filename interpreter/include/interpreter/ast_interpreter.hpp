@@ -145,6 +145,7 @@ public:
     }
 
     virtual std::shared_ptr<Object> Apply(const std::vector<std::shared_ptr<Object>>& args) = 0;
+    virtual ~Function() = default;
 };
 
 class InlineFunction : public Function {

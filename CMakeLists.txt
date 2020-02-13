@@ -33,8 +33,6 @@ else ()
     set(GIT_REVISION "dev")
 endif ()
 
-find_package(Threads REQUIRED)
-
 include(TestBigEndian)
 TEST_BIG_ENDIAN(IS_BIG_ENDIAN)
 
@@ -63,7 +61,6 @@ add_executable(nlang ${NLANG_CORE_HEADERS} ${NLANG_CORE_SOURCES})
 target_link_libraries(nlang nlang_common)
 target_link_libraries(nlang nlang_parser)
 target_link_libraries(nlang nlang_interpreter)
-target_link_libraries(nlang Threads::Threads)
 
 if (ENABLE_JNI_TOOLS)
     add_subdirectory(ide/jni)

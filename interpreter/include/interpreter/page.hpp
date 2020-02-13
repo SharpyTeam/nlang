@@ -186,7 +186,7 @@ private:
 };
 
 
-PageRange Page::AllocateRange(size_t pages_count)  {
+inline PageRange Page::AllocateRange(size_t pages_count)  {
     void* raw_data;
     size_t size = Size() * pages_count;
 #if defined(NLANG_PLATFORM_LINUX) || defined(NLANG_PLATFORM_MACOS)
@@ -208,11 +208,11 @@ PageRange Page::AllocateRange(size_t pages_count)  {
     return PageRange(PageHandle(raw_data), PageHandle(raw_data) + pages_count);
 }
 
-PageHandle Page::Allocate() {
+inline PageHandle Page::Allocate() {
     return AllocateRange(1).begin();
 }
 
-void Page::FreeRange(PageRange range) {
+inline void Page::FreeRange(PageRange range) {
     void* raw_data = range.begin().data_;
     size_t size = Size() * range.size();
     if (!raw_data) {
@@ -227,7 +227,7 @@ void Page::FreeRange(PageRange range) {
 #endif
 }
 
-void Page::Free(PageHandle handle) {
+inline void Page::Free(PageHandle handle) {
     FreeRange(PageRange(handle, handle + 1));
 }
 

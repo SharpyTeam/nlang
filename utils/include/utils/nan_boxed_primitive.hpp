@@ -5,6 +5,9 @@
 #include <cstdint>
 #include <type_traits>
 #include <limits>
+#include <stdexcept>
+#include <iostream>
+#include <cstring>
 
 namespace nlang::utils {
 
@@ -74,15 +77,19 @@ public:
     }
 
     NLANG_FORCE_INLINE double GetNumber() const {
-        return reinterpret_cast<const double&>(value);
+        double v_;
+        std::memcpy(&v_, &value, sizeof(double));
+        return v_;
     }
 
     NLANG_FORCE_INLINE int32_t GetInt32() const {
-        return (uint32_t)(value & 0xFFFFFFFF);
+        int32_t v_;
+        std::memcpy(&v_, &value, sizeof(int32_t));
+        return v_;
     }
 
     NLANG_FORCE_INLINE void* GetPointer() const {
-        return reinterpret_cast<void*>(SignExtend<47>(value));
+        return reinterpret_cast<void*>(SignExtend<47, uint64_t>(value & mask_48_bit));
     }
 
 
@@ -95,15 +102,16 @@ public:
     }
 
     NLANG_FORCE_INLINE void SetNumber(double value_) {
-        value = reinterpret_cast<uint64_t&>(value_);
+        std::memcpy(&value, &value_, sizeof(uint64_t));
     }
 
     NLANG_FORCE_INLINE void SetInt32(int32_t value_) {
-        value = int32_signature | reinterpret_cast<uint32_t&>(value_);
+        value = int32_signature;
+        std::memcpy(&value, &value_, sizeof(int32_t));
     }
 
     NLANG_FORCE_INLINE void SetPointer(void* ptr) {
-        value = pointer_signature | reinterpret_cast<uint64_t&>(ptr);
+        value = pointer_signature | (reinterpret_cast<uint64_t>(ptr) & mask_48_bit);
     }
 
 
@@ -130,6 +138,7 @@ private:
 
     static constexpr uint64_t type_mask =               signaling_nan_mask      | ((uint64_t)0x111 << (uint64_t)48);
 
+    static constexpr uint64_t mask_48_bit =             ((uint64_t)1 << (uint64_t)48) - (uint64_t)1;
     static constexpr uint64_t pointer_signature =       signaling_nan_signature | ((uint64_t)0x000 << (uint64_t)48);
     static constexpr uint64_t null_signature =          signaling_nan_signature | ((uint64_t)0x010 << (uint64_t)48);
     static constexpr uint64_t int32_signature =         signaling_nan_signature | ((uint64_t)0x001 << (uint64_t)48);

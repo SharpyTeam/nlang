@@ -26,6 +26,8 @@ public:
     static std::shared_ptr<T> Create(Args&&... args) {
         return std::shared_ptr<T>(new T(std::forward<Args>(args)...));
     }
+
+    virtual ~CharStream() = default;
 };
 
 class StringCharStream : public CharStream {
