@@ -12,6 +12,7 @@ compiler:
 env:
   - CONFIGURATION=Release
   - CONFIGURATION=Debug
+  - CONFIGURATION=Debug SANITIZE=true
 
 addons:
   apt:
@@ -63,7 +64,7 @@ jobs:
 script:
   - mkdir build
   - cd build
-  - cmake .. -DCMAKE_BUILD_TYPE=$CONFIGURATION `if [ "$TRAVIS_CPU_ARCH" != "arm64" ]; then echo "-DENABLE_JNI_TOOLS=TRUE"; fi`
+  - cmake .. -DCMAKE_BUILD_TYPE=$CONFIGURATION `if [ "$TRAVIS_CPU_ARCH" != "arm64" ]; then echo "-DENABLE_JNI_TOOLS=TRUE"; fi` `if [ "$SANITIZE" = "true" ]; then echo "-DENABLE_SANITIZERS=TRUE"; fi`
   - cmake --build . --config $CONFIGURATION
   - cd tests
   - ctest
