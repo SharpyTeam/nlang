@@ -40,13 +40,13 @@ static size_t utf32_to_utf8(uint8_t* buffer, uint32_t code) {
 
 extern "C" JNIEXPORT void JNICALL Java_org_nlang_JNI_tokenize(JNIEnv* env, jclass, jobject source, jint start, jint end, jobject tokens_map) {
     jclass CharSequence_class = env->FindClass("java/lang/CharSequence");
-    jmethodID CharSequence_length = env->GetMethodID(CharSequence_class, "length", "()I");
+    //jmethodID CharSequence_length = env->GetMethodID(CharSequence_class, "length", "()I");
     jmethodID CharSequence_charAt = env->GetMethodID(CharSequence_class, "charAt", "(I)C");
 
     jclass TreeMap_class = env->FindClass("java/util/TreeMap");
     jmethodID TreeMap_put = env->GetMethodID(TreeMap_class, "put", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;");
 
-    jint length = env->CallIntMethod(source, CharSequence_length);
+    //gjint length = env->CallIntMethod(source, CharSequence_length);
 
     uint8_t buf[4];
     std::vector<jint> relation;
