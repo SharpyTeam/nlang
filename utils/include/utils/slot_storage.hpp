@@ -163,7 +163,7 @@ public:
     }
 
     ~SlotStorage() {
-        // TODO
+        FreePages(false);
     }
 
     Slot* Store(T* value) {
@@ -217,22 +217,7 @@ public:
     }
 
     void FreeEmptyPages() {
-        SlotPage<T>* page = nullptr;
-        pages.remove_if([&](const SlotPage<T>& p) {
-            if (p.empty()) {
-                if (page) {
-                    capacity_ -= page->capacity();
-                    SlotPage<T>::Release(page);
-                }
-                page = const_cast<SlotPage<T>*>(&p);
-                return true;
-            }
-            return false;
-        });
-        if (page) {
-            capacity_ -= page->capacity();
-            SlotPage<T>::Release(page);
-        }
+        FreePages(true);
     }
 
     template<typename F>
@@ -265,6 +250,26 @@ public:
 
     size_t capacity() const {
         return capacity_;
+    }
+
+private:
+    void FreePages(bool empty_only) {
+        SlotPage<T>* page = nullptr;
+        pages.remove_if([&](const SlotPage<T>& p) {
+            if (!empty_only || p.empty()) {
+                if (page) {
+                    capacity_ -= page->capacity();
+                    SlotPage<T>::Release(page);
+                }
+                page = const_cast<SlotPage<T>*>(&p);
+                return true;
+            }
+            return false;
+        });
+        if (page) {
+            capacity_ -= page->capacity();
+            SlotPage<T>::Release(page);
+        }
     }
 
 private:
