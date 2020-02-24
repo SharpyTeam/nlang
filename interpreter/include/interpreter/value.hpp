@@ -23,6 +23,7 @@ public:
         NUMBER,
         INT32,
         STRING,
+        CLASS,
         OBJECT,
         FUNCTION
     };

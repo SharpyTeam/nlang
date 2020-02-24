@@ -37,10 +37,18 @@ int main(int argc, char *argv[]) {
 
     Heap heap;
 
-    auto object_handle = heap.Store(new Object);
+    auto class_name = String::New(heap, "test");
 
+    auto class_handle = Class::New(heap, class_name);
+    std::cout << class_handle.Is<StackValue>() << std::endl;
+    std::cout << class_handle.Is<HeapValue>() << std::endl;
+    std::cout << class_handle.Is<Class>() << std::endl;
+    std::cout << class_handle.Is<Object>() << std::endl;
+
+    auto object_handle = Object::New(heap, class_handle);
     std::cout << object_handle.Is<StackValue>() << std::endl;
     std::cout << object_handle.Is<HeapValue>() << std::endl;
+    std::cout << object_handle.Is<Class>() << std::endl;
     std::cout << object_handle.Is<Object>() << std::endl;
 
     Handle<Value> handle = Number::New(12351);
