@@ -3,6 +3,7 @@
 #include "value.hpp"
 #include "handle.hpp"
 #include "function.hpp"
+#include "heap.hpp"
 
 #include <vector>
 #include <cstdint>
@@ -158,9 +159,11 @@ private:
                 switch (*instruction_pointer++) {
                     // call
                     case 1: {
-                        uint64_t register_begin = *reinterpret_cast<const uint64_t*>(instruction_pointer);
+                        uint64_t register_begin;
+                        std::memcpy(&register_begin, instruction_pointer, sizeof(uint64_t));
                         instruction_pointer += sizeof(uint64_t);
-                        uint64_t register_end = *reinterpret_cast<const uint64_t*>(instruction_pointer);
+                        uint64_t register_end;
+                        std::memcpy(&register_end, instruction_pointer, sizeof(uint64_t));
                         instruction_pointer += sizeof(uint64_t);
                         Call(accumulator.As<Function>(), registers_pointer + register_begin, registers_pointer + register_end);
                         break;
@@ -174,7 +177,8 @@ private:
 
                     // load register to accumulator
                     case 3: {
-                        uint64_t register_index = *reinterpret_cast<const uint64_t*>(instruction_pointer);
+                        uint64_t register_index;
+                        std::memcpy(&register_index, instruction_pointer, sizeof(uint64_t));
                         instruction_pointer += sizeof(uint64_t);
                         accumulator = registers_pointer[register_index];
                         break;
@@ -182,7 +186,8 @@ private:
 
                     // load argument to accumulator
                     case 4: {
-                        uint64_t argument_index = *reinterpret_cast<const uint64_t*>(instruction_pointer);
+                        uint64_t argument_index;
+                        std::memcpy(&argument_index, instruction_pointer, sizeof(uint64_t));
                         instruction_pointer += sizeof(uint64_t);
                         accumulator = arguments_pointer[argument_index];
                         break;
@@ -190,7 +195,8 @@ private:
 
                     // store accumulator to register
                     case 5: {
-                        uint64_t register_index = *reinterpret_cast<const uint64_t*>(instruction_pointer);
+                        uint64_t register_index;
+                        std::memcpy(&register_index, instruction_pointer, sizeof(uint64_t));
                         instruction_pointer += sizeof(uint64_t);
                         registers_pointer[register_index] = accumulator;
                         break;
@@ -198,7 +204,8 @@ private:
 
                     // store accumulator to argument
                     case 6: {
-                        uint64_t argument_index = *reinterpret_cast<const uint64_t*>(instruction_pointer);
+                        uint64_t argument_index;
+                        std::memcpy(&argument_index, instruction_pointer, sizeof(uint64_t));
                         instruction_pointer += sizeof(uint64_t);
                         arguments_pointer[argument_index] = accumulator;
                         break;

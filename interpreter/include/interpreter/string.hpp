@@ -25,7 +25,7 @@ public:
         } else {
             s = ConvertAndConcat(strings...);
         }
-       return heap.StoreValue(new String(s)).As<String>();
+       return heap.Store(new String(s)).As<String>();
     }
 
     String() = delete;

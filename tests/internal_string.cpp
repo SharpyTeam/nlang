@@ -16,9 +16,9 @@ TEST_CASE("string creation & manipulation") {
     const char16_t* e = u"ф";
     const char32_t* f = U"ъ";
 
-    heap.RegisterDeleterForType(Value::Type::STRING, [](HeapValue* value) {
+    /*heap.RegisterDeleterForType(Value::Type::STRING, [](HeapValue* value) {
         delete static_cast<String*>(value);
-    });
+    });*/
 
     SECTION("strings can be created from STL strings") {
         Handle<String> s = String::New(heap, a, b, c);

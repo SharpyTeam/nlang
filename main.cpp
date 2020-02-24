@@ -3,7 +3,7 @@
 #include <parser/scanner.hpp>
 #include <parser/parser.hpp>
 #include <parser/char_stream.hpp>
-#include <interpreter/page.hpp>
+#include <utils/page.hpp>
 #include <interpreter/heap.hpp>
 #include <interpreter/ast_interpreter.hpp>
 #include <interpreter/value.hpp>
@@ -36,13 +36,9 @@ int main(int argc, char *argv[]) {
     using namespace nlang;
 
     Heap heap;
-    heap.RegisterDeleterForType(Value::Type::OBJECT, [](HeapValue* value) {
-        delete static_cast<Object*>(value);
-    });
-    heap.RegisterDeleterForType(Value::Type::STRING, [](HeapValue* value) {
-        delete static_cast<String*>(value);
-    });
-    auto object_handle = heap.StoreValue(new Object);
+
+    auto object_handle = heap.Store(new Object);
+
     std::cout << object_handle.Is<StackValue>() << std::endl;
     std::cout << object_handle.Is<HeapValue>() << std::endl;
     std::cout << object_handle.Is<Object>() << std::endl;

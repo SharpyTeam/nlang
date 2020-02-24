@@ -21,7 +21,8 @@
         nlang::utils::PrintBacktrace();         \
         exit(0);                                \
     }                                           \
-}
+}                                               \
+do {} while (0)
 
 #else
 #define NLANG_ASSERT(...) do {} while (0)

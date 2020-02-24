@@ -9,7 +9,9 @@ set(NLANG_TESTS_SOURCES
         tests_main.cpp
         page_allocation.cpp
         internal_string.cpp
-        thread_spawn_and_execution.cpp)
+        thread_spawn_and_execution.cpp
+        forward_list_view.cpp
+        slot_storage.cpp)
 
 include(CTest)
 include(${CMAKE_SOURCE_DIR}/deps/Catch2/contrib/Catch.cmake)

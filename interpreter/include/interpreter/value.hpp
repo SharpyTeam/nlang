@@ -2,6 +2,7 @@
 
 #include "handle.hpp"
 
+#include <utils/nan_boxed_primitive.hpp>
 #include <utils/defs.hpp>
 #include <utils/traits.hpp>
 

@@ -1,7 +1,7 @@
 #pragma once
 
 #include "value.hpp"
-#include "heap.hpp"
+#include "handle.hpp"
 
 #include <cstdint>
 #include <vector>

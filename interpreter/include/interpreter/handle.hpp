@@ -3,6 +3,7 @@
 #include <utils/defs.hpp>
 #include <utils/nan_boxed_primitive.hpp>
 #include <utils/traits.hpp>
+#include <utils/slot_storage.hpp>
 
 #include <type_traits>
 #include <cstdint>
@@ -105,7 +106,7 @@ public:
 private:
     template<typename U>
     NLANG_FORCE_INLINE U* GetHeapPointerOfType() const {
-        return static_cast<U*>(*static_cast<HeapValue**>(value.GetPointer()));
+        return static_cast<U*>(static_cast<typename utils::SlotStorage<HeapValue>::Slot*>(value.GetPointer())->Get());
     }
 
     NLANG_FORCE_INLINE T* Get() const {

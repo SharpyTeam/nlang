@@ -6,13 +6,13 @@ set(CMAKE_CXX_STANDARD 17)
 find_package(Threads REQUIRED)
 
 set(NLANG_INTERPRETER_SOURCES
-        src/stub.cpp src/function.cpp)
+        src/stub.cpp
+        src/function.cpp)
 
 set(NLANG_INTERPRETER_HEADERS
         include/interpreter/ast_interpreter.hpp
         include/interpreter/heap.hpp
         include/interpreter/value.hpp
-        include/interpreter/page.hpp
         include/interpreter/handle.hpp
         include/interpreter/interpreter.hpp
         include/interpreter/class.hpp
