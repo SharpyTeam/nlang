@@ -18,14 +18,14 @@ public:
     // Static methods
 
     template<typename ...StrArgs>
-    static Handle<String> New(Heap &heap, const StrArgs& ...strings) {
+    static Handle <String> New(Heap& heap, const StrArgs& ...strings) {
         std::u32string s;
         if constexpr ((std::is_base_of_v<String, StrArgs> && ...)) {
             s = Concat(strings...);
         } else {
             s = ConvertAndConcat(strings...);
         }
-       return heap.Store(new String(s)).As<String>();
+        return heap.Store(new String(s)).As<String>();
     }
 
     String() = delete;
@@ -42,7 +42,7 @@ public:
         return data;
     }
 
-    [[nodiscard]] Handle<Int32> GetCharCodeAt(const size_t index) const {
+    [[nodiscard]] Handle <Int32> GetCharCodeAt(const size_t index) const {
         return Int32::New(int32_t(data[index]));
     }
 
@@ -152,6 +152,13 @@ template<>
 struct hash<nlang::Handle<nlang::String>> {
     size_t operator()(const nlang::Handle<nlang::String>& h) const {
         return h->GetHash();
+    }
+};
+
+template<>
+struct equal_to<nlang::Handle<nlang::String>> {
+    bool operator()(const nlang::Handle<nlang::String>& lhs, const nlang::Handle<nlang::String>& rhs) const {
+        return *lhs == *rhs;
     }
 };
 

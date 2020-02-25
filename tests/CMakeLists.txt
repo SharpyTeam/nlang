@@ -11,7 +11,8 @@ set(NLANG_TESTS_SOURCES
         internal_string.cpp
         thread_spawn_and_execution.cpp
         forward_list_view.cpp
-        slot_storage.cpp)
+        slot_storage.cpp
+        class_and_object_creation.cpp)
 
 include(CTest)
 include(${CMAKE_SOURCE_DIR}/deps/Catch2/contrib/Catch.cmake)

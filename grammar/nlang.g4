@@ -9,8 +9,8 @@ assign_operator: '=' | '+=' | '-=' | '*=' | '/=' | '%=';
 equality_operator: '==' | '!=';
 comparison_operator: '<=' | '>=' | '<' | '>';
 identifier: ; // TODO add identifier regex here
-//number: ; // TODO
-//string: ; // TODO
+number: ; // TODO
+string: ; // TODO
 literal: number | string | 'null' | 'true' | 'false';
 additive_operator: '+' | '-';
 multiplicative_operator: '*' | '/' | '%';
@@ -54,3 +54,5 @@ var_def_statement: 'let' argument ('=' expression)?;
 
 while_statement: 'while' '(' expression ')' block_statement;
 if_statement: 'if' '(' expression ')' block_statement ('else' 'if' '(' expression ')' block_statement)* ('else' block_statement)?;
+
+fragment
