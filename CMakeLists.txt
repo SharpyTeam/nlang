@@ -21,6 +21,18 @@ elseif (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
     string(REGEX REPLACE "/W[0-4]" "/W4" CMAKE_CXX_FLAGS_INIT "${CMAKE_CXX_FLAGS_INIT}")
 endif ()
 
+find_package(Protobuf REQUIRED)
+
+function (compile_proto SRCS OUT_SOURCES OUT_HEADERS)
+    foreach (SRC ${${SRCS}})
+        protobuf_generate_cpp(PROTO_SOURCES PROTO_HEADERS ${SRC})
+    endforeach ()
+    list(APPEND ${OUT_SOURCES} "${PROTO_SOURCES}")
+    list(APPEND ${OUT_HEADERS} "${PROTO_HEADERS}")
+    set(${OUT_SOURCES} ${${OUT_SOURCES}} PARENT_SCOPE)
+    set(${OUT_HEADERS} ${${OUT_HEADERS}} PARENT_SCOPE)
+endfunction ()
+
 find_package(Git)
 if (Git_FOUND)
     execute_process(COMMAND "${GIT_EXECUTABLE}" rev-parse --short HEAD
@@ -51,6 +63,7 @@ add_subdirectory(utils)
 add_subdirectory(common)
 add_subdirectory(parser)
 add_subdirectory(interpreter)
+add_subdirectory(compiler)
 
 add_subdirectory(tests)
 
@@ -66,6 +79,7 @@ add_executable(nlang ${NLANG_CORE_HEADERS} ${NLANG_CORE_SOURCES})
 target_link_libraries(nlang nlang_common)
 target_link_libraries(nlang nlang_parser)
 target_link_libraries(nlang nlang_interpreter)
+target_link_libraries(nlang nlang_compiler)
 
 if (ENABLE_JNI_TOOLS)
     message(STATUS "Enabling JNI tools builds")
