@@ -28,6 +28,8 @@ do {} while (0)
 #define NLANG_ASSERT(...) do {} while (0)
 #endif
 
+#define NLANG_UNUSED(x) (void)(x)
+
 #if defined(__clang__)
 #define NLANG_COMPILER_CLANG
 #define NLANG_FORCE_INLINE inline __attribute__((always_inline))

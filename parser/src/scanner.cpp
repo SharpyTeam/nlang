@@ -4,7 +4,7 @@
 
 namespace nlang {
 
-Scanner::ScannerImpl::ScannerImpl(std::shared_ptr<CharStream> char_stream)
+Scanner::ScannerImpl::ScannerImpl(std::shared_ptr<ICharStream> char_stream)
     : row(1)
     , column(1)
     , char_stream_cache_offset(0)
@@ -53,7 +53,7 @@ TokenInstance Scanner::ScannerImpl::NextToken() {
                 Token actual_token = token;
                 if (token == Token::OPERATOR_OR_PUNCTUATION || token == Token::IDENTIFIER) {
                     try {
-                        actual_token = TokenUtils::SourceToToken(str);
+                        actual_token = TokenUtils::GetTokenByText(str);
                     } catch (...) {}
                 }
 
@@ -109,7 +109,8 @@ const TokenInstance &Scanner::NextTokenAssert(Token token, AdvanceBehaviour adva
     auto &ts = NextToken(advance_behaviour);
     if (ts.token != token) {
         mark.Apply();
-        throw std::runtime_error("Expected " + TokenUtils::TokenToString(token) + ", found " + TokenUtils::TokenToString(ts.token));
+        throw std::runtime_error("Expected " + TokenUtils::GetTokenName(token) + ", found " +
+                                 TokenUtils::GetTokenName(ts.token));
     }
     return ts;
 }
@@ -158,11 +159,11 @@ void Scanner::SetIgnore(Token token, bool ignore) {
     }
 }
 
-std::shared_ptr<Scanner> Scanner::Create(const std::shared_ptr<CharStream> &char_stream) {
+std::shared_ptr<Scanner> Scanner::Create(const std::shared_ptr<ICharStream> &char_stream) {
     return std::shared_ptr<Scanner>(new Scanner(char_stream));
 }
 
-Scanner::Scanner(std::shared_ptr<CharStream> char_stream)
+Scanner::Scanner(std::shared_ptr<ICharStream> char_stream)
     : impl(std::move(char_stream))
     , pos(0)
 {

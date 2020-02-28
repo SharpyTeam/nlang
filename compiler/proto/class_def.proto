@@ -1,5 +1,11 @@
 syntax = "proto3";
 
+message Function {
+    string name = 1;
+
+    bytes bytecode = 2;
+}
+
 message ClassDef {
     string name = 1;
 }

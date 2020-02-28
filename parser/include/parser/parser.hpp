@@ -14,7 +14,7 @@ namespace nlang {
 
 class Parser {
 public:
-    std::shared_ptr<Expression> ParseExpression() {
+    std::shared_ptr<IExpression> ParseExpression() {
         if (scanner->NextTokenLookahead().token == Token::FN) {
             return ParseFunctionDefExpression();
         }
@@ -154,7 +154,7 @@ private:
     }
 
     std::shared_ptr<Statement> ParseIfStatement() {
-        std::vector<std::pair<std::shared_ptr<Expression>, std::shared_ptr<Statement>>> ifs;
+        std::vector<std::pair<std::shared_ptr<IExpression>, std::shared_ptr<Statement>>> ifs;
         std::shared_ptr<Statement> else_statement;
         while (true) {
             scanner->NextTokenAssert(Token::IF);
@@ -183,7 +183,7 @@ private:
     }
 
 #define BINARY(name, next, ...)                                                                 \
-    std::shared_ptr<Expression> name() {                                                        \
+    std::shared_ptr<IExpression> name() {                                                        \
         static std::unordered_set<Token> tokens { __VA_ARGS__ };                                \
         auto expr = next();                                                                     \
         while (true) {                                                                          \
@@ -198,14 +198,14 @@ private:
         return expr;                                                                            \
     }
 
-    std::shared_ptr<Expression> ParseParenthesizedExpression() {
+    std::shared_ptr<IExpression> ParseParenthesizedExpression() {
         scanner->NextTokenAssert(Token::LEFT_PAR);
         auto expr = ParseExpression();
         scanner->NextTokenAssert(Token::RIGHT_PAR);
         return expr;
     }
 
-    std::shared_ptr<Expression> ParseBasicExpression() {
+    std::shared_ptr<IExpression> ParseBasicExpression() {
         auto mark = scanner->Mark();
         auto token = scanner->NextToken();
         switch (token.token) {
@@ -232,7 +232,7 @@ private:
         }
     }
 
-    std::shared_ptr<Expression> ParsePostfixUnaryExpression() {
+    std::shared_ptr<IExpression> ParsePostfixUnaryExpression() {
         static std::unordered_set<Token> tokens { Token::ADD_ADD, Token::SUB_SUB };
         auto expr = ParseBasicExpression();
         while (true) {
@@ -240,7 +240,7 @@ private:
             if (auto token = scanner->NextToken(); tokens.find(token.token) != tokens.end()) {
                 expr = std::make_shared<PostfixExpression>(token.token, expr);
             } else if (token.token == Token::LEFT_PAR) {
-                std::vector<std::shared_ptr<Expression>> arguments;
+                std::vector<std::shared_ptr<IExpression>> arguments;
                 while (true) {
                     if (scanner->TrySkipToken(Token::RIGHT_PAR)) {
                         break;
@@ -261,7 +261,7 @@ private:
         return expr;
     }
 
-    std::shared_ptr<Expression> ParsePrefixUnaryExpression() {
+    std::shared_ptr<IExpression> ParsePrefixUnaryExpression() {
         static std::unordered_set<Token> tokens { Token::ADD, Token::SUB, Token::ADD_ADD, Token::SUB_SUB };
         std::stack<Token> operators;
         while (true) {
@@ -283,7 +283,7 @@ private:
     BINARY(ParseMultiplicativeExpression, ParsePrefixUnaryExpression, Token::MUL, Token::DIV, Token::REMAINDER)
     BINARY(ParseAdditiveExpression, ParseMultiplicativeExpression, Token::ADD, Token::SUB)
 
-    std::shared_ptr<Expression> ParseRangeExpression() {
+    std::shared_ptr<IExpression> ParseRangeExpression() {
         // TODO maybe add range syntax later
         return ParseAdditiveExpression();
     }
@@ -297,7 +297,7 @@ private:
 
 #undef BINARY
 
-    std::shared_ptr<Expression> ParseFunctionDefExpression() {
+    std::shared_ptr<IExpression> ParseFunctionDefExpression() {
         std::string name;
         std::vector<std::string> args_list;
         std::vector<std::shared_ptr<Statement>> body;

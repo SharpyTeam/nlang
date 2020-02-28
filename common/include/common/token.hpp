@@ -1,11 +1,9 @@
 #pragma once
 
-#include <map>
+#include <utils/defs.hpp>
+
 #include <unordered_map>
-#include <unordered_set>
 #include <string>
-#include <regex>
-#include <stdexcept>
 
 namespace nlang {
 
@@ -93,35 +91,35 @@ struct TokenInstance {
 
 class TokenUtils {
 public:
-    static const std::string &TokenToString(Token token) {
-        return token_to_string.at(token);
+    static const std::string &GetTokenName(Token token) {
+        return token_to_name.at(token);
     }
 
-    static const std::string &TokenToSource(Token token) {
-        return token_to_source.at(token);
+    static const std::string &GetTokenText(Token token) {
+        const std::string& text = token_to_text.at(token);
+        NLANG_ASSERT(!text.empty());
+        return text;
     }
 
-    static Token SourceToToken(const std::string &source) {
-        if (source.empty()) {
-            throw std::runtime_error("Can't convert empty source to token");
-        }
-        return source_to_token.at(source);
+    static Token GetTokenByText(const std::string &text) {
+        NLANG_ASSERT(!text.empty());
+        return text_to_token.at(text);
     }
 
 private:
-    inline static const std::unordered_map<Token, std::string> token_to_string {
+    inline static const std::unordered_map<Token, std::string> token_to_name {
 #define T(token, value) { Token::token, #token },
         TOKENS_LIST
 #undef T
     };
 
-    inline static const std::unordered_map<Token, std::string> token_to_source {
+    inline static const std::unordered_map<Token, std::string> token_to_text {
 #define T(token, value) { Token::token, value },
         TOKENS_LIST
 #undef T
     };
 
-    inline static const std::unordered_map<std::string, Token> source_to_token {
+    inline static const std::unordered_map<std::string, Token> text_to_token {
 #define T(token, value) { value, Token::token },
         TOKENS_LIST
 #undef T

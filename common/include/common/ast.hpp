@@ -8,7 +8,7 @@
 
 namespace nlang {
 
-class ASTNode;
+class IASTNode;
 class FileNode;
 class LiteralExpression;
 class NumberLiteralExpression;
@@ -29,9 +29,9 @@ class BreakStatement;
 class ContinueStatement;
 
 
-class ASTVisitor {
+class IASTVisitor {
 public:
-    virtual void Visit(ASTNode&) = 0;
+    virtual void Visit(IASTNode&) = 0;
     virtual void Visit(FileNode&) = 0;
     virtual void Visit(LiteralExpression&) = 0;
     virtual void Visit(NumberLiteralExpression&) = 0;
@@ -52,43 +52,48 @@ public:
     virtual void Visit(ContinueStatement&) = 0;
 };
 
+
 #define VISITOR_ACCEPT                          \
-virtual void Accept(ASTVisitor& visitor) {      \
+virtual void Accept(IASTVisitor& visitor) {      \
     visitor.Visit(*this);                       \
 }
 
-class ASTNode {
+
+class IASTNode {
 public:
     VISITOR_ACCEPT
 
-    ASTNode(const ASTNode&) = delete;
-    ASTNode(ASTNode&&) = delete;
-    ASTNode& operator=(const ASTNode&) = delete;
-    ASTNode& operator=(ASTNode&&) = delete;
+    IASTNode(const IASTNode&) = delete;
+    IASTNode(IASTNode&&) = delete;
+    IASTNode& operator=(const IASTNode&) = delete;
+    IASTNode& operator=(IASTNode&&) = delete;
 
-    virtual ~ASTNode() = default;
+    virtual ~IASTNode() = 0;
 
 protected:
-    ASTNode() {};
+    IASTNode() {};
 };
 
-class Expression : public ASTNode {
+
+class IExpression : public IASTNode {
 public:
     VISITOR_ACCEPT
+    virtual ~IExpression() = 0;
 };
 
-class LiteralExpression : public Expression {
+
+class LiteralExpression : public IExpression {
 public:
     VISITOR_ACCEPT
 
     const Token type;
 
-    explicit LiteralExpression(Token type)
-        : type(type)
-    {
+    virtual ~LiteralExpression() = 0;
 
-    }
+protected:
+    explicit LiteralExpression(Token type) : type(type) {}
 };
+
 
 class NumberLiteralExpression : public LiteralExpression {
 public:
@@ -104,6 +109,7 @@ public:
     }
 };
 
+
 class StringLiteralExpression : public LiteralExpression {
 public:
     VISITOR_ACCEPT
@@ -118,7 +124,8 @@ public:
     }
 };
 
-class IdentifierExpression : public Expression {
+
+class IdentifierExpression : public IExpression {
 public:
     VISITOR_ACCEPT
 
@@ -131,15 +138,16 @@ public:
     }
 };
 
-class BinaryExpression : public Expression {
+
+class BinaryExpression : public IExpression {
 public:
     VISITOR_ACCEPT
 
     const Token op;
-    const std::shared_ptr<Expression> left;
-    const std::shared_ptr<Expression> right;
+    const std::shared_ptr<IExpression> left;
+    const std::shared_ptr<IExpression> right;
 
-    BinaryExpression(Token op, std::shared_ptr<Expression> left, std::shared_ptr<Expression> right)
+    BinaryExpression(Token op, std::shared_ptr<IExpression> left, std::shared_ptr<IExpression> right)
         : op(op)
         , left(std::move(left))
         , right(std::move(right))
@@ -148,14 +156,15 @@ public:
     }
 };
 
-class UnaryExpression : public Expression {
+
+class UnaryExpression : public IExpression {
 public:
     VISITOR_ACCEPT
 
     const Token op;
-    const std::shared_ptr<Expression> expression;
+    const std::shared_ptr<IExpression> expression;
 
-    UnaryExpression(Token op, std::shared_ptr<Expression> expression)
+    UnaryExpression(Token op, std::shared_ptr<IExpression> expression)
         : op(op)
         , expression(std::move(expression))
     {
@@ -163,14 +172,15 @@ public:
     }
 };
 
-class PostfixExpression : public Expression {
+
+class PostfixExpression : public IExpression {
 public:
     VISITOR_ACCEPT
 
     const Token op;
-    const std::shared_ptr<Expression> expression;
+    const std::shared_ptr<IExpression> expression;
 
-    PostfixExpression(Token op, std::shared_ptr<Expression> expression)
+    PostfixExpression(Token op, std::shared_ptr<IExpression> expression)
         : op(op)
         , expression(std::move(expression))
     {
@@ -178,38 +188,42 @@ public:
     }
 };
 
-class Statement : public ASTNode {
+
+class Statement : public IASTNode {
 public:
     VISITOR_ACCEPT
 };
+
 
 class ExpressionStatement : public Statement {
 public:
     VISITOR_ACCEPT
 
-    const std::shared_ptr<Expression> expression;
+    const std::shared_ptr<IExpression> expression;
 
-    explicit ExpressionStatement(std::shared_ptr<Expression> expression)
+    explicit ExpressionStatement(std::shared_ptr<IExpression> expression)
         : expression(std::move(expression))
     {
 
     }
 };
 
+
 class ReturnStatement : public Statement {
 public:
     VISITOR_ACCEPT
 
-    const std::shared_ptr<Expression> return_expression;
+    const std::shared_ptr<IExpression> return_expression;
 
-    explicit ReturnStatement(std::shared_ptr<Expression> return_expression = nullptr)
+    explicit ReturnStatement(std::shared_ptr<IExpression> return_expression = nullptr)
         : return_expression(std::move(return_expression))
     {
 
     }
 };
 
-class FileNode : public ASTNode {
+
+class FileNode : public IASTNode {
 public:
     VISITOR_ACCEPT
 
@@ -221,6 +235,7 @@ public:
 
     }
 };
+
 
 class BlockStatement : public Statement {
 public:
@@ -235,14 +250,15 @@ public:
     }
 };
 
+
 class VarDefStatement : public Statement {
 public:
     VISITOR_ACCEPT
 
     const std::string identifier;
-    const std::shared_ptr<Expression> expression;
+    const std::shared_ptr<IExpression> expression;
 
-    explicit VarDefStatement(std::string identifier, std::shared_ptr<Expression> expression = nullptr)
+    explicit VarDefStatement(std::string identifier, std::shared_ptr<IExpression> expression = nullptr)
         : identifier(std::move(identifier))
         , expression(std::move(expression))
     {
@@ -251,14 +267,14 @@ public:
 };
 
 
-class FunctionCallExpression : public Expression {
+class FunctionCallExpression : public IExpression {
 public:
     VISITOR_ACCEPT
 
-    const std::shared_ptr<Expression> expression;
-    const std::vector<std::shared_ptr<Expression>> arguments;
+    const std::shared_ptr<IExpression> expression;
+    const std::vector<std::shared_ptr<IExpression>> arguments;
 
-    FunctionCallExpression(std::shared_ptr<Expression> expression, std::vector<std::shared_ptr<Expression>> arguments)
+    FunctionCallExpression(std::shared_ptr<IExpression> expression, std::vector<std::shared_ptr<IExpression>> arguments)
         : expression(std::move(expression))
         , arguments(std::move(arguments))
     {
@@ -266,7 +282,8 @@ public:
     }
 };
 
-class FunctionDefExpression : public Expression {
+
+class FunctionDefExpression : public IExpression {
 public:
     VISITOR_ACCEPT
 
@@ -283,14 +300,15 @@ public:
     }
 };
 
+
 class IfStatement : public Statement {
 public:
     VISITOR_ACCEPT
 
-    const std::vector<std::pair<std::shared_ptr<Expression>, std::shared_ptr<Statement>>> if_else_if_statement;
+    const std::vector<std::pair<std::shared_ptr<IExpression>, std::shared_ptr<Statement>>> if_else_if_statement;
     const std::shared_ptr<Statement> else_statement;
 
-    IfStatement(std::vector<std::pair<std::shared_ptr<Expression>, std::shared_ptr<Statement>>> if_else_if_statement, std::shared_ptr<Statement> else_statement)
+    IfStatement(std::vector<std::pair<std::shared_ptr<IExpression>, std::shared_ptr<Statement>>> if_else_if_statement, std::shared_ptr<Statement> else_statement)
         : if_else_if_statement(std::move(if_else_if_statement))
         , else_statement(std::move(else_statement))
     {
@@ -298,14 +316,15 @@ public:
     }
 };
 
+
 class WhileStatement : public Statement {
 public:
     VISITOR_ACCEPT
 
-    const std::shared_ptr<Expression> condition;
+    const std::shared_ptr<IExpression> condition;
     const std::shared_ptr<Statement> body;
 
-    WhileStatement(std::shared_ptr<Expression> condition, std::shared_ptr<Statement> body)
+    WhileStatement(std::shared_ptr<IExpression> condition, std::shared_ptr<Statement> body)
         : condition(std::move(condition))
         , body(std::move(body))
     {
@@ -313,12 +332,14 @@ public:
     }
 };
 
+
 class BreakStatement : public Statement {
 public:
     VISITOR_ACCEPT
 
     explicit BreakStatement() {}
 };
+
 
 class ContinueStatement : public Statement {
 public:
@@ -348,14 +369,14 @@ public:
 
 #undef VISITOR_ACCEPT
 
-class ASTStringifier : public ASTVisitor {
+class ASTStringifier : public IASTVisitor {
 public:
-    void Visit(ASTNode& node) {
+    void Visit(IASTNode& node) {
         str += "[ASTNode]";
     }
 
     void Visit(LiteralExpression& le) {
-        str += TokenUtils::TokenToSource(le.type);
+        str += TokenUtils::GetTokenText(le.type);
     }
 
     void Visit(NumberLiteralExpression& nle) {
@@ -373,14 +394,14 @@ public:
     void Visit(BinaryExpression& be) {
         str += "(";
         be.left->Accept(*this);
-        str += " " + TokenUtils::TokenToSource(be.op) + " ";
+        str += " " + TokenUtils::GetTokenText(be.op) + " ";
         be.right->Accept(*this);
         str += ")";
     }
 
     void Visit(UnaryExpression& ue) {
         str += "(";
-        str += TokenUtils::TokenToSource(ue.op);
+        str += TokenUtils::GetTokenText(ue.op);
         ue.expression->Accept(*this);
         str += ")";
     }
@@ -388,7 +409,7 @@ public:
     void Visit(PostfixExpression& pe) {
         str += "(";
         pe.expression->Accept(*this);
-        str += TokenUtils::TokenToSource(pe.op);
+        str += TokenUtils::GetTokenText(pe.op);
         str += ")";
     }
 

@@ -9,80 +9,94 @@
 
 namespace nlang {
 
-class CharStream {
+
+class ICharStream {
 public:
-    CharStream() = default;
-    CharStream(const CharStream&) = delete;
-    CharStream& operator=(const CharStream&) = delete;
+    ICharStream(const ICharStream&) = delete;
+    ICharStream(ICharStream&&) = delete;
+    ICharStream& operator=(const ICharStream&) = delete;
+    ICharStream& operator=(ICharStream&&) = delete;
 
-    virtual bool HasNextChar() = 0;
-    virtual char NextChar() = 0;
+    virtual bool HasNext() = 0;
+    virtual char Next() = 0;
 
-    inline operator bool() {
-        return HasNextChar();
-    }
+    virtual ~ICharStream() = default;
 
-    template<typename T, typename ...Args>
-    static std::shared_ptr<T> Create(Args&&... args) {
-        return std::shared_ptr<T>(new T(std::forward<Args>(args)...));
-    }
-
-    virtual ~CharStream() = default;
+protected:
+    ICharStream() = default;
 };
 
-class StringCharStream : public CharStream {
+
+class StringCharStream : public ICharStream {
 public:
-    explicit StringCharStream(const std::string& source) : source(source) {}
-    explicit StringCharStream(std::string&& source) : source(std::move(source)) {}
-    StringCharStream(StringCharStream&& other) noexcept : source(std::move(other.source)) {}
+    StringCharStream() = delete;
+    StringCharStream(const StringCharStream&) = delete;
+    StringCharStream(StringCharStream&&) = delete;
+    StringCharStream& operator=(const StringCharStream&) = delete;
+    StringCharStream& operator=(StringCharStream&&) = delete;
 
-    StringCharStream& operator=(StringCharStream&& other) noexcept {
-        source = std::move(other.source);
-        pos = other.pos;
-        return *this;
-    }
-
-    bool HasNextChar() override {
+    bool HasNext() override {
         return pos != source.length();
     }
 
-    char NextChar() override {
+    char Next() override {
         return source[pos++];
     }
 
-private:
+    static std::unique_ptr<StringCharStream> New(const std::string& source) {
+        return std::unique_ptr<StringCharStream>(new StringCharStream(source));
+    }
+
+protected:
+    explicit StringCharStream(const std::string& source) : source(source) {}
+    explicit StringCharStream(std::string&& source) : source(std::move(source)) {}
+
     std::string source;
     size_t pos = 0;
 };
 
-class FileCharStream : public CharStream {
-public:
-    explicit FileCharStream(const std::string& path) : path(path) {}
 
-    bool HasNextChar() override {
+class FileCharStream : public ICharStream {
+public:
+    FileCharStream() = delete;
+    FileCharStream(const FileCharStream&) = delete;
+    FileCharStream(FileCharStream&&) = delete;
+    FileCharStream& operator=(const FileCharStream&) = delete;
+    FileCharStream& operator=(FileCharStream&&) = delete;
+
+    bool HasNext() override {
         OpenFile();
         return !file->eof();
     }
 
-    char NextChar() override {
+    char Next() override {
         OpenFile();
         char c;
-        *file >> std::noskipws >> c;
+        *file >> c;
         return c;
     }
 
+    static std::unique_ptr<FileCharStream> New(const std::string& path) {
+        return std::unique_ptr<FileCharStream>(new FileCharStream(path));
+    }
+
 private:
+    explicit FileCharStream(const std::string& path) : path(path) {}
+
     void OpenFile() {
-        if (!file) {
-            file = std::fstream(path);
-            if (file->fail()) {
-                throw std::runtime_error("failed to open file \"" + path + "\"");
-            }
+        if (file) {
+            return;
         }
+        file = std::fstream(path);
+        if (file->fail()) {
+            throw std::runtime_error("failed to open file \"" + path + "\"");
+        }
+        *file >> std::noskipws;
     }
 
     const std::string path;
     std::optional<std::fstream> file;
 };
+
 
 }

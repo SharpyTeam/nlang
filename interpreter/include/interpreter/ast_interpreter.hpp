@@ -236,7 +236,7 @@ struct ContinueException : public std::exception {
 
 };
 
-class ASTExecutor : public ASTVisitor {
+class ASTExecutor : public IASTVisitor {
 public:
     std::shared_ptr<Scope> current_scope;
     std::shared_ptr<Object> expression_result;
@@ -244,7 +244,7 @@ public:
 
     explicit ASTExecutor(const std::shared_ptr<Scope>& current_scope) : current_scope(current_scope) {}
 
-    void Visit(ASTNode &node) override {}
+    void Visit(IASTNode &node) override {}
 
     void Visit(FileNode &node) override {
         for (auto& s : node.statements) {

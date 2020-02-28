@@ -17,10 +17,10 @@
 #include <interpreter/interpreter.hpp>
 
 void print(const std::string &input) {
-    auto sc = nlang::Scanner::Create(nlang::CharStream::Create<nlang::StringCharStream>(input));
+    auto sc = nlang::Scanner::Create(nlang::ICharStream::Create<nlang::StringCharStream>(input));
     auto mark = sc->Mark();
     for (auto token = sc->NextToken(); token.token != nlang::Token::THE_EOF; token = sc->NextToken()) {
-        std::cout << "'" << token.source << "'" << " [" << std::string(nlang::TokenUtils::TokenToString(token.token)) << ", " << static_cast<int>(token.token)  << "]:"
+        std::cout << "'" << token.source << "'" << " [" << std::string(nlang::TokenUtils::GetTokenName(token.token)) << ", " << static_cast<int>(token.token) << "]:"
             << token.row << ":" << token.column << std::endl;
     }
     mark.Apply();
@@ -75,7 +75,7 @@ int main(int argc, char *argv[]) {
 
 
     if (argc == 2) {
-        auto scanner = nlang::Scanner::Create(nlang::CharStream::Create<nlang::FileCharStream>(argv[1]));
+        auto scanner = nlang::Scanner::Create(nlang::ICharStream::Create<nlang::FileCharStream>(argv[1]));
         auto parser = nlang::Parser::Create(scanner);
         nlang::ast_interpreter::Interpreter interpreter(parser->ParseFile());
         interpreter.Run();
@@ -89,7 +89,7 @@ int main(int argc, char *argv[]) {
                 exit(-1);
             }
 
-            auto scanner = nlang::Scanner::Create(nlang::CharStream::Create<nlang::FileCharStream>(argv[2]));
+            auto scanner = nlang::Scanner::Create(nlang::ICharStream::Create<nlang::FileCharStream>(argv[2]));
             auto parser = nlang::Parser::Create(scanner);
             nlang::ASTStringifier stringifier;
             parser->ParseFile()->Accept(stringifier);

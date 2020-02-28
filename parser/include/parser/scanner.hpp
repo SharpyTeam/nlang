@@ -22,10 +22,10 @@ private:
             friend class ScannerImpl;
         public:
             using iterator_category = std::bidirectional_iterator_tag;
-            using value_type = char;
+            using value_type = const char;
             using difference_type = ptrdiff_t;
-            using pointer = const char *;
-            using reference = char;
+            using pointer = value_type*;
+            using reference = value_type&;
 
             explicit CachingCharStreamIterator(ScannerImpl* scanner_impl = nullptr, size_t pos = 0)
                 : scanner_impl(scanner_impl)
@@ -73,7 +73,7 @@ private:
                 return pos != other.pos;
             }
 
-            reference operator*() const {
+            value_type operator*() const {
                 return scanner_impl->GetCharFromCache(pos);
             }
 
@@ -82,22 +82,21 @@ private:
             size_t pos;
         };
 
-        explicit ScannerImpl(std::shared_ptr<CharStream> char_stream);
+        explicit ScannerImpl(std::shared_ptr<ICharStream> char_stream);
 
         TokenInstance NextToken();
 
     private:
         inline bool AdvanceCharCache(size_t index) {
             while (index >= char_stream_cache.size() + char_stream_cache_offset) {
-                if (!char_stream->HasNextChar()) {
+                if (!char_stream->HasNext()) {
                     return false;
                 }
-                char_stream_cache.emplace_back(char_stream->NextChar());
+                char_stream_cache.emplace_back(char_stream->Next());
             }
             return true;
         }
 
-        [[nodiscard]]
         inline char GetCharFromCache(size_t index) const {
             return char_stream_cache.at(index - char_stream_cache_offset);
         }
@@ -108,8 +107,8 @@ private:
         }
 
         inline size_t GetRealCharCacheEndIndex() {
-            while (char_stream->HasNextChar()) {
-                char_stream_cache.emplace_back(char_stream->NextChar());
+            while (char_stream->HasNext()) {
+                char_stream_cache.emplace_back(char_stream->Next());
             }
             return char_stream_cache_offset + char_stream_cache.size();
         }
@@ -118,7 +117,7 @@ private:
         size_t column;
         size_t char_stream_cache_offset;
         std::vector<char> char_stream_cache;
-        std::shared_ptr<CharStream> char_stream;
+        std::unique_ptr<ICharStream> char_stream;
 
         CachingCharStreamIterator current_iterator;
         CachingCharStreamIterator end_iterator;
@@ -128,11 +127,11 @@ public:
     class BookMark {
         friend class Scanner;
     public:
-        Scanner* scanner;
+        void Apply() {
+            scanner->pos = pos;
+        }
 
     private:
-        size_t pos;
-
         explicit BookMark(Scanner* scanner)
             : scanner(scanner)
             , pos(scanner->pos)
@@ -140,10 +139,9 @@ public:
 
         }
 
-    public:
-        void Apply() {
-            scanner->pos = pos;
-        }
+    private:
+        Scanner* scanner;
+        size_t pos;
     };
 
     Scanner(const Scanner&) = delete;
@@ -167,10 +165,10 @@ public:
     bool IsIgnoring(Token token) const;
     void SetIgnore(Token token, bool ignore = true);
 
-    static std::shared_ptr<Scanner> Create(const std::shared_ptr<CharStream>& char_stream);
+    static std::shared_ptr<Scanner> Create(const std::shared_ptr<ICharStream>& char_stream);
 
 private:
-    explicit Scanner(std::shared_ptr<CharStream> char_stream);
+    explicit Scanner(std::unique_ptr<ICharStream> char_stream);
 
     const TokenInstance& NextTokenWithoutIgnore();
 
