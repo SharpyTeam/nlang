@@ -1,4 +1,5 @@
 #include <parser/scanner.hpp>
+#include <parser/token_stream.hpp>
 
 #include <stdexcept>
 

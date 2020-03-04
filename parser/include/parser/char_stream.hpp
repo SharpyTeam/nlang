@@ -1,11 +1,17 @@
 #pragma once
 
+#include <utils/defs.hpp>
+
 #include <utility>
 #include <string>
 #include <string_view>
 #include <memory>
 #include <fstream>
 #include <optional>
+#include <cstddef>
+#include <iterator>
+#include <vector>
+
 
 namespace nlang {
 
@@ -52,7 +58,7 @@ protected:
     explicit StringCharStream(std::string&& source) : source(std::move(source)) {}
 
     std::string source;
-    size_t pos = 0;
+    std::size_t pos = 0;
 };
 
 
