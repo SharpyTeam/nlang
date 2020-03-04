@@ -57,6 +57,9 @@ if (${IS_BIG_ENDIAN})
     message(FATAL_ERROR "Big-Endian architectures are not supported.")
 endif ()
 
+include(CTest)
+include(${CMAKE_SOURCE_DIR}/deps/Catch2/contrib/Catch.cmake)
+
 add_subdirectory(${CMAKE_SOURCE_DIR}/deps/Catch2)
 
 add_subdirectory(utils)

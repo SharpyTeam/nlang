@@ -11,10 +11,16 @@ install:
   - git submodule update --init --recursive
 
 build_script:
+  - cd C:\tools\vcpkg
+  - git pull
+  - .\bootstrap-vcpkg.bat
+  - vcpkg integrate install
+  - vcpkg install protobuf protobuf:x64-windows
+  - cd %APPVEYOR_BUILD_FOLDER%
   - call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Auxiliary\Build\vcvarsall.bat" %platform%
   - mkdir build
   - cd build
-  - cmd: IF "%platform%" == "x64" ( cmake .. -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=%configuration% -DENABLE_JNI_TOOLS=TRUE ) ELSE ( cmake .. -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=%configuration% )
+  - cmd: IF "%platform%" == "x64" ( cmake .. -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=%configuration% -DCMAKE_TOOLCHAIN_FILE=C:\tools\vcpkg\scripts\buildsystems\vcpkg.cmake -DENABLE_JNI_TOOLS=TRUE ) ELSE ( cmake .. -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=%configuration% -DCMAKE_TOOLCHAIN_FILE=C:\tools\vcpkg\scripts\buildsystems\vcpkg.cmake )
   - cmake --build . --config %configuration%
   - cd tests
   - ctest
