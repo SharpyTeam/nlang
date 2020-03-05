@@ -67,7 +67,7 @@ public:
         auto mark = Mark();
         mark.ApplyOnDestroy();
         auto& token_instance = const_cast<Scanner*>(this)->NextToken();
-        if (token_instance.token == Token::THE_EOF || token_instance.token == Token::SEMICOLON) {
+        if (token_instance.token == Token::THE_EOF) {
             return true;
         }
         for (size_t i = p + 1; i < pos; ++i) {

@@ -19,7 +19,7 @@ TEST_CASE("scanner test") {
     REQUIRE(scanner->NextToken().text == "_345kek");
     REQUIRE(scanner->NextTokenLookahead().token == Token::IDENTIFIER);
     REQUIRE(scanner->NextToken().text == "lol");
-    REQUIRE(scanner->IsEOL());
+    REQUIRE(!scanner->IsEOL());
     REQUIRE(scanner->NextToken().token == Token::SEMICOLON);
     REQUIRE(scanner->NextTokenLookahead().token == Token::FOR);
     REQUIRE(scanner->NextToken().text == "for");
