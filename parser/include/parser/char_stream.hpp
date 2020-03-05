@@ -58,7 +58,7 @@ protected:
     explicit StringCharStream(std::string&& source) : source(std::move(source)) {}
 
     std::string source;
-    std::size_t pos = 0;
+    size_t pos = 0;
 };
 
 

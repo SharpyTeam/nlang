@@ -86,7 +86,7 @@ struct TokenInstance {
     size_t pos;
     size_t row;
     size_t column;
-    std::string source;
+    std::string text;
 };
 
 class TokenUtils {

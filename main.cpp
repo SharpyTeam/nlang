@@ -20,7 +20,7 @@ void print(const std::string &input) {
     auto sc = nlang::Scanner::Create(nlang::ICharStream::Create<nlang::StringCharStream>(input));
     auto mark = sc->Mark();
     for (auto token = sc->NextToken(); token.token != nlang::Token::THE_EOF; token = sc->NextToken()) {
-        std::cout << "'" << token.source << "'" << " [" << std::string(nlang::TokenUtils::GetTokenName(token.token)) << ", " << static_cast<int>(token.token) << "]:"
+        std::cout << "'" << token.text << "'" << " [" << std::string(nlang::TokenUtils::GetTokenName(token.token)) << ", " << static_cast<int>(token.token) << "]:"
             << token.row << ":" << token.column << std::endl;
     }
     mark.Apply();

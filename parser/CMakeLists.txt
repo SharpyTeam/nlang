@@ -4,13 +4,12 @@ project(nlang_parser)
 set(CMAKE_CXX_STANDARD 17)
 
 set(NLANG_PARSER_SOURCES
-        src/scanner.cpp)
+        src/stub.cpp)
 
 set(NLANG_PARSER_HEADERS
-        include/parser/scanner.hpp
         include/parser/parser.hpp
         include/parser/char_stream.hpp
-        include/parser/scanner_new.hpp
+        include/parser/scanner.hpp
         include/parser/token_stream.hpp include/parser/stream_cache.hpp)
 
 add_subdirectory(ut)

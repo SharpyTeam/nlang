@@ -10,21 +10,21 @@ namespace nlang {
 template<typename S>
 class StreamCache {
 public:
-    using T = decltype(std::declval<S>().Next());
+    using T = std::decay_t<decltype(std::declval<S>().Next())>;
 
     friend class StreamCacheIterator;
 
     class StreamCacheIterator {
     public:
         using iterator_category = std::bidirectional_iterator_tag;
-        using value_type = const T;
+        using value_type = T;
         using difference_type = ptrdiff_t;
-        using pointer = value_type*;
-        using reference = value_type&;
+        using pointer = const value_type*;
+        using reference = const value_type&;
 
-        explicit StreamCacheIterator(StreamCache* stream_cache, std::uintptr_t pos = -1)
+        explicit StreamCacheIterator(StreamCache* stream_cache = nullptr, size_t pos = -1)
             : stream_cache(stream_cache)
-            , pos((pos != -1 && !stream_cache->Advance(pos)) ? -1 : pos)
+            , pos((pos != (size_t)-1 && !stream_cache->Advance(pos)) ? (size_t)-1 : pos)
         {
 
         }
@@ -33,8 +33,9 @@ public:
         StreamCacheIterator& operator=(const StreamCacheIterator&) = default;
 
         StreamCacheIterator& operator++() {
+            NLANG_ASSERT(pos != (size_t)-1);
             if (!stream_cache->Advance(++pos)) {
-                pos = -1;
+                pos = (size_t)-1;
             }
             return *this;
         }
@@ -46,7 +47,8 @@ public:
         }
 
         StreamCacheIterator& operator--() {
-            if (pos == -1) {
+            NLANG_ASSERT(pos != 0);
+            if (pos == (size_t)-1) {
                 pos = stream_cache->AdvanceToEnd();
             }
             --pos;
@@ -71,17 +73,21 @@ public:
             return (*stream_cache)[pos];
         }
 
+        pointer operator->() const {
+            return &(*stream_cache)[pos];
+        }
+
         void CutCacheToThis() {
             stream_cache->Cut(pos);
         }
 
-        std::uintptr_t GetPosition() const {
+        size_t GetPosition() const {
             return pos;
         }
 
     private:
         StreamCache* stream_cache;
-        std::uintptr_t pos;
+        size_t pos;
     };
 
     explicit StreamCache(std::unique_ptr<S>&& stream)
@@ -93,9 +99,9 @@ public:
 
     }
 
-    const T& operator[](std::uintptr_t index) const {
+    const T& operator[](size_t index) const {
         NLANG_ASSERT(index >= offset);
-        Advance(index);
+        const_cast<StreamCache*>(this)->Advance(index);
         return buffer[index - offset];
     }
 
@@ -107,20 +113,19 @@ public:
         return end_;
     }
 
-    bool empty() const {
-        return begin_ == end_;
-    }
-
-    void Cut(std::intptr_t index_to) {
+    void Cut(size_t index_to) {
         NLANG_ASSERT(index_to >= offset);
+        if (index_to == (size_t)-1) {
+            index_to = buffer.size() + offset;
+        }
         buffer.erase(buffer.begin(), buffer.begin() + index_to - offset);
         offset = index_to;
-        begin_ = CharStreamCacheIterator(this, offset);
+        begin_ = StreamCacheIterator(this, offset);
     }
 
 private:
-    bool Advance(std::uintptr_t index_to) {
-        while (index_to >= (std::uintptr_t)buffer.size() + offset) {
+    bool Advance(size_t index_to) {
+        while (index_to >= (size_t)buffer.size() + offset) {
             if (!stream->HasNext()) {
                 return false;
             }
@@ -129,17 +134,17 @@ private:
         return true;
     }
 
-    std::intptr_t AdvanceToEnd() {
+    size_t AdvanceToEnd() {
         while (stream->HasNext()) {
             buffer.push_back(stream->Next());
         }
-        return offset + (std::uintptr_t)buffer.size();
+        return offset + (size_t)buffer.size();
     }
 
 private:
     std::unique_ptr<S> stream;
-    std::intptr_t offset;
     std::vector<T> buffer;
+    size_t offset;
     StreamCacheIterator begin_;
     StreamCacheIterator end_;
 };

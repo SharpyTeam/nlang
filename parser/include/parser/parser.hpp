@@ -128,7 +128,7 @@ private:
 
     std::shared_ptr<Statement> ParseVarDefStatement() {
         scanner->NextTokenAssert(Token::LET);
-        const std::string identifier = scanner->NextTokenAssert(Token::IDENTIFIER).source;
+        const std::string identifier = scanner->NextTokenAssert(Token::IDENTIFIER).text;
         if (scanner->TrySkipToken(Token::ASSIGN)) {
             return std::make_shared<VarDefStatement>(identifier, ParseExpression());
         }
@@ -214,13 +214,13 @@ private:
                 return ParseParenthesizedExpression();
 
             case Token::IDENTIFIER:
-                return std::make_shared<IdentifierExpression>(token.source);
+                return std::make_shared<IdentifierExpression>(token.text);
 
             case Token::NUMBER:
-                return std::make_shared<NumberLiteralExpression>(std::stod(token.source));
+                return std::make_shared<NumberLiteralExpression>(std::stod(token.text));
 
             case Token::STRING:
-                return std::make_shared<StringLiteralExpression>(token.source);
+                return std::make_shared<StringLiteralExpression>(token.text);
 
             case Token::THE_NULL:
             case Token::THE_TRUE:
@@ -228,7 +228,7 @@ private:
                 return std::make_shared<LiteralExpression>(token.token);
 
             default:
-                throw std::runtime_error("Unexpected token \"" + token.source + "\" at [" + std::to_string(token.row) + ":" + std::to_string(token.column) + "]");
+                throw std::runtime_error("Unexpected token \"" + token.text + "\" at [" + std::to_string(token.row) + ":" + std::to_string(token.column) + "]");
         }
     }
 
@@ -303,14 +303,14 @@ private:
         std::vector<std::shared_ptr<Statement>> body;
         scanner->NextTokenAssert(Token::FN);
         if (scanner->NextTokenLookahead().token == Token::IDENTIFIER) {
-            name = scanner->NextToken().source;
+            name = scanner->NextToken().text;
         }
         scanner->NextTokenAssert(Token::LEFT_PAR);
         while (true) {
             if (scanner->TrySkipToken(Token::RIGHT_PAR)) {
                 break;
             }
-            args_list.emplace_back(scanner->NextTokenAssert(Token::IDENTIFIER).source);
+            args_list.emplace_back(scanner->NextTokenAssert(Token::IDENTIFIER).text);
             if (scanner->TrySkipToken(Token::COMMA)) {
                 if (scanner->NextTokenLookahead().token == Token::RIGHT_PAR) {
                     throw std::runtime_error("Expected arg, found par");

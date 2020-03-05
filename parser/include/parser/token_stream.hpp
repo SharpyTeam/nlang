@@ -16,43 +16,29 @@
 namespace nlang {
 
 class TokenStream final {
-private:
-    TokenStream(std::unique_ptr<ICharStream>&& char_stream)
-        : cache(std::move(char_stream))
-        , row(1)
-        , col(1)
-        , token_instance(NextImpl())
-    {
-
-    }
-
+public:
     TokenStream(const TokenStream&) = delete;
     TokenStream(TokenStream&&) = delete;
     TokenStream& operator=(const TokenStream&) = delete;
     TokenStream& operator=(TokenStream&&) = delete;
 
     bool HasNext() {
-        return token_instance.token != Token::THE_EOF;
+        return !reached_end;
     }
 
     TokenInstance Next() {
-        TokenInstance t = token_instance;
-        token_instance = NextImpl();
-        return t;
-    }
+        NLANG_ASSERT(!reached_end);
 
-private:
-    TokenInstance NextImpl() {
         static constexpr const std::regex_constants::syntax_option_type regex_flags =
             std::regex_constants::optimize | std::regex_constants::ECMAScript;
 
         static const std::vector<std::pair<std::regex, Token>> regex_tokens {
             { std::regex(R"(^[ \t\r]+)", regex_flags),                 Token::SPACE },
-            { std::regex(R"(^\/\/.*?[\n$])", regex_flags),                 Token::COMMENT },
+            { std::regex(R"(^\/\/.*?(\n|$))", regex_flags),                 Token::COMMENT },
             { std::regex(R"(^\/\*.*?\*\/)", regex_flags),               Token::COMMENT },
             { std::regex(R"(^((\+\+|\-\-|\+=|-=|\*=|\/=|\%=|==|!=|>=|<=|<<|>>)|\(|\)|\{|\}|;|,|=|\*|\/|\+|\-|!|>|<|\~|&|\||\^))",
                          regex_flags),                                        Token::OPERATOR_OR_PUNCTUATION },
-            { std::regex(R"(^([^\x00-\x7F]|[a-zA-Z])([^\x00-\x7F]|[a-zA-Z0-9_])*)", regex_flags), Token::IDENTIFIER },
+            { std::regex(R"(^([^\x00-\x7F]|[a-zA-Z_])([^\x00-\x7F]|[a-zA-Z0-9_])*)", regex_flags), Token::IDENTIFIER },
             { std::regex(R"(^"[^"\\]*(?:\\.[^"\\]*)*")", regex_flags),  Token::STRING },
             { std::regex(R"(^[0-9]+(\.[0-9]+)?\b)", regex_flags),       Token::NUMBER },
             { std::regex(R"(^\n)", regex_flags),                        Token::NEWLINE }
@@ -80,7 +66,7 @@ private:
                     if (token == Token::OPERATOR_OR_PUNCTUATION || token == Token::IDENTIFIER) {
                         try {
                             actual_token = TokenUtils::GetTokenByText(str);
-                        } catch (...) {}
+                        } catch (std::out_of_range&) {}
                     }
 
                     const size_t saved_row = row;
@@ -120,14 +106,29 @@ private:
         }
 
         it.CutCacheToThis();
+        reached_end = true;
         return TokenInstance { Token::THE_EOF, it.GetPosition(), row, col, "" };
+    }
+
+    static std::unique_ptr<TokenStream> New(std::unique_ptr<ICharStream>&& char_stream) {
+        return std::unique_ptr<TokenStream>(new TokenStream(std::move(char_stream)));
+    }
+
+private:
+    TokenStream(std::unique_ptr<ICharStream>&& char_stream)
+        : cache(std::move(char_stream))
+        , row(1)
+        , col(1)
+        , reached_end(false)
+    {
+
     }
 
 private:
     StreamCache<ICharStream> cache;
-    std::uintptr_t row;
-    std::uintptr_t col;
-    TokenInstance token_instance;
+    size_t row;
+    size_t col;
+    bool reached_end;
 };
 
 }

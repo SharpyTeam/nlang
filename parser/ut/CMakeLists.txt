@@ -2,6 +2,7 @@ project(nlang_parser_tests)
 
 set(NLANG_PARSER_TESTS_SOURCES
         main.cpp
+        scanner.cpp
         parser.cpp)
 
 add_executable(nlang_parser_tests ${NLANG_PARSER_TESTS_SOURCES})
