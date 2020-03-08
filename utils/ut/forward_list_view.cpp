@@ -91,4 +91,7 @@ TEST_CASE("forward list view functionality") {
         REQUIRE(list.size() == 0);
         REQUIRE(list.empty());
     }
+
+    holder.clear();
+    holder2.clear();
 }
