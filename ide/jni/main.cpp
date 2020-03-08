@@ -64,10 +64,10 @@ extern "C" JNIEXPORT void JNICALL Java_org_nlang_JNI_tokenize(JNIEnv* env, jclas
     jclass Integer_class = env->FindClass("java/lang/Integer");
     jmethodID Integer_init = env->GetMethodID(Integer_class, "<init>", "(I)V");
 
-    auto sc = nlang::Scanner::Create(nlang::CharStream::Create<nlang::StringCharStream>(s));
+    auto sc = nlang::Scanner::New(nlang::TokenStream::New(nlang::StringCharStream::New(s)));
     while (sc->NextTokenLookahead().token != nlang::Token::THE_EOF) {
-        auto token = sc->NextToken(nlang::Scanner::AdvanceBehaviour::NO_IGNORE);
+        auto token = sc->NextToken();
         auto j_pos = relation[token.pos];
-        env->CallObjectMethod(tokens_map, TreeMap_put, env->NewObject(Integer_class, Integer_init, j_pos), env->NewStringUTF(nlang::TokenUtils::TokenToString(token.token).c_str()));
+        env->CallObjectMethod(tokens_map, TreeMap_put, env->NewObject(Integer_class, Integer_init, j_pos), env->NewStringUTF(token.text.c_str()));
     }
 }
