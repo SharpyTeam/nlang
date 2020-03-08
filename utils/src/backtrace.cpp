@@ -1,4 +1,4 @@
-#include <utils/defs.hpp>
+#include <utils/macro.hpp>
 #include <utils/backtrace.hpp>
 
 #include <stdexcept>
@@ -7,7 +7,7 @@
 #include <backward.hpp>
 #endif
 
-namespace nlang::utils {
+namespace nlang {
 
 void PrintBacktrace() {
 #ifdef NLANG_DEBUG

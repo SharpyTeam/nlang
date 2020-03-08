@@ -1,6 +1,6 @@
 #pragma once
 
-namespace nlang::utils {
+namespace nlang {
 
 void PrintBacktrace();
 

@@ -10,7 +10,7 @@
 #include <type_traits>
 #include <utility>
 
-namespace nlang::utils {
+namespace nlang {
 
 class ThreadPool {
 public:

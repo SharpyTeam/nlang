@@ -1,6 +1,7 @@
 #pragma once
 
-#include <utils/defs.hpp>
+#include <utils/macro.hpp>
+#include <utils/holder.hpp>
 
 #include <utility>
 #include <string>
@@ -49,8 +50,8 @@ public:
         return source[pos++];
     }
 
-    static std::unique_ptr<StringCharStream> New(const std::string& source) {
-        return std::unique_ptr<StringCharStream>(new StringCharStream(source));
+    static Holder<StringCharStream> New(const std::string& source) {
+        return Holder<StringCharStream>(new StringCharStream(source));
     }
 
 protected:
@@ -82,8 +83,8 @@ public:
         return c;
     }
 
-    static std::unique_ptr<FileCharStream> New(const std::string& path) {
-        return std::unique_ptr<FileCharStream>(new FileCharStream(path));
+    static Holder<FileCharStream> New(const std::string& path) {
+        return Holder<FileCharStream>(new FileCharStream(path));
     }
 
 private:

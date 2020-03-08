@@ -1,8 +1,3 @@
-cmake_minimum_required(VERSION 3.10)
-project(nlang_common)
-
-set(CMAKE_CXX_STANDARD 17)
-
 set(NLANG_COMMON_SOURCES
         src/stub.cpp)
 

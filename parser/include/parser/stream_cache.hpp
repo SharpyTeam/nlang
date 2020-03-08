@@ -1,5 +1,7 @@
 #pragma once
 
+#include <utils/holder.hpp>
+
 #include <iterator>
 #include <memory>
 #include <vector>
@@ -90,7 +92,7 @@ public:
         size_t pos;
     };
 
-    explicit StreamCache(std::unique_ptr<S>&& stream)
+    explicit StreamCache(Holder<S>&& stream)
         : stream(std::move(stream))
         , offset(0)
         , begin_(this, 0)
@@ -142,7 +144,7 @@ private:
     }
 
 private:
-    std::unique_ptr<S> stream;
+    Holder<S> stream;
     std::vector<T> buffer;
     size_t offset;
     StreamCacheIterator begin_;

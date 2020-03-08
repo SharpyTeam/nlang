@@ -1,11 +1,10 @@
-#include "version.hpp"
+#include <version/version.hpp>
 
 #include <parser/scanner.hpp>
 #include <parser/parser.hpp>
 #include <parser/char_stream.hpp>
 #include <utils/page.hpp>
 #include <interpreter/heap.hpp>
-#include <interpreter/ast_interpreter.hpp>
 #include <interpreter/value.hpp>
 #include <interpreter/object.hpp>
 #include <interpreter/string.hpp>

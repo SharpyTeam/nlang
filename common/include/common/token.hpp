@@ -1,6 +1,6 @@
 #pragma once
 
-#include <utils/defs.hpp>
+#include <utils/macro.hpp>
 
 #include <unordered_map>
 #include <string>
@@ -24,7 +24,9 @@ T(ELSE, "else")                     \
 T(FOR, "for")                       \
 T(WHILE, "while")                   \
 T(LOOP, "loop")                     \
+T(CLASS, "class")                   \
 T(FN, "fn")                         \
+T(OP, "op")                         \
 T(LET, "let")                       \
 T(CONST, "const")                   \
 T(RETURN, "return")                 \
@@ -35,7 +37,11 @@ T(LEFT_PAR, "(")                    \
 T(RIGHT_PAR, ")")                   \
 T(LEFT_BRACE, "{")                  \
 T(RIGHT_BRACE, "}")                 \
+T(LEFT_BRACKET, "[")                \
+T(RIGHT_BRACKET, "]")               \
+T(DOT, ".")                         \
 T(COMMA, ",")                       \
+T(COLON, ":")                       \
 T(SEMICOLON, ";")                   \
                                     \
 T(ASSIGN, "=")                      \

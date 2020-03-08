@@ -9,7 +9,7 @@
 TEST_CASE("scanner test") {
     using namespace nlang;
 
-    const std::string s = "_345kek lol; for + -= \n     /*block comment*/    $$$    ololo   // line comment ";
+    const std::string s = "_345kek lol; for + -= \n     /*block comment*/    $$$ 0.5123   ololo   // line comment ";
 
     auto scanner = Scanner::New(TokenStream::New(StringCharStream::New(s)));
 
@@ -31,6 +31,8 @@ TEST_CASE("scanner test") {
     REQUIRE(scanner->IsEOL());
     REQUIRE(scanner->NextTokenLookahead().token == Token::INVALID);
     REQUIRE(scanner->NextToken().text == "$$$");
+    REQUIRE(scanner->NextTokenLookahead().token == Token::NUMBER);
+    REQUIRE(scanner->NextToken().text == "0.5123");
     REQUIRE(scanner->NextTokenLookahead().token == Token::IDENTIFIER);
     REQUIRE(scanner->NextToken().text == "ololo");
     REQUIRE(scanner->IsEOL());

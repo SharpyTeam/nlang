@@ -1,28 +1,64 @@
 cmake_minimum_required(VERSION 3.10)
 
-project(nlang VERSION 0.0.0)
+project(nlang VERSION 0.0.0 LANGUAGES CXX)
 
+
+# C++ features
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED 17)
 set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
+
+# Build configuration
+include(TestBigEndian)
+TEST_BIG_ENDIAN(IS_BIG_ENDIAN)
+
+if (${IS_BIG_ENDIAN})
+    message(FATAL_ERROR "Big-Endian architectures are not supported.")
+endif ()
+
 if (NOT CMAKE_BUILD_TYPE OR CMAKE_BUILD_TYPE STREQUAL "")
     set(CMAKE_BUILD_TYPE "Debug" CACHE STRING "" FORCE)
 endif ()
 
-if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+
+# Compiler flags
+if (CMAKE_CXX_COMPILER_ID MATCHES "Clang" OR CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
     # MATCHES cause on macOS it is AppleClang now
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Werror -pedantic")
-elseif (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Werror -pedantic")
+
+    if (ENABLE_SANITIZERS)
+        message(STATUS "Enabling asan & ubsan sanitizers")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=undefined,address")
+    endif ()
 elseif (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
     # remove default warning level from CMAKE_CXX_FLAGS_INIT
     string(REGEX REPLACE "/W[0-4]" "/W4" CMAKE_CXX_FLAGS_INIT "${CMAKE_CXX_FLAGS_INIT}")
+
+    if (ENABLE_SANITIZERS)
+        message(WARNING "Build with sanitizers is not supported on MSVC yet")
+    endif ()
 endif ()
 
-find_package(Protobuf REQUIRED)
 
+# Packages
+find_package(Threads REQUIRED)
+find_package(Protobuf REQUIRED)
+find_package(Git)
+find_package(Catch2)
+
+
+# Source-dependencies
+add_subdirectory(deps/backward-cpp)
+
+
+# Testing stuff
+include(CTest)
+include(Catch)
+
+
+# Protobuf integration
 function (compile_proto SRCS OUT_SOURCES OUT_HEADERS)
     foreach (SRC ${${SRCS}})
         protobuf_generate_cpp(PROTO_SOURCES PROTO_HEADERS ${SRC})
@@ -33,7 +69,8 @@ function (compile_proto SRCS OUT_SOURCES OUT_HEADERS)
     set(${OUT_HEADERS} ${${OUT_HEADERS}} PARENT_SCOPE)
 endfunction ()
 
-find_package(Git)
+
+# Version definitions
 if (Git_FOUND)
     execute_process(COMMAND "${GIT_EXECUTABLE}" rev-parse --short HEAD
             RESULT_VARIABLE GIT_REVISION_FETCH_RESULT
@@ -45,46 +82,33 @@ else ()
     set(GIT_REVISION "dev")
 endif ()
 
-if (ENABLE_SANITIZERS)
-    message(STATUS "Enabling asan & ubsan sanitizers")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=undefined,address")
-endif ()
+configure_file(version.hpp.in "${CMAKE_BINARY_DIR}/version/version.hpp")
 
-include(TestBigEndian)
-TEST_BIG_ENDIAN(IS_BIG_ENDIAN)
 
-if (${IS_BIG_ENDIAN})
-    message(FATAL_ERROR "Big-Endian architectures are not supported.")
-endif ()
-
-include(CTest)
-include(${CMAKE_SOURCE_DIR}/deps/Catch2/contrib/Catch.cmake)
-
-add_subdirectory(${CMAKE_SOURCE_DIR}/deps/Catch2)
-
+# Subprojects
 add_subdirectory(utils)
 add_subdirectory(common)
 add_subdirectory(parser)
-add_subdirectory(interpreter)
 add_subdirectory(compiler)
-
-add_subdirectory(tests)
-
-set(NLANG_CORE_SOURCES
-        main.cpp)
-
-set(NLANG_CORE_HEADERS
-        )
-
-configure_file(version.hpp.in "${CMAKE_CURRENT_SOURCE_DIR}/version.hpp")
-
-add_executable(nlang ${NLANG_CORE_HEADERS} ${NLANG_CORE_SOURCES})
-target_link_libraries(nlang nlang_common)
-target_link_libraries(nlang nlang_parser)
-target_link_libraries(nlang nlang_interpreter)
-target_link_libraries(nlang nlang_compiler)
+add_subdirectory(interpreter)
 
 if (ENABLE_JNI_TOOLS)
     message(STATUS "Enabling JNI tools builds")
     add_subdirectory(ide/jni)
 endif ()
+
+
+# nlang executable
+set(NLANG_SOURCES
+        main.cpp)
+
+set(NLANG_HEADERS
+        )
+
+add_executable(nlang ${NLANG_HEADERS} ${NLANG_SOURCES})
+target_link_libraries(nlang nlang_utils)
+target_link_libraries(nlang nlang_common)
+target_link_libraries(nlang nlang_parser)
+target_link_libraries(nlang nlang_compiler)
+target_link_libraries(nlang nlang_runtime)
+target_link_libraries(nlang nlang_interpreter)

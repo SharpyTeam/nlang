@@ -1,20 +1,15 @@
 #pragma once
 
-#include "value.hpp"
-#include "handle.hpp"
-#include "function.hpp"
-#include "heap.hpp"
+#include <interpreter/value.hpp>
+#include <interpreter/handle.hpp>
+#include <interpreter/function.hpp>
+#include <interpreter/heap.hpp>
 
 #include <vector>
 #include <cstdint>
 #include <thread>
 
 namespace nlang {
-
-class Compiler {
-
-};
-
 
 class Heap;
 class Thread;

@@ -4,7 +4,7 @@
 #include "handle.hpp"
 
 #include <utils/slot_storage.hpp>
-#include <utils/defs.hpp>
+#include <utils/macro.hpp>
 
 #include <cstdint>
 #include <functional>
@@ -21,7 +21,7 @@ public:
     }
 
 public:
-    utils::SlotStorage<HeapValue> storage;
+    SlotStorage<HeapValue> storage;
 };
 
 }

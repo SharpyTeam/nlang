@@ -3,8 +3,9 @@
 #include "char_stream.hpp"
 #include "stream_cache.hpp"
 
-#include <utils/defs.hpp>
+#include <utils/macro.hpp>
 #include <common/token.hpp>
+#include <utils/holder.hpp>
 
 #include <iterator>
 #include <memory>
@@ -36,10 +37,11 @@ public:
             { std::regex(R"(^[ \t\r]+)", regex_flags),                 Token::SPACE },
             { std::regex(R"(^\/\/.*?(\n|$))", regex_flags),                 Token::COMMENT },
             { std::regex(R"(^\/\*.*?\*\/)", regex_flags),               Token::COMMENT },
-            { std::regex(R"(^((\+\+|\-\-|\+=|-=|\*=|\/=|\%=|==|!=|>=|<=|<<|>>)|\(|\)|\{|\}|;|,|=|\*|\/|\+|\-|!|>|<|\~|&|\||\^))",
+            { std::regex(R"(^((\+\+|\-\-|\+=|-=|\*=|\/=|\%=|==|!=|>=|<=|<<|>>)|\(|\)|\{|\}|\[|\]|;|:|,|\.|=|\*|\/|\+|\-|!|>|<|\~|&|\||\^))",
                          regex_flags),                                        Token::OPERATOR_OR_PUNCTUATION },
             { std::regex(R"(^([^\x00-\x7F]|[a-zA-Z_])([^\x00-\x7F]|[a-zA-Z0-9_])*)", regex_flags), Token::IDENTIFIER },
             { std::regex(R"(^"[^"\\]*(?:\\.[^"\\]*)*")", regex_flags),  Token::STRING },
+            { std::regex(R"(^'[^'\\]*(?:\\.[^'\\]*)*')", regex_flags),  Token::STRING },
             { std::regex(R"(^[0-9]+(\.[0-9]+)?\b)", regex_flags),       Token::NUMBER },
             { std::regex(R"(^\n)", regex_flags),                        Token::NEWLINE }
         };
@@ -110,12 +112,12 @@ public:
         return TokenInstance { Token::THE_EOF, it.GetPosition(), row, col, "" };
     }
 
-    static std::unique_ptr<TokenStream> New(std::unique_ptr<ICharStream>&& char_stream) {
-        return std::unique_ptr<TokenStream>(new TokenStream(std::move(char_stream)));
+    static Holder<TokenStream> New(Holder<ICharStream>&& char_stream) {
+        return Holder<TokenStream>(new TokenStream(std::move(char_stream)));
     }
 
 private:
-    TokenStream(std::unique_ptr<ICharStream>&& char_stream)
+    TokenStream(Holder<ICharStream>&& char_stream)
         : cache(std::move(char_stream))
         , row(1)
         , col(1)

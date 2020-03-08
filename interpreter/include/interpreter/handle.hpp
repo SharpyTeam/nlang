@@ -1,6 +1,6 @@
 #pragma once
 
-#include <utils/defs.hpp>
+#include <utils/macro.hpp>
 #include <utils/nan_boxed_primitive.hpp>
 #include <utils/traits.hpp>
 #include <utils/slot_storage.hpp>
@@ -36,7 +36,7 @@ public:
 
     friend class Heap;
 
-    using BackingPrimitive = std::conditional_t<std::is_base_of_v<HeapValue, T>, utils::FakeNanBoxedPrimitive, utils::NanBoxedPrimitive>;
+    using BackingPrimitive = std::conditional_t<std::is_base_of_v<HeapValue, T>, FakeNanBoxedPrimitive, NanBoxedPrimitive>;
 
     NLANG_FORCE_INLINE Handle() {}
 
@@ -106,7 +106,7 @@ public:
 private:
     template<typename U>
     NLANG_FORCE_INLINE U* GetHeapPointerOfType() const {
-        return static_cast<U*>(static_cast<typename utils::SlotStorage<HeapValue>::Slot*>(value.GetPointer())->Get());
+        return static_cast<U*>(static_cast<typename SlotStorage<HeapValue>::Slot*>(value.GetPointer())->Get());
     }
 
     NLANG_FORCE_INLINE T* Get() const {

@@ -1,16 +1,13 @@
-cmake_minimum_required(VERSION 3.10)
-project(nlang_parser)
-
-set(CMAKE_CXX_STANDARD 17)
-
 set(NLANG_PARSER_SOURCES
         src/stub.cpp)
 
 set(NLANG_PARSER_HEADERS
         include/parser/parser.hpp
+        include/parser/parser_new.hpp
         include/parser/char_stream.hpp
         include/parser/scanner.hpp
-        include/parser/token_stream.hpp include/parser/stream_cache.hpp)
+        include/parser/token_stream.hpp
+        include/parser/stream_cache.hpp)
 
 add_subdirectory(ut)
 

@@ -2,6 +2,7 @@
 
 #include "token_stream.hpp"
 
+#include <utils/holder.hpp>
 #include <common/token.hpp>
 
 #include <memory>
@@ -27,6 +28,13 @@ public:
             apply_on_destroy = true;
         }
 
+        ~BookMark() {
+            if (apply_on_destroy) {
+                Apply();
+            }
+            scanner->marked_positions.erase(pos_it);
+        }
+
     private:
         explicit BookMark(Scanner* scanner)
             : scanner(scanner)
@@ -34,13 +42,6 @@ public:
             , apply_on_destroy(false)
         {
 
-        }
-
-        ~BookMark() {
-            if (apply_on_destroy) {
-                Apply();
-            }
-            scanner->marked_positions.erase(pos_it);
         }
 
         Scanner* scanner;
@@ -79,6 +80,7 @@ public:
     }
 
     const TokenInstance& NextToken() {
+        // TODO skip and report invalid tokens
         static std::unordered_set<Token> tokens_to_skip { Token::NEWLINE, Token::COMMENT, Token::SPACE };
         auto it = StreamCache<TokenStream>::StreamCacheIterator(&cache, pos);
         while (it != cache.end() && tokens_to_skip.find(it->token) != tokens_to_skip.end()) {
@@ -95,7 +97,7 @@ public:
         auto& token_instance = NextToken();
         if (token_instance.token != token) {
             mark.Apply();
-            // TODO error
+            throw std::runtime_error("Expected " + TokenUtils::GetTokenName(token) + ", got " + TokenUtils::GetTokenName(token_instance.token));
         }
         return token_instance;
     }
@@ -107,12 +109,12 @@ public:
     }
 
 
-    static std::unique_ptr<Scanner> New(std::unique_ptr<TokenStream>&& token_stream) {
-        return std::unique_ptr<Scanner>(new Scanner(std::move(token_stream)));
+    static Holder<Scanner> New(Holder<TokenStream>&& token_stream) {
+        return Holder<Scanner>(new Scanner(std::move(token_stream)));
     }
 
 private:
-    Scanner(std::unique_ptr<TokenStream>&& token_stream)
+    Scanner(Holder<TokenStream>&& token_stream)
         : cache(std::move(token_stream))
         , pos(0)
     {

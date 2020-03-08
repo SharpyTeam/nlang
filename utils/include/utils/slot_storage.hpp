@@ -5,12 +5,12 @@
 
 #include <algorithm>
 
-namespace nlang::utils {
+namespace nlang {
 
 template<typename T>
-class SlotPage : public utils::ForwardListView<SlotPage<T>>::NodeHeader {
+class SlotPage : public ForwardListView<SlotPage<T>>::NodeHeader {
 public:
-    class FreeSlot : public utils::ForwardListView<FreeSlot>::NodeHeader {
+    class FreeSlot : public ForwardListView<FreeSlot>::NodeHeader {
     public:
         FreeSlot() {}
     };
@@ -69,15 +69,15 @@ public:
     };
 
     static SlotPage* New() {
-        utils::Page* page = utils::Page::Allocate();
+        Page* page = Page::Allocate();
         SlotPage* slot_page = new (page) SlotPage;
         return slot_page;
     }
 
     static void Release(SlotPage* slot_page) {
-        utils::Page* page = static_cast<utils::Page*>(static_cast<void*>(slot_page));
+        Page* page = static_cast<Page*>(static_cast<void*>(slot_page));
         slot_page->~SlotPage();
-        utils::Page::Free(page);
+        Page::Free(page);
     }
 
     Slot* Store(T* value) {
@@ -140,12 +140,12 @@ private:
     }
 
     Slot* end() const {
-        NLANG_ASSERT((utils::Page::size() - sizeof(SlotPage)) % sizeof(Slot) == 0);
-        return begin() + (utils::Page::size() - sizeof(SlotPage)) / sizeof(Slot);
+        NLANG_ASSERT((Page::size() - sizeof(SlotPage)) % sizeof(Slot) == 0);
+        return begin() + (Page::size() - sizeof(SlotPage)) / sizeof(Slot);
     }
 
 private:
-    utils::ForwardListView<FreeSlot> free_slots;
+    ForwardListView<FreeSlot> free_slots;
     size_t size_;
 };
 
@@ -273,8 +273,8 @@ private:
     }
 
 private:
-    utils::ForwardListView<SlotPage<T>> pages;
-    utils::ForwardListView<SlotPage<T>> full_pages;
+    ForwardListView<SlotPage<T>> pages;
+    ForwardListView<SlotPage<T>> full_pages;
     size_t size_;
     size_t capacity_;
 };

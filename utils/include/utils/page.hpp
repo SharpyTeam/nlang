@@ -1,6 +1,6 @@
 #pragma once
 
-#include <utils/defs.hpp>
+#include "macro.hpp"
 
 #include <cstddef>
 #include <stdexcept>
@@ -20,7 +20,7 @@
 #include <Windows.h>
 #endif
 
-namespace nlang::utils {
+namespace nlang {
 
 
 class Page {

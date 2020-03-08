@@ -14,7 +14,7 @@ namespace nlang {
 
 class Parser {
 public:
-    std::shared_ptr<IExpression> ParseExpression() {
+    Holder<IExpression> ParseExpression() {
         if (scanner->NextTokenLookahead().token == Token::FN) {
             return ParseFunctionDefExpression();
         }
@@ -55,21 +55,15 @@ public:
         return std::make_shared<FileNode>(statements);
     }
 
-    static std::shared_ptr<Parser> Create(const std::shared_ptr<Scanner> &scanner) {
-        return std::shared_ptr<Parser>(new Parser(scanner));
+    static Holder<Parser> New(Holder<Scanner>&& scanner) {
+        return Holder<Parser>(new Parser(std::move(scanner)));
     }
 
 private:
-    std::shared_ptr<Scanner> scanner;
-
-
-    explicit Parser(const std::shared_ptr<Scanner> &scanner)
-        : scanner(scanner)
+    explicit Parser(Holder<Scanner>&& scanner)
+        : scanner(std::move(scanner))
     {
-        scanner->ResetIgnore();
-        scanner->SetIgnore(Token::SPACE);
-        scanner->SetIgnore(Token::COMMENT);
-        scanner->SetIgnore(Token::NEWLINE);
+
     }
 
     bool NextIsStatementBreak() {
@@ -182,11 +176,14 @@ private:
         return std::make_shared<WhileStatement>(expr, ParseBlockStatement());
     }
 
-#define BINARY(name, next, ...)                                                                 \
-    std::shared_ptr<IExpression> name() {                                                        \
+#define BINARY(name, next, allow_nl_left, ...)                                                  \
+    Holder<IExpression> name() {                                                                \
         static std::unordered_set<Token> tokens { __VA_ARGS__ };                                \
         auto expr = next();                                                                     \
         while (true) {                                                                          \
+            if (!allow_nl_left && scanner->IsEOL()) {                                           \
+                break;                                                                          \
+            }                                                                                   \
             auto mark = scanner->Mark();                                                        \
             if (auto token = scanner->NextToken(); tokens.find(token.token) != tokens.end()) {  \
                 expr = std::make_shared<BinaryExpression>(token.token, expr, next());           \
@@ -320,6 +317,9 @@ private:
 
         return std::make_shared<FunctionDefExpression>(name, args_list, ParseBlockStatement());
     }
+
+private:
+    Holder<Scanner> scanner;
 };
 
 }

@@ -1,10 +1,10 @@
 #pragma once
 
-#include <utils/defs.hpp>
+#include <utils/macro.hpp>
 
 #include <iterator>
 
-namespace nlang::utils {
+namespace nlang {
 
 template<typename T>
 class ForwardListView {

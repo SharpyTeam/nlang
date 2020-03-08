@@ -2,7 +2,8 @@
 
 #include "value.hpp"
 #include "heap.hpp"
-#include <utils/defs.hpp>
+
+#include <utils/macro.hpp>
 
 #include <cstring>
 #include <tuple>

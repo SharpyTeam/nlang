@@ -27,8 +27,6 @@ public:
     size_t GetArgumentsCount() const;
     size_t GetRegistersCount() const;
 
-    static void RegisterDeleter(Environment* environment);
-
     static constexpr Type TYPE = Type::FUNCTION;
 
 private:

@@ -3,7 +3,7 @@
 #include "handle.hpp"
 
 #include <utils/nan_boxed_primitive.hpp>
-#include <utils/defs.hpp>
+#include <utils/macro.hpp>
 #include <utils/traits.hpp>
 
 #include <cstdint>
@@ -38,7 +38,7 @@ protected:
 };
 
 
-class StackValue : public utils::NanBoxedPrimitive, public Value {};
+class StackValue : public NanBoxedPrimitive, public Value {};
 
 
 class Null : public StackValue {
@@ -50,6 +50,7 @@ private:
         SetNull();
     }
 };
+
 
 class Bool : public StackValue {
 public:
@@ -65,6 +66,7 @@ private:
     }
 };
 
+
 class Number : public StackValue {
 public:
     NLANG_FORCE_INLINE double Value() const {
@@ -78,6 +80,7 @@ private:
         SetNumber(value);
     }
 };
+
 
 class Int32 : public StackValue {
 public:

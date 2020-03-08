@@ -1,6 +1,6 @@
 #pragma once
 
-#include "defs.hpp"
+#include "macro.hpp"
 
 #include <cstdint>
 #include <type_traits>
@@ -9,7 +9,7 @@
 #include <iostream>
 #include <cstring>
 
-namespace nlang::utils {
+namespace nlang {
 
 class FakeNanBoxedPrimitive;
 
