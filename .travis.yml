@@ -61,6 +61,8 @@ jobs:
       env:
         - CONFIGURATION=Release
         - MATRIX_EVAL="brew install gcc catch2 protobuf && brew tap adoptopenjdk/openjdk && brew cask install adoptopenjdk11"
+    allow_failures:
+      - env: CONFIGURATION=Debug SANITIZE=true
 
 
 script:
