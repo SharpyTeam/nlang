@@ -39,31 +39,36 @@ jobs:
       arch: amd64
       env:
         - CONFIGURATION=Debug
-        - MATRIX_EVAL="brew install dwarfutils binutils protobuf && brew tap adoptopenjdk/openjdk && brew cask install adoptopenjdk11"
+        - MATRIX_EVAL="brew install catch2 dwarfutils binutils protobuf && brew tap adoptopenjdk/openjdk && brew cask install adoptopenjdk11"
     - os: osx
       osx_image: xcode11.2
       compiler: gcc
       arch: amd64
       env:
         - CONFIGURATION=Debug
-        - MATRIX_EVAL="brew install gcc dwarfutils binutils protobuf && brew tap adoptopenjdk/openjdk && brew cask install adoptopenjdk11"
+        - MATRIX_EVAL="brew install gcc catch2 dwarfutils binutils protobuf && brew tap adoptopenjdk/openjdk && brew cask install adoptopenjdk11"
     - os: osx
       osx_image: xcode11.2
       compiler: clang
       arch: amd64
       env:
         - CONFIGURATION=Release
-        - MATRIX_EVAL="brew install protobuf && brew tap adoptopenjdk/openjdk && brew cask install adoptopenjdk11"
+        - MATRIX_EVAL="brew install catch2 protobuf && brew tap adoptopenjdk/openjdk && brew cask install adoptopenjdk11"
     - os: osx
       osx_image: xcode11.2
       compiler: gcc
       arch: amd64
       env:
         - CONFIGURATION=Release
-        - MATRIX_EVAL="brew install gcc protobuf && brew tap adoptopenjdk/openjdk && brew cask install adoptopenjdk11"
+        - MATRIX_EVAL="brew install gcc catch2 protobuf && brew tap adoptopenjdk/openjdk && brew cask install adoptopenjdk11"
 
 
 script:
+  - git clone https://github.com/catchorg/Catch2.git
+  - cd Catch2
+  - cmake -Bbuild -H. -DBUILD_TESTING=OFF
+  - sudo cmake --build build/ --target install
+  - cd ..
   - mkdir build
   - cd build
   - cmake .. -DCMAKE_BUILD_TYPE=$CONFIGURATION `if [ "$TRAVIS_CPU_ARCH" != "arm64" ]; then echo "-DENABLE_JNI_TOOLS=TRUE"; fi` `if [ "$SANITIZE" = "true" ]; then echo "-DENABLE_SANITIZERS=TRUE"; fi`

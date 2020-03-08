@@ -15,7 +15,7 @@ build_script:
   - git pull
   - .\bootstrap-vcpkg.bat
   - vcpkg integrate install
-  - vcpkg install protobuf protobuf:x64-windows
+  - vcpkg install protobuf:x64-windows catch2:x64-windows
   - cd %APPVEYOR_BUILD_FOLDER%
   - call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Auxiliary\Build\vcvarsall.bat" %platform%
   - mkdir build
