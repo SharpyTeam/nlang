@@ -22,5 +22,4 @@ build_script:
   - cd build
   - cmd: IF "%platform%" == "x64" ( cmake .. -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=%configuration% -DCMAKE_TOOLCHAIN_FILE=C:\tools\vcpkg\scripts\buildsystems\vcpkg.cmake -DENABLE_JNI_TOOLS=TRUE ) ELSE ( cmake .. -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=%configuration% -DCMAKE_TOOLCHAIN_FILE=C:\tools\vcpkg\scripts\buildsystems\vcpkg.cmake )
   - cmake --build . --config %configuration%
-  - cd tests
   - ctest
