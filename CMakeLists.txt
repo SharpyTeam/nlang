@@ -43,6 +43,8 @@ endif ()
 
 
 # Packages
+list(APPEND CMAKE_PREFIX_PATH deps/backward-cpp)
+find_package(Backward)
 find_package(Threads REQUIRED)
 find_package(Protobuf REQUIRED)
 find_package(Git)
@@ -50,7 +52,7 @@ find_package(Catch2)
 
 
 # Source-dependencies
-add_subdirectory(deps/backward-cpp)
+#
 
 
 # Testing stuff
