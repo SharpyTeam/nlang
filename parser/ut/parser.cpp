@@ -3,7 +3,7 @@
 #include <iostream>
 #include <parser/char_stream.hpp>
 #include <parser/scanner.hpp>
-#include <parser/parser_new.hpp>
+#include <parser/parser.hpp>
 
 TEST_CASE("parser test") {
     using namespace nlang;
@@ -27,7 +27,7 @@ R"(fn print_my_name_and_predict_age(first_name: string, last_name: string = 'Smi
     return static_age
 })";
 
-    auto parser = ParserNew::New(Scanner::New(TokenStream::New(StringCharStream::New(source))));
+    auto parser = Parser::New(Scanner::New(TokenStream::New(StringCharStream::New(source))));
     auto ast = parser->ParseFunctionDefinitionExpression();
 
     ASTPrinter printer;

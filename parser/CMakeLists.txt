@@ -3,7 +3,6 @@ set(NLANG_PARSER_SOURCES
 
 set(NLANG_PARSER_HEADERS
         include/parser/parser.hpp
-        include/parser/parser_new.hpp
         include/parser/char_stream.hpp
         include/parser/scanner.hpp
         include/parser/token_stream.hpp

@@ -17,5 +17,4 @@ add_library(nlang_interpreter ${NLANG_INTERPRETER_HEADERS} ${NLANG_INTERPRETER_S
 target_include_directories(nlang_interpreter PUBLIC include)
 target_link_libraries(nlang_interpreter nlang_common)
 target_link_libraries(nlang_interpreter nlang_parser)
-target_link_libraries(nlang_interpreter nlang_runtime)
 target_link_libraries(nlang_interpreter Threads::Threads)
