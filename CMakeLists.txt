@@ -23,25 +23,6 @@ if (NOT CMAKE_BUILD_TYPE OR CMAKE_BUILD_TYPE STREQUAL "")
 endif ()
 
 
-# Compiler flags
-if (CMAKE_CXX_COMPILER_ID MATCHES "Clang" OR CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-    # MATCHES cause on macOS it is AppleClang now
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Werror -pedantic")
-
-    if (ENABLE_SANITIZERS)
-        message(STATUS "Enabling asan & ubsan sanitizers")
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=undefined,address")
-    endif ()
-elseif (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
-    # remove default warning level from CMAKE_CXX_FLAGS_INIT
-    string(REGEX REPLACE "/W[0-4]" "/W4" CMAKE_CXX_FLAGS_INIT "${CMAKE_CXX_FLAGS_INIT}")
-
-    if (ENABLE_SANITIZERS)
-        message(WARNING "Build with sanitizers is not supported on MSVC yet")
-    endif ()
-endif ()
-
-
 # Packages
 list(APPEND CMAKE_PREFIX_PATH deps/backward-cpp)
 find_package(Backward)
@@ -51,8 +32,25 @@ find_package(Git)
 find_package(Catch2)
 
 
-# Source-dependencies
-#
+# Compiler flags
+if (CMAKE_CXX_COMPILER_ID MATCHES "Clang" OR CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    # MATCHES cause on macOS it is AppleClang now
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Werror -pedantic")
+
+    if (ENABLE_SANITIZERS)
+        message(STATUS "Enabling asan & ubsan sanitizers")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address")
+        set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fsanitize=address")
+        set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -fsanitize=address")
+    endif ()
+elseif (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+    # remove default warning level from CMAKE_CXX_FLAGS_INIT
+    string(REGEX REPLACE "/W[0-4]" "/W4" CMAKE_CXX_FLAGS_INIT "${CMAKE_CXX_FLAGS_INIT}")
+
+    if (ENABLE_SANITIZERS)
+        message(WARNING "Build with sanitizers is not supported on MSVC yet")
+    endif ()
+endif ()
 
 
 # Testing stuff
