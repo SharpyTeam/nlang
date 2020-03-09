@@ -48,7 +48,7 @@ extern "C" JNIEXPORT void JNICALL Java_org_nlang_JNI_tokenize(JNIEnv* env, jclas
 
     //gjint length = env->CallIntMethod(source, CharSequence_length);
 
-    uint8_t buf[4];
+    uint8_t buf[4] {};
     std::vector<jint> relation;
     std::string s;
     s.reserve(end - start);
