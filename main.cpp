@@ -11,9 +11,9 @@ void print(const std::string &input) {
     using namespace nlang;
     auto scanner = Scanner::New(TokenStream::New(StringCharStream::New(input)));
 
-    for (auto token = scanner->NextToken(); token.token != nlang::Token::THE_EOF; token = scanner->NextToken()) {
-        std::cout << "'" << token.text << "'" << " [" << std::string(nlang::TokenUtils::GetTokenName(token.token)) << ", " << static_cast<int>(token.token) << "]:"
-            << token.row << ":" << token.column << std::endl;
+    for (auto token = scanner->NextToken(); token->token != nlang::Token::THE_EOF; token = scanner->NextToken()) {
+        std::cout << "'" << token->text << "'" << " [" << std::string(nlang::TokenUtils::GetTokenName(token->token)) << ", " << static_cast<int>(token->token) << "]:"
+            << token->row << ":" << token->column << std::endl;
     }
 }
 

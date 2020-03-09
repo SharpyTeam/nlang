@@ -16,15 +16,15 @@ public:
 
     Holder<IStatement> ParseVariableDefinitionStatement() {
         scanner->NextTokenAssert(Token::LET);
-        auto identifier = MakeHolder<IdentifierExpression>(scanner->NextTokenAssert(Token::IDENTIFIER).text);
+        auto identifier = MakeHolder<IdentifierExpression>(scanner->NextTokenAssert(Token::IDENTIFIER)->text);
         Holder<IdentifierExpression> type_hint;
         Holder<IExpression> default_value;
 
-        if (scanner->NextTokenLookahead().token == Token::COLON) {
+        if (scanner->NextTokenLookahead()->token == Token::COLON) {
             scanner->NextToken();
-            type_hint = MakeHolder<IdentifierExpression>(scanner->NextTokenAssert(Token::IDENTIFIER).text);
+            type_hint = MakeHolder<IdentifierExpression>(scanner->NextTokenAssert(Token::IDENTIFIER)->text);
         }
-        if (scanner->NextTokenLookahead().token == Token::ASSIGN) {
+        if (scanner->NextTokenLookahead()->token == Token::ASSIGN) {
             scanner->NextToken();
             default_value = ParseExpression();
         }
@@ -33,7 +33,7 @@ public:
 
     Holder<IStatement> ParseReturnStatement() {
         scanner->NextTokenAssert(Token::RETURN);
-        if (scanner->IsEOL() || scanner->NextTokenLookahead().token == Token::COLON) {
+        if (scanner->IsEOL() || scanner->NextTokenLookahead()->token == Token::COLON) {
             return MakeHolder<ReturnStatement>();
         }
         return MakeHolder<ReturnStatement>(ParseExpression());
@@ -57,12 +57,12 @@ public:
             auto expr = ParseExpression();
             scanner->NextTokenAssert(Token::RIGHT_PAR);
             ifs.emplace_back(std::move(expr), ParseBlockStatement());
-            if (scanner->NextTokenLookahead().token != Token::ELSE) {
+            if (scanner->NextTokenLookahead()->token != Token::ELSE) {
                 break;
             } else {
                 scanner->NextToken();
             }
-            if (scanner->NextTokenLookahead().token != Token::IF) {
+            if (scanner->NextTokenLookahead()->token != Token::IF) {
                 ifs.emplace_back(nullptr, ParseBlockStatement());
                 break;
             }
@@ -83,7 +83,7 @@ public:
     }
 
     Holder<IStatement> ParseStatement() {
-        switch (scanner->NextTokenLookahead().token) {
+        switch (scanner->NextTokenLookahead()->token) {
             case Token::LET:
                 return ParseVariableDefinitionStatement();
 
@@ -114,11 +114,11 @@ public:
         std::vector<Holder<IStatement>> statements;
 
         while (true) {
-            if (scanner->IsEOF() || scanner->NextTokenLookahead().token == Token::RIGHT_BRACE) {
+            if (scanner->IsEOF() || scanner->NextTokenLookahead()->token == Token::RIGHT_BRACE) {
                 break;
             }
             statements.emplace_back(ParseStatement());
-            if (!scanner->IsEOF() && scanner->NextTokenLookahead().token == Token::SEMICOLON) {
+            if (!scanner->IsEOF() && scanner->NextTokenLookahead()->token == Token::SEMICOLON) {
                 scanner->NextToken();
             }
         }
@@ -138,25 +138,25 @@ public:
         std::vector<Holder<VariableDefinitionStatement>> args;
 
         scanner->NextTokenAssert(Token::FN);
-        if (scanner->NextTokenLookahead().token == Token::IDENTIFIER) {
-            name = MakeHolder<IdentifierExpression>(scanner->NextToken().text);
+        if (scanner->NextTokenLookahead()->token == Token::IDENTIFIER) {
+            name = MakeHolder<IdentifierExpression>(scanner->NextToken()->text);
         }
         scanner->NextTokenAssert(Token::LEFT_PAR);
         bool default_value_required = false;
         while (true) {
-            if (scanner->NextTokenLookahead().token == Token::RIGHT_PAR) {
+            if (scanner->NextTokenLookahead()->token == Token::RIGHT_PAR) {
                 scanner->NextToken();
                 break;
             }
-            auto arg_name = MakeHolder<IdentifierExpression>(scanner->NextTokenAssert(Token::IDENTIFIER).text);
+            auto arg_name = MakeHolder<IdentifierExpression>(scanner->NextTokenAssert(Token::IDENTIFIER)->text);
             Holder<IdentifierExpression> type_hint;
             Holder<IExpression> default_value;
 
-            if (scanner->NextTokenLookahead().token == Token::COLON) {
+            if (scanner->NextTokenLookahead()->token == Token::COLON) {
                 scanner->NextToken();
-                type_hint = MakeHolder<IdentifierExpression>(scanner->NextTokenAssert(Token::IDENTIFIER).text);
+                type_hint = MakeHolder<IdentifierExpression>(scanner->NextTokenAssert(Token::IDENTIFIER)->text);
             }
-            if (scanner->NextTokenLookahead().token == Token::ASSIGN) {
+            if (scanner->NextTokenLookahead()->token == Token::ASSIGN) {
                 scanner->NextToken();
                 default_value = ParseExpression();
                 default_value_required = true;
@@ -167,18 +167,18 @@ public:
             args.emplace_back(MakeHolder<VariableDefinitionStatement>(
                 std::move(arg_name), std::move(default_value), std::move(type_hint)));
 
-            if (scanner->NextTokenLookahead().token == Token::COMMA) {
+            if (scanner->NextTokenLookahead()->token == Token::COMMA) {
                 scanner->NextToken();
-                if (scanner->NextTokenLookahead().token == Token::RIGHT_PAR) {
+                if (scanner->NextTokenLookahead()->token == Token::RIGHT_PAR) {
                     throw std::runtime_error("Expected arg, found par");
                 }
             }
         }
 
         Holder<IdentifierExpression> type_hint;
-        if (scanner->NextTokenLookahead().token == Token::COLON) {
+        if (scanner->NextTokenLookahead()->token == Token::COLON) {
             scanner->NextToken();
-            type_hint = MakeHolder<IdentifierExpression>(scanner->NextTokenAssert(Token::IDENTIFIER).text);
+            type_hint = MakeHolder<IdentifierExpression>(scanner->NextTokenAssert(Token::IDENTIFIER)->text);
         }
 
         return MakeHolder<FunctionDefinitionExpression>(std::move(name), ParseBlockStatement(), std::move(args), std::move(type_hint));
@@ -194,48 +194,48 @@ public:
     Holder<IExpression> ParseBasicExpression() {
         auto mark = scanner->Mark();
         auto token = scanner->NextToken();
-        switch (token.token) {
+        switch (token->token) {
             case Token::LEFT_PAR:
                 mark.Apply();
                 return ParseParenthesizedExpression();
 
             case Token::IDENTIFIER:
-                return MakeHolder<IdentifierExpression>(token.text);
+                return MakeHolder<IdentifierExpression>(token->text);
 
             case Token::NUMBER:
-                return MakeHolder<NumberExpression>(std::stod(token.text));
+                return MakeHolder<NumberExpression>(std::stod(token->text));
 
             case Token::STRING:
-                return MakeHolder<StringExpression>(token.text);
+                return MakeHolder<StringExpression>(token->text);
 
             case Token::THE_NULL:
                 return MakeHolder<NullExpression>();
 
             case Token::THE_TRUE:
             case Token::THE_FALSE:
-                return MakeHolder<BoolExpression>(token.token == Token::THE_TRUE);
+                return MakeHolder<BoolExpression>(token->token == Token::THE_TRUE);
 
             default:
-                throw std::runtime_error("Unexpected token \"" + token.text + "\" at [" + std::to_string(token.row) + ":" + std::to_string(token.column) + "]");
+                throw std::runtime_error("Unexpected token \"" + token->text + "\" at [" + std::to_string(token->row) + ":" + std::to_string(token->column) + "]");
         }
     }
 
     std::vector<Holder<IExpression>> ParseCallOrSubscriptArguments() {
         std::vector<Holder<IExpression>> arguments;
-        Token open = scanner->NextToken().token;
+        Token open = scanner->NextToken()->token;
         if (open != Token::LEFT_PAR && open != Token::LEFT_BRACKET) {
             throw std::runtime_error("TODO");
         }
         Token close = open == Token::LEFT_PAR ? Token::RIGHT_PAR : Token::RIGHT_BRACKET;
         while (true) {
-            if (const TokenInstance& token = scanner->NextTokenLookahead(); token.token == close) {
+            if (auto token = scanner->NextTokenLookahead(); token->token == close) {
                 scanner->NextToken();
                 break;
             }
             arguments.emplace_back(ParseExpression());
-            if (scanner->NextTokenLookahead().token == Token::COMMA) {
+            if (scanner->NextTokenLookahead()->token == Token::COMMA) {
                 scanner->NextToken();
-                if (scanner->NextTokenLookahead().token == close) {
+                if (scanner->NextTokenLookahead()->token == close) {
                     throw std::runtime_error("Expected arg, found close");
                 }
             }
@@ -248,16 +248,16 @@ public:
         auto expr = ParseBasicExpression();
         while (true) {
             auto mark = scanner->Mark();
-            if (const TokenInstance& token = scanner->NextToken(); tokens_set.find(token.token) != tokens_set.end()) {
-                expr = MakeHolder<PostfixExpression>(token.token, std::move(expr));
-            } else if (token.token == Token::LEFT_PAR) {
+            if (auto token = scanner->NextToken(); tokens_set.find(token->token) != tokens_set.end()) {
+                expr = MakeHolder<PostfixExpression>(token->token, std::move(expr));
+            } else if (token->token == Token::LEFT_PAR) {
                 mark.Apply();
                 expr = MakeHolder<FunctionCallExpression>(std::move(expr), ParseCallOrSubscriptArguments());
-            } else if (token.token == Token::LEFT_BRACKET) {
+            } else if (token->token == Token::LEFT_BRACKET) {
                 mark.Apply();
                 expr = MakeHolder<SubscriptExpression>(std::move(expr), ParseCallOrSubscriptArguments());
-            } else if (token.token == Token::DOT) {
-                expr = MakeHolder<MemberAccessExpression>(std::move(expr), MakeHolder<IdentifierExpression>(scanner->NextTokenAssert(Token::IDENTIFIER).text));
+            } else if (token->token == Token::DOT) {
+                expr = MakeHolder<MemberAccessExpression>(std::move(expr), MakeHolder<IdentifierExpression>(scanner->NextTokenAssert(Token::IDENTIFIER)->text));
             } else {
                 mark.Apply();
                 break;
@@ -271,8 +271,8 @@ public:
         std::stack<Token> operators;
         while (true) {
             auto mark = scanner->Mark();
-            if (auto token = scanner->NextToken(); tokens_set.find(token.token) != tokens_set.end()) {
-                operators.push(token.token);
+            if (auto token = scanner->NextToken(); tokens_set.find(token->token) != tokens_set.end()) {
+                operators.push(token->token);
             } else {
                 mark.Apply();
                 auto expr = ParsePostfixUnaryExpression();
@@ -300,11 +300,11 @@ public:
     Holder<IExpression> ParseAssignmentExpression() { return ParseBinaryExpression<&Parser::ParseDisjunctionExpression, false, Associativity::RIGHT, Token::ASSIGN, Token::ASSIGN_ADD, Token::ASSIGN_SUB, Token::ASSIGN_MUL, Token::ASSIGN_DIV, Token::ASSIGN_REMAINDER>(); }
 
     Holder<IExpression> ParseExpression() {
-        if (scanner->NextTokenLookahead().token == Token::FN) {
+        if (scanner->NextTokenLookahead()->token == Token::FN) {
             return ParseFunctionDefinitionExpression();
-        } else if (scanner->NextTokenLookahead().token == Token::OP) {
+        } else if (scanner->NextTokenLookahead()->token == Token::OP) {
             // TODO return ParseOperatorDefinitionExpression();
-        } else if (scanner->NextTokenLookahead().token == Token::CLASS) {
+        } else if (scanner->NextTokenLookahead()->token == Token::CLASS) {
             // TODO return ParseClassDefinitionExpression();
         }
         return ParseAssignmentExpression();
@@ -323,11 +323,11 @@ public:
                 }
             }
             auto mark = scanner->Mark();
-            if (const TokenInstance& token = scanner->NextToken(); tokens_set.find(token.token) != tokens_set.end()) {
+            if (auto token = scanner->NextToken(); tokens_set.find(token->token) != tokens_set.end()) {
                 if constexpr (associativity == Associativity::LEFT) {
-                    expr = MakeHolder<BinaryExpression>(token.token, std::move(expr), (this->*next)());
+                    expr = MakeHolder<BinaryExpression>(token->token, std::move(expr), (this->*next)());
                 } else {
-                    expr = MakeHolder<BinaryExpression>(token.token, std::move(expr), ParseBinaryExpression<next, allow_newline_before_op, associativity, tokens...>());
+                    expr = MakeHolder<BinaryExpression>(token->token, std::move(expr), ParseBinaryExpression<next, allow_newline_before_op, associativity, tokens...>());
                 }
             } else {
                 mark.Apply();

@@ -49,6 +49,35 @@ public:
         bool apply_on_destroy;
     };
 
+    class TokenInstanceHandle {
+        friend class Scanner;
+
+    public:
+        const TokenInstance& operator*() const {
+            return scanner->cache[*pos_it];
+        }
+
+        const TokenInstance* operator->() const {
+            return &scanner->cache[*pos_it];
+        }
+
+        ~TokenInstanceHandle() {
+            scanner->marked_positions.erase(pos_it);
+        }
+
+    private:
+        explicit TokenInstanceHandle(Scanner* scanner, size_t pos)
+            : scanner(scanner)
+            , pos_it(scanner->marked_positions.insert(pos))
+        {
+
+        }
+
+    private:
+        Scanner* scanner;
+        std::multiset<size_t>::const_iterator pos_it;
+    };
+
     Scanner(const Scanner&) = delete;
     Scanner(Scanner&&) = delete;
     Scanner& operator=(const Scanner&) = delete;
@@ -60,15 +89,15 @@ public:
     }
 
     bool IsEOF() const {
-        return NextTokenLookahead().token == Token::THE_EOF;
+        return NextTokenLookahead()->token == Token::THE_EOF;
     }
 
     bool IsEOL() const {
         size_t p = pos;
         auto mark = Mark();
         mark.ApplyOnDestroy();
-        auto& token_instance = const_cast<Scanner*>(this)->NextToken();
-        if (token_instance.token == Token::THE_EOF) {
+        auto tok = const_cast<Scanner*>(this)->NextToken();
+        if (tok->token == Token::THE_EOF) {
             return true;
         }
         for (size_t i = p + 1; i < pos; ++i) {
@@ -79,7 +108,7 @@ public:
         return false;
     }
 
-    const TokenInstance& NextToken() {
+    TokenInstanceHandle NextToken() {
         // TODO skip and report invalid tokens
         static std::unordered_set<Token> tokens_to_skip { Token::NEWLINE, Token::COMMENT, Token::SPACE };
         auto it = StreamCache<TokenStream>::StreamCacheIterator(&cache, pos);
@@ -87,22 +116,22 @@ public:
             ++it;
         }
         pos = it.GetPosition() + 1;
-        // TODO maybe return by value and uncomment this?
-        // cache.Cut(marked_positions.empty() ? pos : *marked_positions.begin());
-        return *it;
+        TokenInstanceHandle handle(this, it.GetPosition());
+        cache.Cut(*marked_positions.begin());
+        return handle;
     }
 
-    const TokenInstance& NextTokenAssert(Token token) {
+    TokenInstanceHandle NextTokenAssert(Token token) {
         auto mark = Mark();
-        auto& token_instance = NextToken();
-        if (token_instance.token != token) {
+        auto tok = NextToken();
+        if (tok->token != token) {
             mark.Apply();
-            throw std::runtime_error("Expected " + TokenUtils::GetTokenName(token) + ", got " + TokenUtils::GetTokenName(token_instance.token));
+            throw std::runtime_error("Expected " + TokenUtils::GetTokenName(token) + ", got " + TokenUtils::GetTokenName(tok->token));
         }
-        return token_instance;
+        return tok;
     }
 
-    const TokenInstance& NextTokenLookahead() const {
+    TokenInstanceHandle NextTokenLookahead() const {
         auto mark = Mark();
         mark.ApplyOnDestroy();
         return const_cast<Scanner*>(this)->NextToken();
