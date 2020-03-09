@@ -4,7 +4,7 @@
 
 #include <iterator>
 #include <memory>
-#include <vector>
+#include <deque>
 
 
 namespace nlang {
@@ -18,7 +18,7 @@ public:
 
     class StreamCacheIterator {
     public:
-        using iterator_category = std::bidirectional_iterator_tag;
+        using iterator_category = std::random_access_iterator_tag;
         using value_type = T;
         using difference_type = ptrdiff_t;
         using pointer = const value_type*;
@@ -61,6 +61,35 @@ public:
             auto iter = CharStreamCacheIterator(stream_cache, pos);
             this->operator--();
             return iter;
+        }
+
+        StreamCacheIterator& operator+=(difference_type n) noexcept {
+            pos = (difference_type)pos + n;
+            if (!stream_cache->Advance(pos)) {
+                pos = (size_t)-1;
+            }
+            return *this;
+        }
+
+        StreamCacheIterator operator+(difference_type n) const noexcept {
+            StreamCacheIterator tmp = *this;
+            return tmp += n;
+        }
+
+        StreamCacheIterator& operator-=(difference_type n) noexcept {
+            return *this += -n;
+        }
+
+        StreamCacheIterator operator-(difference_type n) const noexcept {
+            StreamCacheIterator tmp = *this;
+            return tmp -= n;
+        }
+
+        difference_type operator-(const StreamCacheIterator& other) const noexcept {
+            if (pos == (size_t)-1) {
+                return stream_cache->AdvanceToEnd() - other.pos;
+            }
+            return pos - other.pos;
         }
 
         bool operator==(const StreamCacheIterator& other) const {
@@ -120,7 +149,7 @@ public:
         if (index_to == (size_t)-1) {
             index_to = buffer.size() + offset;
         }
-        buffer.erase(buffer.begin(), buffer.begin() + index_to - offset);
+        buffer.erase(buffer.begin(), buffer.begin() + (index_to - offset));
         offset = index_to;
         begin_ = StreamCacheIterator(this, offset);
     }
@@ -145,7 +174,7 @@ private:
 
 private:
     Holder<S> stream;
-    std::vector<T> buffer;
+    std::deque<T> buffer;
     size_t offset;
     StreamCacheIterator begin_;
     StreamCacheIterator end_;

@@ -68,7 +68,7 @@ TEST_CASE("forward list view functionality") {
     }
 
     SECTION("remove") {
-        list.remove(*new Node(2));
+        list.remove(Node(2));
         REQUIRE(Compare(list, { 1, 9, 6, 6, 4, 8 }));
     }
 
