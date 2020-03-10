@@ -75,4 +75,4 @@ script:
   - cd build
   - cmake .. -DCMAKE_BUILD_TYPE=$CONFIGURATION `if [ "$TRAVIS_CPU_ARCH" != "arm64" ]; then echo "-DENABLE_JNI_TOOLS=TRUE"; fi` `if [ "$SANITIZE" = "true" ]; then echo "-DENABLE_SANITIZERS=TRUE"; fi`
   - cmake --build . --config $CONFIGURATION
-  - ctest
+  - ctest --output-on-failure
