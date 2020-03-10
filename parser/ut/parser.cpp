@@ -10,6 +10,8 @@ TEST_CASE("parser test") {
 
     const std::string source =
 R"(fn print_my_name_and_predict_age(first_name: string, last_name: string = 'Smith') : number {
+    fn dummy() {}
+    dummy()
     print(first_name); print(second_name)
     let static_age = 15
     let guessed_age: number
@@ -30,11 +32,11 @@ R"(fn print_my_name_and_predict_age(first_name: string, last_name: string = 'Smi
     auto parser = Parser::New(Scanner::New(TokenStream::New(StringCharStream::New(source))));
     auto ast = parser->ParseFunctionDefinitionExpression();
 
-    ASTPrinter printer;
-    printer.Visit(*ast);
-
-    REQUIRE(printer.text ==
+    REQUIRE(ASTStringifier().Stringify(*ast) ==
 R"(fn print_my_name_and_predict_age(first_name: string, last_name: string = 'Smith'): number {
+    fn dummy() {
+    }
+    dummy()
     print(first_name)
     print(second_name)
     let static_age = 15.000000
@@ -50,6 +52,6 @@ R"(fn print_my_name_and_predict_age(first_name: string, last_name: string = 'Smi
         break
     }
     return static_age
-}
-)"); // NEWLINE here is important
+})");
+
 }

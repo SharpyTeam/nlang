@@ -100,7 +100,7 @@ public:
         if (tok->token == Token::THE_EOF) {
             return true;
         }
-        for (size_t i = p + 1; i < pos; ++i) {
+        for (size_t i = p; i < pos; ++i) {
             if (cache[i].token == Token::NEWLINE) {
                 return true;
             }
@@ -115,8 +115,8 @@ public:
         while (it != cache.end() && tokens_to_skip.find(it->token) != tokens_to_skip.end()) {
             ++it;
         }
-        pos = it.GetPosition() + 1;
         TokenInstanceHandle handle(this, it.GetPosition());
+        pos = it.GetPosition() + 1;
         cache.Cut(*marked_positions.begin());
         return handle;
     }

@@ -8,6 +8,7 @@
 #include <string>
 #include <memory>
 #include <utility>
+#include <cctype>
 
 namespace nlang {
 
@@ -276,12 +277,12 @@ public:
         Holder<IdentifierExpression>&& name,
         Holder<IStatement>&& body,
         std::vector<Holder<VariableDefinitionStatement>>&& arguments = std::vector<Holder<VariableDefinitionStatement>>(),
-    Holder<IdentifierExpression>&& type_hint = nullptr)
+        Holder<IdentifierExpression>&& type_hint = nullptr)
 
-    : name(std::move(name))
-    , body(std::move(body))
-    , arguments(std::move(arguments))
-    , type_hint(std::move(type_hint))
+        : name(std::move(name))
+        , body(std::move(body))
+        , arguments(std::move(arguments))
+        , type_hint(std::move(type_hint))
     {
 #ifdef NLANG_DEBUG
         bool th = false;
@@ -505,10 +506,44 @@ public:
 #undef VISITOR_ACCEPT
 
 
-class ASTPrinter : public IASTVisitor {
+class ASTStringifier : protected IASTVisitor {
 public:
-    std::string text;
-    std::string indent = "";
+    std::string Stringify(const IASTNode& node) const {
+        text.clear();
+        indent.clear();
+        const_cast<IASTNode&>(node).Accept(const_cast<ASTStringifier&>(*this));
+
+        std::string text_trimmed;
+
+        size_t pos = 0;
+        while (pos < text.size()) {
+            size_t newline_shift = text.find_first_of('\n', pos);
+            newline_shift = (newline_shift == std::string::npos) ? text.size() : newline_shift - pos;
+            std::string substr = text.substr(pos, newline_shift);
+            for (char c : substr) {
+                if (!isspace(c)) {
+                    if (!text_trimmed.empty()) {
+                        text_trimmed += "\n";
+                    }
+                    for (size_t i = substr.size(); i > 0; --i) {
+                        if (!isspace(substr[i - 1])) {
+                            substr.resize(i);
+                            break;
+                        }
+                    }
+                    text_trimmed += substr;
+                    break;
+                }
+            }
+            pos += newline_shift + 1;
+        }
+
+        return text_trimmed;
+    }
+
+private:
+    mutable std::string text;
+    mutable std::string indent = "";
 
     void Visit(IASTNode&) override {};
     void Visit(IExpression&) override {};
