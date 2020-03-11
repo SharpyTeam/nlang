@@ -9,6 +9,9 @@ set(CMAKE_CXX_STANDARD_REQUIRED 17)
 set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
+# Suppress CMake unused variable warning
+set(dummy_var "${CMAKE_C_COMPILER}")
+
 
 # Build configuration
 include(TestBigEndian)

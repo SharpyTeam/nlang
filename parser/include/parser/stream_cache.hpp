@@ -43,7 +43,7 @@ public:
         }
 
         StreamCacheIterator operator++(int) {
-            auto iter = CharStreamCacheIterator(stream_cache, pos);
+            auto iter = StreamCacheIterator(stream_cache, pos);
             this->operator++();
             return iter;
         }
@@ -58,7 +58,7 @@ public:
         }
 
         StreamCacheIterator operator--(int) {
-            auto iter = CharStreamCacheIterator(stream_cache, pos);
+            auto iter = StreamCacheIterator(stream_cache, pos);
             this->operator--();
             return iter;
         }
