@@ -7,6 +7,10 @@
 
 #include <memory>
 #include <vector>
+#include <stack>
+#include <utility>
+#include <string>
+#include <unordered_set>
 #include <stdexcept>
 
 namespace nlang {
