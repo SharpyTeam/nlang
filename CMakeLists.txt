@@ -49,6 +49,8 @@ if (CMAKE_CXX_COMPILER_ID MATCHES "Clang" OR CMAKE_CXX_COMPILER_ID STREQUAL "GNU
 elseif (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
     # remove default warning level from CMAKE_CXX_FLAGS_INIT
     string(REGEX REPLACE "/W[0-4]" "/W4" CMAKE_CXX_FLAGS_INIT "${CMAKE_CXX_FLAGS_INIT}")
+    # define macro to suppress codecvt and wstring_convert deprecation warnings
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /D_SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING")
 
     if (ENABLE_SANITIZERS)
         message(WARNING "Build with sanitizers is not supported on MSVC yet")
