@@ -136,18 +136,18 @@ private:
     static constexpr uint64_t signaling_nan_mask =      0x7FF8000000000000;
     static constexpr uint64_t signaling_nan_signature = 0x7FF0000000000000;
 
-    static constexpr uint64_t type_mask =               signaling_nan_mask      | ((uint64_t)0x111 << (uint64_t)48);
+    static constexpr uint64_t type_mask =               signaling_nan_mask      | ((uint64_t)0b111 << (uint64_t)48);
 
     static constexpr uint64_t mask_48_bit =             ((uint64_t)1 << (uint64_t)48) - (uint64_t)1;
-    static constexpr uint64_t pointer_signature =       signaling_nan_signature | ((uint64_t)0x000 << (uint64_t)48);
-    static constexpr uint64_t null_signature =          signaling_nan_signature | ((uint64_t)0x010 << (uint64_t)48);
-    static constexpr uint64_t int32_signature =         signaling_nan_signature | ((uint64_t)0x001 << (uint64_t)48);
+    static constexpr uint64_t pointer_signature =       signaling_nan_signature | ((uint64_t)0b000 << (uint64_t)48);
+    static constexpr uint64_t null_signature =          signaling_nan_signature | ((uint64_t)0b010 << (uint64_t)48);
+    static constexpr uint64_t int32_signature =         signaling_nan_signature | ((uint64_t)0b001 << (uint64_t)48);
 
-    static constexpr uint64_t bool_mask =               signaling_nan_mask      | ((uint64_t)0x011 << (uint64_t)48);
+    static constexpr uint64_t bool_mask =               signaling_nan_mask      | ((uint64_t)0b011 << (uint64_t)48);
 
-    static constexpr uint64_t bool_signature =          signaling_nan_signature | ((uint64_t)0x011 << (uint64_t)48);
-    static constexpr uint64_t bool_false_signature =    signaling_nan_signature | ((uint64_t)0x011 << (uint64_t)48);
-    static constexpr uint64_t bool_true_signature =     signaling_nan_signature | ((uint64_t)0x111 << (uint64_t)48);
+    static constexpr uint64_t bool_signature =          signaling_nan_signature | ((uint64_t)0b011 << (uint64_t)48);
+    static constexpr uint64_t bool_false_signature =    signaling_nan_signature | ((uint64_t)0b011 << (uint64_t)48);
+    static constexpr uint64_t bool_true_signature =     signaling_nan_signature | ((uint64_t)0b111 << (uint64_t)48);
 };
 
 
