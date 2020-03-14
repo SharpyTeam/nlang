@@ -9,7 +9,9 @@ set(NLANG_INTERPRETER_HEADERS
         include/interpreter/heap.hpp
         include/interpreter/object.hpp
         include/interpreter/string.hpp
-        include/interpreter/value.hpp)
+        include/interpreter/value.hpp
+        include/interpreter_new/module.hpp
+        include/interpreter_new/module_loader.hpp)
 
 add_subdirectory(ut)
 

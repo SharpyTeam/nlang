@@ -10,10 +10,10 @@
 #include <utility>
 #include <cctype>
 
-namespace nlang {
+namespace nlang::ast {
 
 // base
-class IASTNode;
+class INode;
 class IExpression;
 class IStatement;
 class ILiteral;
@@ -57,10 +57,13 @@ class ReturnStatement;
 class BreakStatement;
 class ContinueStatement;
 
+// top level
+class Module;
+
 
 class IASTVisitor {
 public:
-    virtual void Visit(IASTNode&) = 0;
+    virtual void Visit(INode&) = 0;
     virtual void Visit(IExpression&) = 0;
     virtual void Visit(IStatement&) = 0;
 
@@ -98,6 +101,8 @@ public:
     virtual void Visit(ReturnStatement&) = 0;
     virtual void Visit(BreakStatement&) = 0;
     virtual void Visit(ContinueStatement&) = 0;
+
+    virtual void Visit(Module&) = 0;
 };
 
 
@@ -107,25 +112,25 @@ virtual void Accept(IASTVisitor& visitor) {     \
 }
 
 
-class IASTNode {
+class INode {
 public:
     VISITOR_ACCEPT
 
-    IASTNode(const IASTNode&) = delete;
-    IASTNode(IASTNode&&) = delete;
-    IASTNode& operator=(const IASTNode&) = delete;
-    IASTNode& operator=(IASTNode&&) = delete;
+    INode(const INode&) = delete;
+    INode(INode&&) = delete;
+    INode& operator=(const INode&) = delete;
+    INode& operator=(INode&&) = delete;
 
-    virtual ~IASTNode() = 0;
+    virtual ~INode() = 0;
 
 protected:
-    IASTNode() {};
+    INode() {};
 };
 
-IASTNode::~IASTNode() = default;
+INode::~INode() = default;
 
 
-class IExpression : public IASTNode {
+class IExpression : public INode {
 public:
     VISITOR_ACCEPT
 
@@ -135,7 +140,7 @@ public:
 IExpression::~IExpression() = default;
 
 
-class IStatement : public IASTNode {
+class IStatement : public INode {
 public:
     VISITOR_ACCEPT
 
@@ -145,7 +150,7 @@ public:
 IStatement::~IStatement() = default;
 
 
-class ILiteral : public IASTNode {
+class ILiteral : public INode {
 public:
     VISITOR_ACCEPT
 
@@ -223,7 +228,7 @@ public:
 };
 
 
-class TypeHint : public IASTNode {
+class TypeHint : public INode {
 public:
     VISITOR_ACCEPT
 
@@ -237,7 +242,7 @@ public:
 };
 
 
-class DefaultValue : public IASTNode {
+class DefaultValue : public INode {
 public:
     VISITOR_ACCEPT
 
@@ -346,7 +351,7 @@ public:
 };
 
 
-class ArgumentDefinitionStatementPart : public IASTNode {
+class ArgumentDefinitionStatementPart : public INode {
 public:
     VISITOR_ACCEPT
 
@@ -539,7 +544,7 @@ public:
 };
 
 
-class ElseStatementPart : public IASTNode {
+class ElseStatementPart : public INode {
 public:
     VISITOR_ACCEPT
 
@@ -647,15 +652,27 @@ public:
 };
 
 
+class Module : public INode {
+public:
+    VISITOR_ACCEPT
+
+    const std::vector<Holder<IStatement>>&& statements;
+
+    explicit Module(std::vector<Holder < IStatement>>&& statements)
+        : statements(std::move(statements))
+    {}
+};
+
+
 #undef VISITOR_ACCEPT
 
 
 class ASTStringifier : protected IASTVisitor {
 public:
-    std::string Stringify(const IASTNode& node) const {
+    std::string Stringify(const INode& node) const {
         text.clear();
         indent.clear();
-        const_cast<IASTNode&>(node).Accept(const_cast<ASTStringifier&>(*this));
+        const_cast<INode&>(node).Accept(const_cast<ASTStringifier&>(*this));
 
         std::string text_trimmed;
 
@@ -689,7 +706,7 @@ private:
     mutable std::string text;
     mutable std::string indent = "";
 
-    void Visit(IASTNode&) override {};
+    void Visit(INode&) override {};
     void Visit(IExpression&) override {};
     void Visit(IStatement&) override {};
 
@@ -890,6 +907,12 @@ private:
 
     void Visit(ContinueStatement&) override {
         text += "return\n" + indent;
+    }
+
+    void Visit(Module& m) override {
+        for (auto& ss : m.statements) {
+            ss->Accept(*this);
+        }
     }
 };
 

@@ -32,7 +32,7 @@ R"(fn print_my_name_and_predict_age(first_name: string, last_name: string = 'Smi
     auto parser = Parser::New(Scanner::New(TokenStream::New(StringCharStream::New(source))));
     auto ast = parser->ParseFunctionDefinitionExpression();
 
-    REQUIRE(ASTStringifier().Stringify(*ast) ==
+    REQUIRE(ast::ASTStringifier().Stringify(*ast) ==
 R"(fn print_my_name_and_predict_age(first_name: string, last_name: string = 'Smith'): number {
     fn dummy() {
     }
