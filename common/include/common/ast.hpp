@@ -16,14 +16,23 @@ namespace nlang {
 class IASTNode;
 class IExpression;
 class IStatement;
+class ILiteral;
+
+// literals
+class NullLiteral;
+class BoolLiteral;
+class NumberLiteral;
+class StringLiteral;
+class IdentifierLiteral;
+
+// helpers
+class TypeHint;
+class DefaultValue;
+class ElseStatementPart;
+class ArgumentDefinitionStatementPart;
 
 // expressions
-class NullExpression;
-class BoolExpression;
-class NumberExpression;
-class StringExpression;
-class IdentifierExpression;
-
+class LiteralExpression;
 class ParenthesizedExpression;
 class PrefixExpression;
 class PostfixExpression;
@@ -41,7 +50,7 @@ class ClassDefinitionExpression;
 class VariableDefinitionStatement;
 class ExpressionStatement;
 class BlockStatement;
-class BranchStatement;
+class IfElseStatement;
 class WhileStatement;
 
 class ReturnStatement;
@@ -55,12 +64,18 @@ public:
     virtual void Visit(IExpression&) = 0;
     virtual void Visit(IStatement&) = 0;
 
-    virtual void Visit(NullExpression&) = 0;
-    virtual void Visit(BoolExpression&) = 0;
-    virtual void Visit(NumberExpression&) = 0;
-    virtual void Visit(StringExpression&) = 0;
-    virtual void Visit(IdentifierExpression&) = 0;
+    virtual void Visit(NullLiteral&) = 0;
+    virtual void Visit(BoolLiteral&) = 0;
+    virtual void Visit(NumberLiteral&) = 0;
+    virtual void Visit(StringLiteral&) = 0;
+    virtual void Visit(IdentifierLiteral&) = 0;
 
+    virtual void Visit(TypeHint&) = 0;
+    virtual void Visit(DefaultValue&) = 0;
+    virtual void Visit(ElseStatementPart&) = 0;
+    virtual void Visit(ArgumentDefinitionStatementPart&) = 0;
+
+    virtual void Visit(LiteralExpression&) = 0;
     virtual void Visit(ParenthesizedExpression&) = 0;
     virtual void Visit(PrefixExpression&) = 0;
     virtual void Visit(PostfixExpression&) = 0;
@@ -77,7 +92,7 @@ public:
     virtual void Visit(VariableDefinitionStatement&) = 0;
     virtual void Visit(ExpressionStatement&) = 0;
     virtual void Visit(BlockStatement&) = 0;
-    virtual void Visit(BranchStatement&) = 0;
+    virtual void Visit(IfElseStatement&) = 0;
     virtual void Visit(WhileStatement&) = 0;
 
     virtual void Visit(ReturnStatement&) = 0;
@@ -130,51 +145,121 @@ public:
 IStatement::~IStatement() = default;
 
 
-class NullExpression : public IExpression {
+class ILiteral : public IASTNode {
 public:
     VISITOR_ACCEPT
 
-    NullExpression() {}
+    virtual ~ILiteral() = 0;
+};
+
+ILiteral::~ILiteral() = default;
+
+
+class NullLiteral : public ILiteral {
+public:
+    VISITOR_ACCEPT
+
+    const TokenInstance token;
+
+    NullLiteral(TokenInstance&& token)
+        : token(std::move(token))
+    {}
 };
 
 
-class BoolExpression : public IExpression {
+class BoolLiteral : public ILiteral {
 public:
     VISITOR_ACCEPT
 
+    const TokenInstance token;
     const bool flag;
 
-    explicit BoolExpression(bool flag) : flag(flag) {}
+    explicit BoolLiteral(TokenInstance&& token)
+        : token(std::move(token))
+        , flag(this->token.token == Token::THE_TRUE)
+    {}
 };
 
 
-class NumberExpression : public IExpression {
+class NumberLiteral : public ILiteral {
 public:
     VISITOR_ACCEPT
 
+    const TokenInstance token;
     const double number;
 
-    explicit NumberExpression(double number) : number(number) {}
+    explicit NumberLiteral(TokenInstance&& token)
+        : token(std::move(token))
+        , number(std::stod(this->token.text))
+    {}
 };
 
 
-class StringExpression : public IExpression {
+class StringLiteral : public ILiteral {
 public:
     VISITOR_ACCEPT
 
+    const TokenInstance token;
     const std::string string;
 
-    explicit StringExpression(std::string string) : string(std::move(string)) {}
+    explicit StringLiteral(TokenInstance&& token)
+        : token(std::move(token))
+        , string(this->token.text)
+    {}
 };
 
 
-class IdentifierExpression : public IExpression {
+class IdentifierLiteral : public ILiteral {
 public:
     VISITOR_ACCEPT
 
-    const std::string identifier;
+    const TokenInstance token;
+    const std::string& identifier;
 
-    explicit IdentifierExpression(std::string identifier) : identifier(std::move(identifier)) {}
+    explicit IdentifierLiteral(TokenInstance&& token)
+        : token(std::move(token))
+        , identifier(this->token.text)
+    {}
+};
+
+
+class TypeHint : public IASTNode {
+public:
+    VISITOR_ACCEPT
+
+    const TokenInstance colon;
+    const Holder<IdentifierLiteral> name;
+
+    TypeHint(TokenInstance&& colon, Holder<IdentifierLiteral>&& name)
+        : colon(std::move(colon))
+        , name(std::move(name))
+    {}
+};
+
+
+class DefaultValue : public IASTNode {
+public:
+    VISITOR_ACCEPT
+
+    const TokenInstance assignment;
+    const Holder<IExpression> value;
+
+    DefaultValue(TokenInstance&& assignment, Holder<IExpression>&& value)
+        : assignment(std::move(assignment))
+        , value(std::move(value))
+    {}
+};
+
+
+class LiteralExpression : public IExpression {
+public:
+    VISITOR_ACCEPT
+
+    const Holder<ILiteral> literal;
+
+    LiteralExpression(Holder<ILiteral>&& literal)
+        : literal(std::move(literal))
+    {}
 };
 
 
@@ -182,13 +267,15 @@ class ParenthesizedExpression : public IExpression {
 public:
     VISITOR_ACCEPT
 
+    const TokenInstance left_par;
     const Holder<IExpression> expression;
+    const TokenInstance right_par;
 
-    ParenthesizedExpression(Holder<IExpression>&& expression)
-        : expression(std::move(expression))
-    {
-
-    }
+    ParenthesizedExpression(TokenInstance&& left_par, Holder<IExpression>&& expression, TokenInstance&& right_par)
+        : left_par(std::move(left_par))
+        , expression(std::move(expression))
+        , right_par(std::move(right_par))
+    {}
 };
 
 
@@ -196,15 +283,13 @@ class PrefixExpression : public IExpression {
 public:
     VISITOR_ACCEPT
 
-    const Token prefix;
+    const TokenInstance prefix;
     const Holder<IExpression> expression;
 
-    PrefixExpression(Token prefix, Holder<IExpression>&& expression)
-        : prefix(prefix)
+    PrefixExpression(TokenInstance&& prefix, Holder<IExpression>&& expression)
+        : prefix(std::move(prefix))
         , expression(std::move(expression))
-    {
-
-    }
+    {}
 };
 
 
@@ -212,15 +297,13 @@ class PostfixExpression : public IExpression {
 public:
     VISITOR_ACCEPT
 
-    const Token postfix;
     const Holder<IExpression> expression;
+    const TokenInstance postfix;
 
-    PostfixExpression(Token postfix, Holder<IExpression>&& expression)
-        : postfix(postfix)
-        , expression(std::move(expression))
-    {
-
-    }
+    PostfixExpression(Holder<IExpression>&& expression, TokenInstance&& postfix)
+        : expression(std::move(expression))
+        , postfix(std::move(postfix))
+    {}
 };
 
 
@@ -228,17 +311,15 @@ class BinaryExpression : public IExpression {
 public:
     VISITOR_ACCEPT
 
-    const Token op;
     const Holder<IExpression> left;
+    const TokenInstance op;
     const Holder<IExpression> right;
 
-    BinaryExpression(Token op, Holder<IExpression>&& left, Holder<IExpression>&& right)
-        : op(op)
-        , left(std::move(left))
+    BinaryExpression(Holder<IExpression>&& left, TokenInstance&& op, Holder<IExpression>&& right)
+        : left(std::move(left))
+        , op(std::move(op))
         , right(std::move(right))
-    {
-
-    }
+    {}
 };
 
 
@@ -246,25 +327,46 @@ class VariableDefinitionStatement : public IStatement {
 public:
     VISITOR_ACCEPT
 
-    const Holder<IdentifierExpression> name;
-    const Holder<IExpression> value;
-    const Holder<IdentifierExpression> type_hint;
+    const TokenInstance let;
+    const Holder<IdentifierLiteral> name;
+    const Holder<TypeHint> type_hint;
+    const Holder<DefaultValue> default_value;
 
     explicit VariableDefinitionStatement(
-        Holder<IdentifierExpression>&& name,
-        Holder<IExpression>&& value = nullptr,
-        Holder<IdentifierExpression>&& type_hint = nullptr)
+        TokenInstance&& let,
+        Holder<IdentifierLiteral>&& name,
+        Holder<TypeHint>&& type_hint,
+        Holder<DefaultValue>&& default_value)
 
-        : name(std::move(name))
-        , value(std::move(value))
+        : let(std::move(let))
+        , name(std::move(name))
         , type_hint(std::move(type_hint))
-    {
-
-    }
+        , default_value(std::move(default_value))
+    {}
 };
 
 
-class OperatorDefinitionExpression : public IExpression {
+class ArgumentDefinitionStatementPart : public IASTNode {
+public:
+    VISITOR_ACCEPT
+
+    const Holder<IdentifierLiteral> name;
+    const Holder<TypeHint> type_hint;
+    const Holder<DefaultValue> default_value;
+
+    explicit ArgumentDefinitionStatementPart(
+        Holder<IdentifierLiteral>&& name,
+        Holder<TypeHint>&& type_hint,
+        Holder<DefaultValue>&& default_value)
+
+        : name(std::move(name))
+        , type_hint(std::move(type_hint))
+        , default_value(std::move(default_value))
+    {}
+};
+
+
+/*class OperatorDefinitionExpression : public IExpression {
 public:
     VISITOR_ACCEPT
 
@@ -297,42 +399,38 @@ public:
         }
 #endif
     }
-};
+};*/
 
 
 class FunctionDefinitionExpression : public IExpression {
 public:
     VISITOR_ACCEPT
 
-    const Holder<IdentifierExpression> name;
+    const TokenInstance fn;
+    const Holder<IdentifierLiteral> name;
+    const TokenInstance left_par;
+    const std::vector<Holder<ArgumentDefinitionStatementPart>> arguments;
+    const TokenInstance right_par;
+    const Holder<TypeHint> type_hint;
     const Holder<IStatement> body;
-    const std::vector<Holder<VariableDefinitionStatement>> arguments;
-    const Holder<IdentifierExpression> type_hint;
 
     FunctionDefinitionExpression(
-        Holder<IdentifierExpression>&& name,
-        Holder<IStatement>&& body,
-        std::vector<Holder<VariableDefinitionStatement>>&& arguments = std::vector<Holder<VariableDefinitionStatement>>(),
-        Holder<IdentifierExpression>&& type_hint = nullptr)
+        TokenInstance&& fn,
+        Holder<IdentifierLiteral>&& name,
+        TokenInstance&& left_par,
+        std::vector<Holder<ArgumentDefinitionStatementPart>>&& arguments,
+        TokenInstance&& right_par,
+        Holder<TypeHint>&& type_hint,
+        Holder<IStatement>&& body)
 
-        : name(std::move(name))
-        , body(std::move(body))
+        : fn(std::move(fn))
+        , name(std::move(name))
+        , left_par(std::move(left_par))
         , arguments(std::move(arguments))
+        , right_par(std::move(right_par))
         , type_hint(std::move(type_hint))
-    {
-#ifdef NLANG_DEBUG
-        bool th = false;
-        for (auto& argument : arguments) {
-            if (!th) {
-                if (argument->type_hint.get()) {
-                    th = true;
-                }
-            } else {
-                NLANG_ASSERT(argument->type_hint.get() != nullptr);
-            }
-        }
-#endif
-    }
+        , body(std::move(body))
+    {}
 };
 
 
@@ -341,14 +439,16 @@ public:
     VISITOR_ACCEPT
 
     const Holder<IExpression> expression;
+    const TokenInstance left_par;
     const std::vector<Holder<IExpression>> arguments;
+    const TokenInstance right_par;
 
-    FunctionCallExpression(Holder<IExpression>&& expression, std::vector<Holder<IExpression>>&& arguments)
+    FunctionCallExpression(Holder<IExpression>&& expression, TokenInstance&& left_par, std::vector<Holder<IExpression>>&& arguments, TokenInstance&& right_par)
         : expression(std::move(expression))
+        , left_par(std::move(left_par))
         , arguments(std::move(arguments))
-    {
-
-    }
+        , right_par(std::move(right_par))
+    {}
 };
 
 
@@ -357,14 +457,16 @@ public:
     VISITOR_ACCEPT
 
     const Holder<IExpression> expression;
+    const TokenInstance left_bracket;
     const std::vector<Holder<IExpression>> arguments;
+    const TokenInstance right_bracket;
 
-    SubscriptExpression(Holder<IExpression>&& expression, std::vector<Holder<IExpression>>&& arguments)
+    SubscriptExpression(Holder<IExpression>&& expression, TokenInstance&& left_bracket, std::vector<Holder<IExpression>>&& arguments, TokenInstance&& right_bracket)
         : expression(std::move(expression))
+        , left_bracket(std::move(left_bracket))
         , arguments(std::move(arguments))
-    {
-
-    }
+        , right_bracket(std::move(right_bracket))
+    {}
 };
 
 
@@ -373,18 +475,18 @@ public:
     VISITOR_ACCEPT
 
     const Holder<IExpression> expression;
-    const Holder<IdentifierExpression> name;
+    const TokenInstance dot;
+    const Holder<IdentifierLiteral> name;
 
-    MemberAccessExpression(Holder<IExpression>&& expression, Holder<IdentifierExpression>&& name)
+    MemberAccessExpression(Holder<IExpression>&& expression, TokenInstance&& dot, Holder<IdentifierLiteral>&& name)
         : expression(std::move(expression))
+        , dot(std::move(dot))
         , name(std::move(name))
-    {
-
-    }
+    {}
 };
 
 
-class ClassDefinitionExpression : public IExpression {
+/*class ClassDefinitionExpression : public IExpression {
 public:
     VISITOR_ACCEPT
 
@@ -406,7 +508,7 @@ public:
     {
 
     }
-};
+};*/
 
 
 class ExpressionStatement : public IStatement {
@@ -417,9 +519,7 @@ public:
 
     explicit ExpressionStatement(Holder<IExpression>&& expression)
         : expression(std::move(expression))
-    {
-
-    }
+    {}
 };
 
 
@@ -427,27 +527,57 @@ class BlockStatement : public IStatement {
 public:
     VISITOR_ACCEPT
 
+    const TokenInstance left_brace;
     const std::vector<Holder<IStatement>> statements;
+    const TokenInstance right_brace;
 
-    explicit BlockStatement(std::vector<Holder<IStatement>>&& statements)
-        : statements(std::move(statements))
-    {
-
-    }
+    explicit BlockStatement(TokenInstance&& right_brace, std::vector<Holder<IStatement>>&& statements, TokenInstance&& left_brace)
+        : left_brace(std::move(left_brace))
+        , statements(std::move(statements))
+        , right_brace(std::move(right_brace))
+    {}
 };
 
 
-class BranchStatement : public IStatement {
+class ElseStatementPart : public IASTNode {
 public:
     VISITOR_ACCEPT
 
-    const std::vector<std::pair<Holder<IExpression>, Holder<IStatement>>> branches;
+    const TokenInstance else_token;
+    const Holder<IStatement> body;
 
-    explicit BranchStatement(std::vector<std::pair<Holder<IExpression>, Holder<IStatement>>>&& branches)
-        : branches(std::move(branches))
-    {
+    ElseStatementPart(TokenInstance&& else_token, Holder<IStatement>&& body)
+        : else_token(std::move(else_token))
+        , body(std::move(body))
+    {}
+};
 
-    }
+class IfElseStatement : public IStatement {
+public:
+    VISITOR_ACCEPT
+
+    const TokenInstance if_token;
+    const TokenInstance left_par;
+    const Holder<IExpression> condition;
+    const TokenInstance right_par;
+    const Holder<IStatement> body;
+    const Holder<ElseStatementPart> else_branch;
+
+    explicit IfElseStatement(
+        TokenInstance&& if_token,
+        TokenInstance&& left_par,
+        Holder<IExpression>&& condition,
+        TokenInstance&& right_par,
+        Holder<IStatement>&& body,
+        Holder<ElseStatementPart>&& else_branch)
+
+        : if_token(std::move(if_token))
+        , left_par(std::move(left_par))
+        , condition(std::move(condition))
+        , right_par(std::move(right_par))
+        , body(std::move(body))
+        , else_branch(std::move(else_branch))
+    {}
 };
 
 
@@ -455,15 +585,25 @@ class WhileStatement : public IStatement {
 public:
     VISITOR_ACCEPT
 
+    const TokenInstance while_token;
+    const TokenInstance left_par;
     const Holder<IExpression> condition;
+    const TokenInstance right_par;
     const Holder<IStatement> body;
 
-    explicit WhileStatement(Holder<IExpression>&& condition, Holder<IStatement>&& body)
-        : condition(std::move(condition))
-        , body(std::move(body))
-    {
+    explicit WhileStatement(
+        TokenInstance&& while_token,
+        TokenInstance&& left_par,
+        Holder<IExpression>&& condition,
+        TokenInstance&& right_par,
+        Holder<IStatement>&& body)
 
-    }
+        : while_token(std::move(while_token))
+        , left_par(std::move(left_par))
+        , condition(std::move(condition))
+        , right_par(std::move(right_par))
+        , body(std::move(body))
+    {}
 };
 
 
@@ -471,13 +611,13 @@ class ReturnStatement : public IStatement {
 public:
     VISITOR_ACCEPT
 
+    const TokenInstance return_token;
     const Holder<IExpression> expression;
 
-    explicit ReturnStatement(Holder<IExpression>&& expression = nullptr)
-        : expression(std::move(expression))
-    {
-
-    }
+    explicit ReturnStatement(TokenInstance&& return_token, Holder<IExpression>&& expression)
+        : return_token(std::move(return_token))
+        , expression(std::move(expression))
+    {}
 };
 
 
@@ -485,13 +625,13 @@ class BreakStatement : public IStatement {
 public:
     VISITOR_ACCEPT
 
+    const TokenInstance break_token;
     const Holder<IExpression> expression;
 
-    explicit BreakStatement(Holder<IExpression>&& expression = nullptr)
-        : expression(std::move(expression))
-    {
-
-    }
+    explicit BreakStatement(TokenInstance&& break_token, Holder<IExpression>&& expression)
+        : break_token(std::move(break_token))
+        , expression(std::move(expression))
+    {}
 };
 
 
@@ -499,7 +639,11 @@ class ContinueStatement : public IStatement {
 public:
     VISITOR_ACCEPT
 
-    ContinueStatement() {}
+    const TokenInstance continue_token;
+
+    ContinueStatement(TokenInstance&& continue_token)
+        : continue_token(std::move(continue_token))
+    {}
 };
 
 
@@ -549,24 +693,53 @@ private:
     void Visit(IExpression&) override {};
     void Visit(IStatement&) override {};
 
-    void Visit(NullExpression&) override {
+    void Visit(NullLiteral&) override {
         text += "null";
     };
 
-    void Visit(BoolExpression& e) override {
+    void Visit(BoolLiteral& e) override {
         text += (e.flag ? "true" : "false");
     }
 
-    void Visit(NumberExpression& e) override {
+    void Visit(NumberLiteral& e) override {
         text += std::to_string(e.number);
     };
 
-    void Visit(StringExpression& e) override {
+    void Visit(StringLiteral& e) override {
         text += "'" + e.string + "'";
     }
 
-    void Visit(IdentifierExpression& e) override {
+    void Visit(IdentifierLiteral& e) override {
         text += e.identifier;
+    }
+
+    void Visit(TypeHint& t) override {
+        text += ": ";
+        t.name->Accept(*this);
+    }
+
+    void Visit(DefaultValue& v) override {
+        text += " = ";
+        v.value->Accept(*this);
+    }
+
+    void Visit(ElseStatementPart& s) override {
+        text += "else ";
+        s.body->Accept(*this);
+    }
+
+    void Visit(ArgumentDefinitionStatementPart& s) override {
+        s.name->Accept(*this);
+        if (s.type_hint) {
+            s.type_hint->Accept(*this);
+        }
+        if (s.default_value) {
+            s.default_value->Accept(*this);
+        }
+    }
+
+    void Visit(LiteralExpression& e) override {
+        e.literal->Accept(*this);
     }
 
     void Visit(ParenthesizedExpression& e) override {
@@ -576,18 +749,18 @@ private:
     }
 
     void Visit(PrefixExpression& e) override {
-        text += TokenUtils::GetTokenText(e.prefix);
+        text += TokenUtils::GetTokenText(e.prefix.token);
         e.expression->Accept(*this);
     }
 
     void Visit(PostfixExpression& e) override {
         e.expression->Accept(*this);
-        text += TokenUtils::GetTokenText(e.postfix);
+        text += TokenUtils::GetTokenText(e.postfix.token);
     }
 
     void Visit(BinaryExpression&e) override {
         e.left->Accept(*this);
-        text += " " + TokenUtils::GetTokenText(e.op) + " ";
+        text += " " + TokenUtils::GetTokenText(e.op.token) + " ";
         e.right->Accept(*this);
     }
 
@@ -601,26 +774,14 @@ private:
             e.name->Accept(*this);
         }
         text += "(";
-        auto visit_arg = [&](VariableDefinitionStatement& s) {
-            s.name->Accept(*this);
-            if (s.type_hint) {
-                text += ": ";
-                s.type_hint->Accept(*this);
-            }
-            if (s.value) {
-                text += " = ";
-                s.value->Accept(*this);
-            }
-        };
         for (size_t i = 0; i < e.arguments.size(); ++i) {
-            visit_arg(*e.arguments[i]);
+            e.arguments[i]->Accept(*this);
             if (i + 1 != e.arguments.size()) {
                 text += ", ";
             }
         }
         text += ")";
         if (e.type_hint) {
-            text += ": ";
             e.type_hint->Accept(*this);
         }
         text += " ";
@@ -665,12 +826,10 @@ private:
         text += "let ";
         s.name->Accept(*this);
         if (s.type_hint) {
-            text += ": ";
             s.type_hint->Accept(*this);
         }
-        if (s.value) {
-            text += " = ";
-            s.value->Accept(*this);
+        if (s.default_value) {
+            s.default_value->Accept(*this);
         }
         text += "\n" + indent;
     }
@@ -692,19 +851,15 @@ private:
         text += "}\n" + indent;
     }
 
-    void Visit(BranchStatement& s) override {
-        for (size_t i = 0; i < s.branches.size(); ++i) {
-            auto& [ee, ss] = s.branches[i];
-            if (ee) {
-                text += "if (";
-                ee->Accept(*this);
-                text += ") ";
-            }
-            ss->Accept(*this);
-            if (i + 1 != s.branches.size()) {
-                text.resize(text.find_last_of('}') + 1);
-                text += " else ";
-            }
+    void Visit(IfElseStatement& s) override {
+        text += "if (";
+        s.condition->Accept(*this);
+        text += ") ";
+        s.body->Accept(*this);
+        if (s.else_branch) {
+            text.resize(text.find_last_of('}') + 1);
+            text += " ";
+            s.else_branch->Accept(*this);
         }
     }
 

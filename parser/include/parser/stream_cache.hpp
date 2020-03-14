@@ -21,8 +21,8 @@ public:
         using iterator_category = std::random_access_iterator_tag;
         using value_type = T;
         using difference_type = ptrdiff_t;
-        using pointer = const value_type*;
-        using reference = const value_type&;
+        using pointer = value_type*;
+        using reference = value_type&;
 
         explicit StreamCacheIterator(StreamCache* stream_cache = nullptr, size_t pos = -1)
             : stream_cache(stream_cache)
@@ -130,7 +130,7 @@ public:
 
     }
 
-    const T& operator[](size_t index) const {
+    T& operator[](size_t index) const {
         NLANG_ASSERT(index >= offset);
         const_cast<StreamCache*>(this)->Advance(index);
         return buffer[index - offset];
@@ -174,8 +174,8 @@ private:
 
 private:
     Holder<S> stream;
-    std::deque<T> buffer;
-    size_t offset;
+    mutable std::deque<T> buffer;
+    mutable size_t offset;
     StreamCacheIterator begin_;
     StreamCacheIterator end_;
 };

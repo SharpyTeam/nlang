@@ -53,11 +53,11 @@ public:
         friend class Scanner;
 
     public:
-        const TokenInstance& operator*() const {
+        TokenInstance& operator*() const {
             return scanner->cache[*pos_it];
         }
 
-        const TokenInstance* operator->() const {
+        TokenInstance* operator->() const {
             return &scanner->cache[*pos_it];
         }
 
