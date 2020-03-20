@@ -1,6 +1,7 @@
 #pragma once
 
 #include "value.hpp"
+#include "stack_values.hpp"
 #include "heap.hpp"
 
 #include <utils/macro.hpp>

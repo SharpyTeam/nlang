@@ -1,5 +1,7 @@
 #pragma once
 
+#include "value.hpp"
+
 #include <utils/macro.hpp>
 #include <utils/nan_boxed_primitive.hpp>
 #include <utils/traits.hpp>
@@ -11,13 +13,12 @@
 
 namespace nlang {
 
-class Value;
-class StackValue;
-class HeapValue;
-
 class Null;
+
 class Bool;
+
 class Number;
+
 class Int32;
 
 template<typename T, typename Enable = void>
@@ -27,12 +28,16 @@ template<typename T>
 class Handle<T, std::enable_if_t<std::is_base_of_v<Value, T>>> {
 public:
     friend class Null;
+
     friend class Bool;
+
     friend class Number;
+
     friend class Int32;
 
     template<typename U, typename Enable>
-    friend class Handle;
+    friend
+    class Handle;
 
     friend class Heap;
 
@@ -95,6 +100,24 @@ public:
             }
         } else {
             return false;
+        }
+    }
+
+    NLANG_FORCE_INLINE Value::Type GetType() const {
+        if constexpr (std::is_base_of_v<HeapValue, T>) {
+            return Get()->type;
+        }
+
+        if (Is<Null>()) {
+            return Value::Type::THE_NULL;
+        } else if (Is<Bool>()) {
+            return Value::Type::BOOL;
+        } else if (Is<Number>()) {
+            return Value::Type::NUMBER;
+        } else if (Is<Int32>()) {
+            return Value::Type::INT32;
+        } else {
+            throw std::runtime_error("unable to determine the type of the handle");
         }
     }
 

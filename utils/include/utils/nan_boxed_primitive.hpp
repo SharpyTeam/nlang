@@ -17,6 +17,8 @@ class NanBoxedPrimitive {
 public:
     static_assert((sizeof(void*) == 8) && std::numeric_limits<double>::is_iec559, "nan boxing is only supported on 64-bit platforms with IEEE754 doubles");
 
+
+
     NLANG_FORCE_INLINE NanBoxedPrimitive() {
         SetPointer(nullptr);
     }
