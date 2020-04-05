@@ -65,9 +65,9 @@ extern "C" JNIEXPORT void JNICALL Java_org_nlang_JNI_tokenize(JNIEnv* env, jclas
     jmethodID Integer_init = env->GetMethodID(Integer_class, "<init>", "(I)V");
 
     auto sc = nlang::Scanner::New(nlang::TokenStream::New(nlang::StringCharStream::New(s)));
-    while (sc->NextTokenLookahead()->token != nlang::Token::THE_EOF) {
-        auto token = sc->NextToken();
-        auto j_pos = relation[token->pos];
-        env->CallObjectMethod(tokens_map, TreeMap_put, env->NewObject(Integer_class, Integer_init, j_pos), env->NewStringUTF(token->text.c_str()));
+    while (sc->NextTokenLookahead().token != nlang::Token::THE_EOF) {
+        auto& token = sc->NextToken();
+        auto j_pos = relation[token.pos];
+        env->CallObjectMethod(tokens_map, TreeMap_put, env->NewObject(Integer_class, Integer_init, j_pos), env->NewStringUTF(token.text.c_str()));
     }
 }
