@@ -6,8 +6,6 @@
 #include <iostream>
 #include <string>
 #include <cstring>
-#include <interpreter/stack_values.hpp>
-#include <interpreter/string.hpp>
 
 void print(const std::string &input) {
     using namespace nlang;

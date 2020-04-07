@@ -12,8 +12,6 @@ install:
 
 build_script:
   - cd C:\tools\vcpkg
-  - git pull
-  - .\bootstrap-vcpkg.bat
   - vcpkg integrate install
   - vcpkg install protobuf:x64-windows catch2:x64-windows
   - cd %APPVEYOR_BUILD_FOLDER%

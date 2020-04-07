@@ -2,6 +2,7 @@
 
 #include "value.hpp"
 #include "class.hpp"
+#include "heap.hpp"
 
 namespace nlang {
 
@@ -37,16 +38,16 @@ public:
 
     // TODO: checking if the object is instance of specific class
 
-    static constexpr Value::Type TYPE = Value::Type::OBJECT;
-
     Object() = delete;
     Object(const Object&) = delete;
     Object(Object&&) = delete;
 
     Object& operator=(const Object&) = delete;
     Object& operator=(const Object&&) = delete;
+
+    virtual ~Object() override = default;
 private:
-    explicit Object(Handle<Class> the_class) : HeapValue(Type::OBJECT), _class(the_class) {
+    explicit Object(Handle<Class> the_class) : _class(the_class) {
         fields.resize(the_class->GetFieldCount());
         fields.assign(the_class->GetFieldCount(), Null::New());
     }

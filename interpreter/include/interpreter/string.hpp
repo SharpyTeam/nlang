@@ -1,7 +1,6 @@
 #pragma once
 
 #include "value.hpp"
-#include "stack_values.hpp"
 #include "heap.hpp"
 
 #include <utils/macro.hpp>
@@ -15,8 +14,6 @@ namespace nlang {
 
 class String : public HeapValue {
 public:
-    static constexpr Value::Type TYPE = Value::Type::STRING;
-
     // Static methods
 
     template<typename ...StrArgs>
@@ -71,16 +68,16 @@ public:
         return !(*this == other);
     }
 
+    virtual ~String() override = default;
+
 private:
     const std::u32string data;
     size_t hash;
 
-    String(const std::u32string& string) : HeapValue(Type::STRING),
-                                           data(string),
+    String(const std::u32string& string) : data(string),
                                            hash(std::hash<std::u32string>{}(string)) {}
 
-    String(std::u32string&& string) : HeapValue(Type::STRING),
-                                      data(std::move(string)),
+    String(std::u32string&& string) : data(std::move(string)),
                                       hash(std::hash<std::u32string>{}(string)) {}
 
     template<typename Str>

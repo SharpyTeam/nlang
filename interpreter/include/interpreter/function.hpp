@@ -1,7 +1,6 @@
 #pragma once
 
 #include "value.hpp"
-#include "stack_values.hpp"
 #include "handle.hpp"
 
 #include <cstdint>
@@ -19,7 +18,7 @@ public:
         INTERPRETED
     };
 
-    Function(FunctionType type) : HeapValue(Value::Type::FUNCTION), function_type(type) {}
+    Function(FunctionType type) : function_type(type) {}
 
     FunctionType GetFunctionType() const {
         return function_type;
@@ -28,7 +27,7 @@ public:
     size_t GetArgumentsCount() const;
     size_t GetRegistersCount() const;
 
-    static constexpr Type TYPE = Type::FUNCTION;
+    virtual ~Function() override = default;
 
 private:
     const FunctionType function_type;

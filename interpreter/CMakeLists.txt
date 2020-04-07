@@ -11,8 +11,7 @@ set(NLANG_INTERPRETER_HEADERS
         include/interpreter/string.hpp
         include/interpreter/value.hpp
         include/interpreter_new/module.hpp
-        include/interpreter_new/module_loader.hpp
-        include/interpreter/stack_values.hpp)
+        include/interpreter_new/module_loader.hpp)
 
 add_subdirectory(ut)
 

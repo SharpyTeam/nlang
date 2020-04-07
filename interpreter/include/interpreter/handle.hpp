@@ -1,43 +1,43 @@
 #pragma once
 
-#include "value.hpp"
-
 #include <utils/macro.hpp>
 #include <utils/nan_boxed_primitive.hpp>
 #include <utils/traits.hpp>
 #include <utils/slot_storage.hpp>
 
+#include <typeinfo>
 #include <type_traits>
 #include <cstdint>
 #include <stdexcept>
+#include <typeindex>
 
 namespace nlang {
 
-class Null;
-
-class Bool;
-
-class Number;
-
-class Int32;
+using ValueTypeInfo = std::type_index;
 
 template<typename T, typename Enable = void>
 class Handle;
+
+class Value;
+class StackValue;
+class HeapValue;
+
+class Null;
+class Bool;
+class Number;
+class Int32;
+
 
 template<typename T>
 class Handle<T, std::enable_if_t<std::is_base_of_v<Value, T>>> {
 public:
     friend class Null;
-
     friend class Bool;
-
     friend class Number;
-
     friend class Int32;
 
     template<typename U, typename Enable>
-    friend
-    class Handle;
+    friend class Handle;
 
     friend class Heap;
 
@@ -96,30 +96,14 @@ public:
                 if constexpr (!std::is_base_of_v<HeapValue, T>) {
                     if (!value.IsPointer()) return false;
                 }
-                return GetHeapPointerOfType<U>()->type == U::TYPE;
+                HeapValue* v = GetHeapPointerOfType<U>();
+                return dynamic_cast<U *>(v);
             }
         } else {
             return false;
         }
     }
 
-    NLANG_FORCE_INLINE Value::Type GetType() const {
-        if constexpr (std::is_base_of_v<HeapValue, T>) {
-            return Get()->type;
-        }
-
-        if (Is<Null>()) {
-            return Value::Type::THE_NULL;
-        } else if (Is<Bool>()) {
-            return Value::Type::BOOL;
-        } else if (Is<Number>()) {
-            return Value::Type::NUMBER;
-        } else if (Is<Int32>()) {
-            return Value::Type::INT32;
-        } else {
-            throw std::runtime_error("unable to determine the type of the handle");
-        }
-    }
 
     template<typename U>
     NLANG_FORCE_INLINE Handle<U> As() const {

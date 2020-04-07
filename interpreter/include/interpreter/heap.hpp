@@ -20,6 +20,12 @@ public:
         return Handle<HeapValue>(Handle<HeapValue>::BackingPrimitive(static_cast<void*>(slot)));
     }
 
+    virtual ~Heap() {
+        storage.ForEachSlot([=](SlotPage<HeapValue>* page, SlotPage<HeapValue>::Slot* slot) {
+            delete slot->Get();
+        });
+    }
+
 public:
     SlotStorage<HeapValue> storage;
 };

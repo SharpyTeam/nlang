@@ -108,21 +108,99 @@ TEST_CASE("nan-boxing & fake nan-boxing test") {
         REQUIRE(!nb_pointer.IsTrue());
         REQUIRE(!nb_pointer.IsNumber());
         REQUIRE(!nb_pointer.IsInt32());
+
+        delete ((int *) nb_pointer.GetPointer());
     }
 
     // TODO: Add more tests for nan-boxed primitives
 
     SECTION("modify nan-boxed primitives") {
+        nb_empty.SetPointer(nb_pointer.GetPointer());
 
+        REQUIRE(nb_empty.IsPointer());
+        REQUIRE(*((int *) nb_empty.GetPointer()) == -111213);
+        REQUIRE(!nb_empty.IsNull());
+        REQUIRE(!nb_empty.IsBool());
+        REQUIRE(!nb_empty.IsFalse());
+        REQUIRE(!nb_empty.IsTrue());
+        REQUIRE(!nb_empty.IsNumber());
+        REQUIRE(!nb_empty.IsInt32());
+
+        nb_empty = nb_int32;
+
+        REQUIRE(nb_empty.IsInt32());
+        REQUIRE(nb_empty.GetInt32() == 78910);
+        REQUIRE(!nb_empty.IsNull());
+        REQUIRE(!nb_empty.IsBool());
+        REQUIRE(!nb_empty.IsFalse());
+        REQUIRE(!nb_empty.IsTrue());
+        REQUIRE(!nb_empty.IsNumber());
+        REQUIRE(!nb_empty.IsPointer());
+
+        nb_empty.SetBool(nb_true.GetBool());
+
+        REQUIRE(nb_empty.IsBool());
+        REQUIRE(nb_empty.IsTrue());
+        REQUIRE(nb_empty.GetBool());
+        REQUIRE(!nb_empty.IsFalse());
+        REQUIRE(!nb_empty.IsNull());
+        REQUIRE(!nb_empty.IsNumber());
+        REQUIRE(!nb_empty.IsInt32());
+        REQUIRE(!nb_empty.IsPointer());
+
+        nb_empty.SetInt32(nb_int32_neg.GetInt32());
+
+        REQUIRE(nb_int32_neg.IsInt32());
+        REQUIRE(nb_int32_neg.GetInt32() == -78913);
+        REQUIRE(!nb_int32_neg.IsNull());
+        REQUIRE(!nb_int32_neg.IsBool());
+        REQUIRE(!nb_int32_neg.IsFalse());
+        REQUIRE(!nb_int32_neg.IsTrue());
+        REQUIRE(!nb_int32_neg.IsNumber());
+        REQUIRE(!nb_int32_neg.IsPointer());
+
+        nb_empty.SetNumber(nb_number_neg.GetNumber());
+
+        REQUIRE(nb_number_neg.IsNumber());
+        REQUIRE(almost_equal(nb_number_neg.GetNumber(), -456.124, 5));
+        REQUIRE(!nb_number_neg.IsNull());
+        REQUIRE(!nb_number_neg.IsBool());
+        REQUIRE(!nb_number_neg.IsFalse());
+        REQUIRE(!nb_number_neg.IsTrue());
+        REQUIRE(!nb_number_neg.IsInt32());
+        REQUIRE(!nb_number_neg.IsPointer());
+
+        nb_empty.SetNull();
+
+        REQUIRE(nb_null.IsNull());
+        REQUIRE(!nb_null.IsBool());
+        REQUIRE(!nb_null.IsFalse());
+        REQUIRE(!nb_null.IsTrue());
+        REQUIRE(!nb_null.IsNumber());
+        REQUIRE(!nb_null.IsInt32());
+        REQUIRE(!nb_null.IsPointer());
+
+        nb_empty.SetPointer(nullptr);
+
+        REQUIRE(nb_empty.IsPointer());
+        REQUIRE(nb_empty.GetPointer() == nullptr);
+        REQUIRE(!nb_empty.IsNull());
+        REQUIRE(!nb_empty.IsBool());
+        REQUIRE(!nb_empty.IsFalse());
+        REQUIRE(!nb_empty.IsTrue());
+        REQUIRE(!nb_empty.IsNumber());
+        REQUIRE(!nb_empty.IsInt32());
+
+        delete ((int *) nb_pointer.GetPointer());
     }
 
     // TODO: Add tests for fake nan-boxed primitives
 
     SECTION("create fake nan-boxed primitives") {
-
+        delete ((int *) nb_pointer.GetPointer());
     }
 
     SECTION("modify fake nan-boxed primitives") {
-
+        delete ((int *) nb_pointer.GetPointer());
     }
 }

@@ -140,8 +140,6 @@ public:
         return !(*this == other);
     }
 
-    static constexpr Value::Type TYPE = Value::Type::CLASS;
-
     Class() = delete;
     Class(const Class&) = delete;
     Class(Class&&) = delete;
@@ -149,11 +147,13 @@ public:
     Class& operator=(const Class&) = delete;
     Class& operator=(const Class&&) = delete;
 
+    virtual ~Class() override = default;
+
 private:
-    explicit Class(Handle<String> class_name) : HeapValue(Type::CLASS), name(class_name), field_index_offset(0),
+    explicit Class(Handle<String> class_name) : name(class_name), field_index_offset(0),
                                                 method_index_offset(0) {}
 
-    Class(Handle<String> class_name, Handle<Class> class_prototype) : HeapValue(Type::CLASS), name(class_name),
+    Class(Handle<String> class_name, Handle<Class> class_prototype) : name(class_name),
                                                                       field_index_offset(0), method_index_offset(0) {
         ResolvePrototypingFrom(class_prototype);
     }
