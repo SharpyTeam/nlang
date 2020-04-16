@@ -77,6 +77,10 @@ public:
         return value.IsPointer() && value.GetPointer() == nullptr;
     }
 
+    NLANG_FORCE_INLINE operator bool() const {
+        return !IsEmpty();
+    }
+
     template<typename U>
     NLANG_FORCE_INLINE bool Is() const {
         if constexpr (!std::is_base_of_v<Value, U>) {

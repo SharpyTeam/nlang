@@ -1,5 +1,7 @@
 set(NLANG_INTERPRETER_SOURCES
-        src/stub.cpp)
+        src/stub.cpp
+        src/function.cpp
+)
 
 set(NLANG_INTERPRETER_HEADERS
         include/interpreter/interpreter.hpp
@@ -10,8 +12,10 @@ set(NLANG_INTERPRETER_HEADERS
         include/interpreter/object.hpp
         include/interpreter/string.hpp
         include/interpreter/value.hpp
-        include/interpreter_new/module.hpp
-        include/interpreter_new/module_loader.hpp)
+        include/interpreter/context.hpp
+        include/interpreter/bytecode_executor.hpp
+        include/interpreter/native_function.hpp
+)
 
 add_subdirectory(ut)
 

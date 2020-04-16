@@ -2,6 +2,9 @@
 
 #include "value.hpp"
 #include "handle.hpp"
+#include "context.hpp"
+#include "heap.hpp"
+#include "interpreter.hpp"
 
 #include <cstdint>
 #include <vector>
@@ -9,134 +12,47 @@
 
 namespace nlang {
 
-class Environment;
+class Thread;
 
 class Function : public HeapValue {
 public:
-    enum class FunctionType {
-        NATIVE,
-        INTERPRETED
-    };
-
-    Function(FunctionType type) : function_type(type) {}
-
-    FunctionType GetFunctionType() const {
-        return function_type;
-    }
-
-    size_t GetArgumentsCount() const;
-    size_t GetRegistersCount() const;
-
+    Function() = default;
     virtual ~Function() override = default;
 
-private:
-    const FunctionType function_type;
+    virtual size_t GetRegistersCount() const = 0;
+    virtual size_t GetRegisterArgumentsCount() const = 0;
+
+    virtual void DoInvoke(Thread* thread, size_t args_count, const Handle<Value>* args) = 0;
+
+    static void Invoke(Thread* thread, Handle<Context> parent_context, Handle<Function> function, size_t args_count, const Handle<Value>* args);
 };
 
-class InterpretedFunction : public Function {
+
+class Closure : public HeapValue {
 public:
-    const uint8_t* GetInstructionPointer() const {
-        return bytecode.data();
+    Handle<Value> Call(Thread* thread, size_t args_count, const Handle<Value>* args);
+
+    void Invoke(Thread* thread, size_t args_count, const Handle<Value>* args) {
+        Function::Invoke(thread, context, function, args_count, args);
     }
 
-    size_t GetArgumentsCount() const {
-        return arguments_count;
+    static Handle<Closure> New(Heap* heap, Handle<Context> context, Handle<Function> function) {
+        return heap->Store(new Closure(context, function)).As<Closure>();
     }
 
-    size_t GetRegistersCount() const {
-        return registers_count;
-    }
-
-    static Handle<InterpretedFunction> New(Environment* environment, const std::vector<uint8_t>& bytecode, size_t arguments_count, size_t registers_count);
-
-private:
-    InterpretedFunction(const std::vector<uint8_t>& bytecode, size_t arguments_count, size_t registers_count)
-        : Function(Function::FunctionType::INTERPRETED)
-        , bytecode(bytecode)
-        , arguments_count(arguments_count)
-        , registers_count(registers_count)
-    {
-
+    static Handle<Closure> New(Heap* heap, Handle<Function> function) {
+        return New(heap, Handle<Context>(), function);
     }
 
 private:
-    std::vector<uint8_t> bytecode;
-    size_t arguments_count;
-    size_t registers_count;
-};
-
-class NativeFunction : public Function {
-public:
-    class NativeFunctionInfo {
-    public:
-        NativeFunctionInfo(Handle<Value>* args_start, Handle<Value>* args_end, Handle<Value>* return_to)
-            : arguments(args_start, args_end)
-            , return_to(return_to)
-        {
-
-        }
-
-        size_t GetArgumentsCount() const {
-            return arguments.size();
-        }
-
-        Handle<Value>& GetArgument(size_t index) {
-            return arguments[index];
-        }
-
-        void SetReturnValue(Handle<Value> value) {
-            *return_to = value;
-        }
-
-    private:
-        std::vector<Handle<Value>> arguments;
-        Handle<Value>* return_to;
-    };
-
-    NativeFunction(const std::function<void(NativeFunctionInfo&)>& function, size_t arguments_count)
-        : Function(Function::FunctionType::NATIVE)
+    Closure(Handle<Context> context, Handle<Function> function)
+        : context(context)
         , function(function)
-        , arguments_count(arguments_count)
-    {
+    {}
 
-    }
-
-    size_t GetArgumentsCount() const {
-        return arguments_count;
-    }
-
-    size_t GetRegistersCount() const {
-        return 0;
-    }
-
-    void Apply(Handle<Value>* args_start, Handle<Value>* args_end, Handle<Value>* return_to) {
-        NativeFunctionInfo info(args_start, args_end, return_to);
-        info.SetReturnValue(Null::New());
-        function(info);
-    }
-
-    static Handle<NativeFunction> New(Environment* environment, const std::function<void(NativeFunctionInfo&)>& function, size_t arguments_count);
-
-private:
-    const std::function<void(NativeFunctionInfo&)> function;
-    const size_t arguments_count;
+public:
+    Handle<Context> context;
+    Handle<Function> function;
 };
-
-
-inline size_t Function::GetArgumentsCount() const {
-    switch (function_type) {
-        case FunctionType::NATIVE: return static_cast<const NativeFunction*>(this)->GetArgumentsCount();
-        case FunctionType::INTERPRETED: return static_cast<const InterpretedFunction*>(this)->GetArgumentsCount();
-    }
-    return 0;
-}
-
-inline size_t Function::GetRegistersCount() const {
-    switch (function_type) {
-        case FunctionType::NATIVE: return static_cast<const NativeFunction*>(this)->GetRegistersCount();
-        case FunctionType::INTERPRETED: return static_cast<const InterpretedFunction*>(this)->GetRegistersCount();
-    }
-    return 0;
-}
 
 }

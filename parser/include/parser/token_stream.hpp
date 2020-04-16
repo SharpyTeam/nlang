@@ -59,7 +59,7 @@ public:
                         std::string ib;
                         std::swap(ib, invalid_buf);
                         it.CutCacheToThis();
-                        return TokenInstance { Token::INVALID, invalid_pos, row, col - invalid_buf.length(), ib };
+                        return TokenInstance { Token::INVALID, invalid_pos, invalid_buf.length(), row, col - invalid_buf.length(), ib };
                     }
 
                     auto str = match.str();
@@ -84,11 +84,12 @@ public:
 
                     size_t pos_in_string = it.GetPosition();
                     std::advance(it, str.length());
-                    if (actual_token == Token::STRING) {
-                        str = str.substr(1, str.size() - 2);
-                    }
                     it.CutCacheToThis();
-                    return TokenInstance { actual_token, pos_in_string, saved_row, saved_column, str };
+                    size_t len = str.length();
+                    if (actual_token == Token::STRING) {
+                        // TODO peprocess string
+                    }
+                    return TokenInstance { actual_token, pos_in_string, len, saved_row, saved_column, str };
                 }
             }
 
@@ -104,12 +105,12 @@ public:
             std::string ib;
             std::swap(ib, invalid_buf);
             it.CutCacheToThis();
-            return TokenInstance { Token::INVALID, invalid_pos, row, col - invalid_buf.length(), ib };
+            return TokenInstance { Token::INVALID, invalid_pos, ib.length(), row, col - invalid_buf.length(), ib };
         }
 
         it.CutCacheToThis();
         reached_end = true;
-        return TokenInstance { Token::THE_EOF, it.GetPosition(), row, col, "" };
+        return TokenInstance { Token::THE_EOF, it.GetPosition(), 0, row, col, "" };
     }
 
     static Holder<TokenStream> New(Holder<ICharStream>&& char_stream) {

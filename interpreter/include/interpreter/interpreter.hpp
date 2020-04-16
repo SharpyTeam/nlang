@@ -1,216 +1,94 @@
 #pragma once
 
-#include <interpreter/value.hpp>
-#include <interpreter/handle.hpp>
-#include <interpreter/function.hpp>
-#include <interpreter/heap.hpp>
+#include "value.hpp"
+#include "handle.hpp"
+#include "function.hpp"
+#include "heap.hpp"
+#include "context.hpp"
+
 
 #include <vector>
 #include <cstdint>
 #include <thread>
+#include <cstdlib>
 
 namespace nlang {
 
-class Heap;
-class Thread;
+using Instruction = uint8_t;
 
-class Environment {
-public:
-    Heap* GetHeap() {
-        return &heap;
+struct StackFrame {
+    Handle<Context> context;
+    Handle<Function> function;
+    Handle<Value>* arguments = nullptr;
+    Handle<Value>* registers = nullptr;
+    Instruction* ip = nullptr;
+
+    StackFrame* next = nullptr;
+    StackFrame* prev = nullptr;
+
+    StackFrame(
+            StackFrame* prev,
+            Handle<Context> context,
+            Handle<Function> function)
+        : context(context)
+        , function(function)
+        , arguments(reinterpret_cast<Handle<Value>*>(this + 1))
+        , registers(arguments + function->GetRegisterArgumentsCount())
+        , next(reinterpret_cast<StackFrame*>(registers + function->GetRegistersCount()))
+        , prev(prev)
+    {
+        for (Handle<Value>* current = arguments; current < static_cast<void*>(next); ++current) {
+            new (current) Handle<Value>;
+        }
     }
-
-    Thread* GetCurrentThread() const;
-
-    Environment() {
-
-    }
-
-private:
-    Heap heap;
 };
-
-class Function;
 
 class Thread {
 public:
-    Environment* GetEnvironment() const {
-        return environment;
+    Thread(Heap* heap, Handle<Closure> closure, size_t args_count, const Handle<Value>* args) noexcept
+        : heap(heap)
+        , mem(aligned_alloc(alignof(StackFrame), 8 * 1024 * 1024))
+    {
+        thread = std::thread(&Thread::Run, this, closure, std::vector<const Handle<Value>>(args, args + args_count));
     }
 
-private:
-    struct StackFrame {
-        Handle<Function>    function;
-        StackFrame*         caller_frame;
-        const uint8_t*      caller_instruction_pointer;
-        Handle<Value>*      registers_pointer;
-        StackFrame*         next_frame;
+    ~Thread() noexcept {
+        free(mem);
+    }
 
-        StackFrame(
-            Handle<Function> function,
-            StackFrame* caller_frame,
-            const uint8_t* caller_instruction_pointer,
-            const Handle<Value>* args_begin, const Handle<Value>* args_end)
-            : function(function)
-            , caller_frame(caller_frame)
-            , caller_instruction_pointer(caller_instruction_pointer)
-            , registers_pointer(GetArgumentsPointer() + (function.IsEmpty() ? 0 : function->GetArgumentsCount()))
-            , next_frame(reinterpret_cast<StackFrame*>(registers_pointer + (function.IsEmpty() ? 0 : function->GetRegistersCount())))
-        {
-            // Copy arguments
-            Handle<Value>* dst_ptr = GetArgumentsPointer();
-            for (const Handle<Value>* src_ptr = args_begin; src_ptr != args_end; ++src_ptr, ++dst_ptr) {
-                *dst_ptr = *src_ptr;
-            }
-        }
-
-        Handle<Value>* GetArgumentsPointer() const {
-            return reinterpret_cast<Handle<Value>*>(const_cast<StackFrame*>(this + 1));
-        }
-    };
-
-    class ExecutionEnd : public std::exception {};
-
-    // ...
-    // StackFrame           <- next_frame
-    // ------------------------------------------
-    // rN
-    // ...
-    // r1
-    // r0                   <- registers_pointer
-    // argN
-    // ...
-    // arg1
-    // arg0                 <- arguments_pointer
-    // StackFrame
-    // ------------------------------------------
-    // ...
-    // StackFrame           <- caller_frame
-
-    Environment* environment;
-    std::thread thread;
-    std::vector<Handle<Value>> call_stack;
-
-    Handle<Value>   accumulator;
-    StackFrame*     current_frame;
-    Handle<Value>*  registers_pointer;
-    Handle<Value>*  arguments_pointer;
-    const uint8_t*  instruction_pointer;
+    Handle<Value> Join() {
+        thread.join();
+        return acc;
+    }
 
 public:
-    Thread(Environment* environment, Handle<Function> function, Handle<Value>* args_begin, Handle<Value>* args_end)
-        : environment(environment)
-        , current_frame(nullptr)
-        , registers_pointer(nullptr)
-        , arguments_pointer(nullptr)
-        , instruction_pointer(nullptr)
-    {
-        thread = std::thread([this](Handle<Function> f, std::vector<Handle<Value>> v) {
-            Run(f, v.data(), v.data() + v.size());
-        }, function, std::vector<Handle<Value>>(args_begin, args_end));
-    }
-
-    void Join() {
-        thread.join();
-    }
-
-private:
-    void PushFrame(Handle<Function> function = Handle<Function>(), const Handle<Value>* args_begin = nullptr, const Handle<Value>* args_end = nullptr) {
-        StackFrame* frame = current_frame ? current_frame->next_frame : reinterpret_cast<StackFrame*>(call_stack.data());
-        new (frame) StackFrame(function, current_frame, instruction_pointer, args_begin, args_end);
-        current_frame = frame;
-        registers_pointer = frame->registers_pointer;
-        arguments_pointer = frame->GetArgumentsPointer();
-        instruction_pointer = (function.IsEmpty() || function->GetFunctionType() == Function::FunctionType::NATIVE) ? nullptr : function.As<InterpretedFunction>()->GetInstructionPointer();
+    void PushFrame(Handle<Context> context, Handle<Function> function) {
+        if (sp) {
+            sp->ip = ip;
+        }
+        sp = new (sp ? sp->next : static_cast<StackFrame*>(mem)) StackFrame(sp, context, function);
     }
 
     void PopFrame() {
-        if (!current_frame->caller_frame) {
-            throw ExecutionEnd();
-        }
-        instruction_pointer = current_frame->caller_instruction_pointer;
-        current_frame = current_frame->caller_frame;
-        registers_pointer = current_frame->registers_pointer;
-        arguments_pointer = current_frame->GetArgumentsPointer();
-    }
-
-    void Call(Handle<Function> function, const Handle<Value>* args_begin, const Handle<Value>* args_end) {
-        PushFrame(function, args_begin, args_end);
-
-        if (function->GetFunctionType() == Function::FunctionType::NATIVE) {
-            function.As<NativeFunction>()->Apply(current_frame->GetArgumentsPointer(), current_frame->registers_pointer, &accumulator);
-            PopFrame();
+        sp = sp->prev;
+        if (sp) {
+            ip = sp->ip;
         }
     }
 
-    void Run(Handle<Function> function, const Handle<Value>* args_begin, const Handle<Value>* args_end) {
-        call_stack.reserve(8 * 1024 * 1024);
-
-        Call(function, args_begin, args_end);
-
-        try {
-            while (true) {
-                // switch on opcode
-                switch (*instruction_pointer++) {
-                    // call
-                    case 1: {
-                        uint64_t register_begin;
-                        std::memcpy(&register_begin, instruction_pointer, sizeof(uint64_t));
-                        instruction_pointer += sizeof(uint64_t);
-                        uint64_t register_end;
-                        std::memcpy(&register_end, instruction_pointer, sizeof(uint64_t));
-                        instruction_pointer += sizeof(uint64_t);
-                        Call(accumulator.As<Function>(), registers_pointer + register_begin, registers_pointer + register_end);
-                        break;
-                    }
-
-                    // return
-                    case 2: {
-                        PopFrame();
-                        break;
-                    }
-
-                    // load register to accumulator
-                    case 3: {
-                        uint64_t register_index;
-                        std::memcpy(&register_index, instruction_pointer, sizeof(uint64_t));
-                        instruction_pointer += sizeof(uint64_t);
-                        accumulator = registers_pointer[register_index];
-                        break;
-                    }
-
-                    // load argument to accumulator
-                    case 4: {
-                        uint64_t argument_index;
-                        std::memcpy(&argument_index, instruction_pointer, sizeof(uint64_t));
-                        instruction_pointer += sizeof(uint64_t);
-                        accumulator = arguments_pointer[argument_index];
-                        break;
-                    }
-
-                    // store accumulator to register
-                    case 5: {
-                        uint64_t register_index;
-                        std::memcpy(&register_index, instruction_pointer, sizeof(uint64_t));
-                        instruction_pointer += sizeof(uint64_t);
-                        registers_pointer[register_index] = accumulator;
-                        break;
-                    }
-
-                    // store accumulator to argument
-                    case 6: {
-                        uint64_t argument_index;
-                        std::memcpy(&argument_index, instruction_pointer, sizeof(uint64_t));
-                        instruction_pointer += sizeof(uint64_t);
-                        arguments_pointer[argument_index] = accumulator;
-                        break;
-                    }
-                }
-            }
-        } catch (ExecutionEnd&) {
-
-        }
+    void Run(Handle<Closure> closure, std::vector<const Handle<Value>>&& args) {
+        closure->Invoke(this, args.size(), args.data());
     }
+
+public:
+    Heap* heap;
+    Instruction* ip = nullptr;
+    StackFrame* sp = nullptr;
+    Handle<Value> acc;
+
+private:
+    std::thread thread;
+    void* mem = nullptr;
 };
 
 }
