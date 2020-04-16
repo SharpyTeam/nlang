@@ -4,7 +4,6 @@
 #include "handle.hpp"
 #include "context.hpp"
 #include "heap.hpp"
-#include "interpreter.hpp"
 
 #include <cstdint>
 #include <vector>

@@ -6,6 +6,7 @@
 #include "heap.hpp"
 #include "context.hpp"
 
+#include <common/bytecode.hpp>
 
 #include <vector>
 #include <cstdint>
@@ -13,8 +14,6 @@
 #include <cstdlib>
 
 namespace nlang {
-
-using Instruction = uint8_t;
 
 struct StackFrame {
     Handle<Context> context;
@@ -49,7 +48,7 @@ public:
         : heap(heap)
         , mem(aligned_alloc(alignof(StackFrame), 8 * 1024 * 1024))
     {
-        thread = std::thread(&Thread::Run, this, closure, std::vector<const Handle<Value>>(args, args + args_count));
+        thread = std::thread(&Thread::Run, this, closure, std::vector<Handle<Value>>(args, args + args_count));
     }
 
     ~Thread() noexcept {
@@ -76,7 +75,7 @@ public:
         }
     }
 
-    void Run(Handle<Closure> closure, std::vector<const Handle<Value>>&& args) {
+    void Run(Handle<Closure> closure, std::vector<Handle<Value>>&& args) {
         closure->Invoke(this, args.size(), args.data());
     }
 

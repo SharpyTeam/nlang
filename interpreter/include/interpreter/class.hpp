@@ -85,14 +85,14 @@ public:
         return field_index_offset + field_name_to_index.size();
     }
 
-    size_t AddMethod(Handle<String> method_name, Handle<InterpretedFunction> method_target) {
+    size_t AddMethod(Handle<String> method_name, Handle<Closure> method_target) {
         methods.push_back(method_target);
         size_t pos = method_index_offset + methods.size() - 1;
         method_name_to_index[method_name] = pos;
         return pos;
     }
 
-    Handle<InterpretedFunction>& GetMethod(size_t index) {
+    Handle<Closure>& GetMethod(size_t index) {
         if (index >= method_index_offset)
             return methods.at(index);
 
@@ -110,7 +110,7 @@ public:
         return method_index_offset;
     }
 
-    Handle<InterpretedFunction>& GetMethod(Handle<String> method_name) {
+    Handle<Closure>& GetMethod(Handle<String> method_name) {
         return methods[GetMethodIndex(method_name)];
     }
 
@@ -122,7 +122,7 @@ public:
         return method_name_to_index.size();
     }
 
-    Handle<InterpretedFunction>& GetOverload(Overloads target) {
+    Handle<Closure>& GetOverload(Overloads target) {
         NLANG_ASSERT(target != Overloads::OVERLOAD_COUNT);
 
         return overloads_mapping[(size_t) target];
@@ -171,10 +171,10 @@ private:
     std::vector<Handle<HeapValue>> prototype_chain;
     size_t field_index_offset;
     size_t method_index_offset;
-    std::vector<Handle<InterpretedFunction>> methods;
+    std::vector<Handle<Closure>> methods;
     std::unordered_map<Handle<String>, size_t> field_name_to_index;
     std::unordered_map<Handle<String>, size_t> method_name_to_index;
-    std::array<Handle<InterpretedFunction>, (size_t) Overloads::OVERLOAD_COUNT> overloads_mapping;
+    std::array<Handle<Closure>, (size_t) Overloads::OVERLOAD_COUNT> overloads_mapping;
 };
 
 }

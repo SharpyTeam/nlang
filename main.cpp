@@ -5,11 +5,13 @@
 
 #include <interpreter/interpreter.hpp>
 #include <interpreter/native_function.hpp>
+#include <interpreter/bytecode_function.hpp>
 #include <interpreter/function.hpp>
 
 #include <iostream>
 #include <string>
 #include <cstring>
+#include <common/bytecode.hpp>
 
 void print(const std::string &input) {
     using namespace nlang;
@@ -26,19 +28,28 @@ void print(const std::string &input) {
 int main(int argc, char *argv[]) {
     using namespace nlang;
 
-    Heap h;
-    std::vector<Handle<Value>> args { Number::New(15) };
-    Handle<Closure> f = Closure::New(&h, NativeFunction::New(&h, [&](Thread* thread, Handle<Context>, size_t args_count, const Handle<Value>* args) {
-        auto n = Number::New(args[0].As<Number>()->Value() - 1);
-        auto v = n.As<Value>();
-        auto res = Number::New(0);
-        if (n->Value()) {
-            res = f->Call(thread, 1, &v).As<Number>();
-        }
-        std::cout << n->Value() << std::endl;
-        return Number::New(n->Value() + res->Value());
+    Heap heap;
+    Handle<Closure> print_f = Closure::New(&heap, NativeFunction::New(&heap, [&](Thread* thread, Handle<Context>, size_t args_count, const Handle<Value>* args) {
+        std::cout << args[0].As<Number>()->Value() << std::endl;
+        return Null::New();
     }));
-    Thread t(&h, f, args.size(), args.data());
+
+    Instruction call { Opcode::Call, { 0 } };
+    call.operand.registers_range = { 0, 1 };
+
+    Handle<Closure> bc = Closure::New(&heap, BytecodeFunction::New(&heap, 1, 3, {
+        { Opcode::RegToAcc, { -2 } },
+        { Opcode::Mul, { -1 } },
+        { Opcode::AccToReg, { 0 } },
+        { Opcode::RegToAcc, { -3 } },
+        call,
+        { Opcode::RegToAcc, { -2 } },
+        { Opcode::Div, { -1 } },
+        { Opcode::Ret, {} }
+    }));
+
+    std::vector<Handle<Value>> args { print_f, Number::New(3), Number::New(4) };
+    Thread t(&heap, bc, args.size(), args.data());
     std::cout << t.Join().As<Number>()->Value() << std::endl;
 
     std::cout << "nlang " NLANG_VERSION " (" NLANG_BUILD_GIT_REVISION ", " NLANG_BUILD_PROCESSOR ",  " __DATE__ " " __TIME__  ")" << std::endl;

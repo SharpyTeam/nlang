@@ -15,6 +15,7 @@ set(NLANG_INTERPRETER_HEADERS
         include/interpreter/context.hpp
         include/interpreter/bytecode_executor.hpp
         include/interpreter/native_function.hpp
+        include/interpreter/bytecode_function.hpp
 )
 
 add_subdirectory(ut)

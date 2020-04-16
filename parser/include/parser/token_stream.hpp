@@ -87,6 +87,8 @@ public:
                     it.CutCacheToThis();
                     size_t len = str.length();
                     if (actual_token == Token::STRING) {
+                        str.erase(0, 1);
+                        str.resize(str.size() - 1);
                         // TODO peprocess string
                     }
                     return TokenInstance { actual_token, pos_in_string, len, saved_row, saved_column, str };

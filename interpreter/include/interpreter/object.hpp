@@ -24,11 +24,11 @@ public:
         return _class->GetFieldCount();
     }
 
-    Handle<InterpretedFunction>& GetMethod(Handle<String> method_name) {
+    Handle<Closure>& GetMethod(Handle<String> method_name) {
         return GetMethod(_class->GetMethodIndex(method_name));
     }
 
-    Handle<InterpretedFunction>& GetMethod(size_t index) {
+    Handle<Closure>& GetMethod(size_t index) {
         return _class->GetMethod(index);
     }
 

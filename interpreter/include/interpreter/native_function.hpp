@@ -21,6 +21,7 @@ public:
     }
 
     void DoInvoke(Thread* thread, size_t args_count, const Handle<Value>* args) override {
+        thread->ip = nullptr;
         thread->acc = function(thread, thread->sp->context, args_count, args);
         thread->PopFrame();
     }

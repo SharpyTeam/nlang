@@ -4,7 +4,9 @@ set(NLANG_COMMON_SOURCES
 set(NLANG_COMMON_HEADERS
         include/common/token.hpp
         include/common/ast.hpp
-        include/common/error_reporter.hpp)
+        include/common/error_reporter.hpp
+        include/common/bytecode.hpp
+)
 
 add_library(nlang_common ${NLANG_COMMON_HEADERS} ${NLANG_COMMON_SOURCES})
 target_include_directories(nlang_common PUBLIC include)
