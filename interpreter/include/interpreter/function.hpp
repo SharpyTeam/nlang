@@ -15,7 +15,9 @@ class Thread;
 
 class Function : public HeapValue {
 public:
-    Function() = default;
+    Function(Handle<ContextClass> context_class)
+        : context_class(context_class)
+    {}
     virtual ~Function() override = default;
 
     virtual size_t GetRegistersCount() const = 0;
@@ -24,6 +26,9 @@ public:
     virtual void DoInvoke(Thread* thread, size_t args_count, const Handle<Value>* args) = 0;
 
     static void Invoke(Thread* thread, Handle<Context> parent_context, Handle<Function> function, size_t args_count, const Handle<Value>* args);
+
+private:
+    Handle<ContextClass> context_class;
 };
 
 

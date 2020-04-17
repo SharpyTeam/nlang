@@ -29,13 +29,14 @@ public:
         }
     }
 
-    static Handle<BytecodeFunction> New(Heap* heap, size_t registers_count, size_t register_arguments_count, std::vector<Instruction> instructions) {
-        return heap->Store(new BytecodeFunction(registers_count, register_arguments_count, std::move(instructions))).As<BytecodeFunction>();
+    static Handle<BytecodeFunction> New(Heap* heap, size_t registers_count, size_t register_arguments_count, Handle<ContextClass> context_class, std::vector<Instruction> instructions) {
+        return heap->Store(new BytecodeFunction(registers_count, register_arguments_count, context_class, std::move(instructions))).As<BytecodeFunction>();
     }
 
 private:
-    explicit BytecodeFunction(size_t registers_count, size_t register_arguments_count, std::vector<Instruction>&& instructions)
-        : registers_count(registers_count)
+    explicit BytecodeFunction(size_t registers_count, size_t register_arguments_count, Handle<ContextClass> context_class, std::vector<Instruction>&& instructions)
+        : Function(context_class)
+        , registers_count(registers_count)
         , register_arguments_count(register_arguments_count)
         , instructions(std::move(instructions))
     {}

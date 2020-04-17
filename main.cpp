@@ -29,26 +29,28 @@ int main(int argc, char *argv[]) {
     using namespace nlang;
 
     Heap heap;
-    Handle<Closure> print_f = Closure::New(&heap, NativeFunction::New(&heap, [&](Thread* thread, Handle<Context>, size_t args_count, const Handle<Value>* args) {
+    Handle<Function> print_f = NativeFunction::New(&heap, [&](Thread* thread, Handle<Context>, size_t args_count, const Handle<Value>* args) {
         std::cout << args[0].As<Number>()->Value() << std::endl;
         return Null::New();
-    }));
+    });
 
     Instruction call { Opcode::Call, { 0 } };
     call.operand.registers_range = { 0, 1 };
+    Instruction load { Opcode::ConToAcc, { 0 }};
+    load.operand.context_descriptor = { 0, 0 };
 
-    Handle<Closure> bc = Closure::New(&heap, BytecodeFunction::New(&heap, 1, 3, {
+    Handle<Closure> bc = Closure::New(&heap, BytecodeFunction::New(&heap, 1, 2, ContextClass::New(&heap, 1, { print_f }), {
         { Opcode::RegToAcc, { -2 } },
         { Opcode::Mul, { -1 } },
         { Opcode::AccToReg, { 0 } },
-        { Opcode::RegToAcc, { -3 } },
+        load,
         call,
         { Opcode::RegToAcc, { -2 } },
         { Opcode::Div, { -1 } },
         { Opcode::Ret, {} }
     }));
 
-    std::vector<Handle<Value>> args { print_f, Number::New(3), Number::New(4) };
+    std::vector<Handle<Value>> args { Number::New(3), Number::New(4) };
     Thread t(&heap, bc, args.size(), args.data());
     std::cout << t.Join().As<Number>()->Value() << std::endl;
 

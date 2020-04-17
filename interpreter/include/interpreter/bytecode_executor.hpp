@@ -19,6 +19,14 @@ public:
                     thread->sp->registers[thread->ip->operand.register_index] = thread->acc;
                     break;
                 }
+                case Opcode::ConToAcc: {
+                    thread->acc = thread->sp->context->GetItem({ thread->ip->operand.context_descriptor.context_index, thread->ip->operand.context_descriptor.item_index });
+                    break;
+                }
+                case Opcode::AccToCon: {
+                    thread->sp->context->SetItem({ thread->ip->operand.context_descriptor.context_index, thread->ip->operand.context_descriptor.item_index }, thread->acc);
+                    break;
+                }
                 case Opcode::Add: {
                     thread->acc = Number::New(thread->acc.As<Number>()->Value() + thread->sp->registers[thread->ip->operand.register_index].As<Number>()->Value());
                     break;

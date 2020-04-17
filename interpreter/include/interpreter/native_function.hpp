@@ -27,12 +27,13 @@ public:
     }
 
     static Handle<NativeFunction> New(Heap* heap, std::function<Handle<Value>(Thread*, Handle<Context>, size_t, const Handle<Value>*)> function) {
-        return heap->Store(new NativeFunction(std::move(function))).As<NativeFunction>();
+        return heap->Store(new NativeFunction(ContextClass::New(heap), std::move(function))).As<NativeFunction>();
     }
 
 private:
-    explicit NativeFunction(std::function<Handle<Value>(Thread*, Handle<Context>, size_t, const Handle<Value>*)>&& function)
-        : function(std::move(function))
+    explicit NativeFunction(Handle<ContextClass> context_class, std::function<Handle<Value>(Thread*, Handle<Context>, size_t, const Handle<Value>*)>&& function)
+        : Function(context_class)
+        , function(std::move(function))
     {}
 
     std::function<Handle<Value>(Thread*, Handle<Context>, size_t, const Handle<Value>*)> function;

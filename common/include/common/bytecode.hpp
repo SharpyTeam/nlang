@@ -7,6 +7,8 @@ namespace nlang {
 enum class Opcode : uint8_t {
     RegToAcc,
     AccToReg,
+    ConToAcc,
+    AccToCon,
     Add,
     Sub,
     Mul,
@@ -23,6 +25,10 @@ struct Instruction {
             int32_t first;
             uint32_t count;
         } registers_range;
+        struct {
+            uint32_t context_index;
+            uint32_t item_index;
+        } context_descriptor;
     } operand;
 };
 

@@ -1,6 +1,7 @@
 set(NLANG_INTERPRETER_SOURCES
         src/stub.cpp
         src/function.cpp
+        src/context.cpp
 )
 
 set(NLANG_INTERPRETER_HEADERS
