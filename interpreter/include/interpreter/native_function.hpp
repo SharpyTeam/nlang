@@ -1,7 +1,7 @@
 #pragma once
 
 #include "function.hpp"
-#include "interpreter.hpp"
+#include "thread.hpp"
 #include "common/heap/heap.hpp"
 #include "common/handles/handle.hpp"
 #include "common/values/value.hpp"
