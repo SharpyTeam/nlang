@@ -23,7 +23,16 @@ public:
                     break;
                 }
                 case Opcode::Add: {
-                    thread->acc = Number::New(thread->acc.As<Number>()->Value() + thread->sp->registers[thread->ip->reg].As<Number>()->Value());
+                    if (thread->acc.Is<Number>() && thread->sp->registers[thread->ip->reg].Is<Number>())
+                        thread->acc = Number::New(thread->acc.As<Number>()->Value() + thread->sp->registers[thread->ip->reg].As<Number>()->Value());
+                    else if (thread->acc.Is<String>() && thread->sp->registers[thread->ip->reg].Is<String>())
+                        thread->acc = String::New(thread->heap, *thread->acc.As<String>(), *thread->sp->registers[thread->ip->reg].As<String>());
+                    else if (thread->acc.Is<String>()) {
+                        thread->acc = String::New(thread->heap, *thread->acc.As<String>(), std::to_string(thread->sp->registers[thread->ip->reg].As<Number>()->Value()));
+                    }
+                    else {
+                        thread->acc = String::New(thread->heap, std::to_string(thread->sp->registers[thread->ip->reg].As<Number>()->Value()), *thread->acc.As<String>());
+                    }
                     break;
                 }
                 case Opcode::Sub: {
@@ -36,6 +45,36 @@ public:
                 }
                 case Opcode::Div: {
                     thread->acc = Number::New(thread->acc.As<Number>()->Value() / thread->sp->registers[thread->ip->reg].As<Number>()->Value());
+                    break;
+                }
+                case Opcode::CheckEqual: {
+                    thread->acc = Bool::New(almost_equal(thread->acc.As<Number>()->Value(), thread->sp->registers[thread->ip->reg].As<Number>()->Value(), 20));
+                    break;
+                }
+                case Opcode::CheckNotEqual: {
+                    thread->acc = Bool::New(!almost_equal(thread->acc.As<Number>()->Value(), thread->sp->registers[thread->ip->reg].As<Number>()->Value(), 20));
+                    break;
+                }
+                case Opcode::CheckGreater: {
+                    thread->acc = Bool::New(thread->acc.As<Number>()->Value() > thread->sp->registers[thread->ip->reg].As<Number>()->Value());
+                    break;
+                }
+                case Opcode::CheckGreaterOrEqual: {
+                    thread->acc = Bool::New(
+                            almost_equal(thread->acc.As<Number>()->Value(), thread->sp->registers[thread->ip->reg].As<Number>()->Value(), 20) ||
+                                  thread->acc.As<Number>()->Value() > thread->sp->registers[thread->ip->reg].As<Number>()->Value()
+                            );
+                    break;
+                }
+                case Opcode::CheckLess: {
+                    thread->acc = Bool::New(thread->acc.As<Number>()->Value() < thread->sp->registers[thread->ip->reg].As<Number>()->Value());
+                    break;
+                }
+                case Opcode::CheckLessOrEqual: {
+                    thread->acc = Bool::New(
+                            almost_equal(thread->acc.As<Number>()->Value(), thread->sp->registers[thread->ip->reg].As<Number>()->Value(), 20) ||
+                            thread->acc.As<Number>()->Value() < thread->sp->registers[thread->ip->reg].As<Number>()->Value()
+                    );
                     break;
                 }
                 case Opcode::DeclareContext: {
@@ -63,13 +102,33 @@ public:
                     continue;
                 }
                 case Opcode::JumpIfTrue: {
-                    if (thread->acc.As<Number>()->Value() != 0.0) {
+                    if (thread->acc.Is<Number>() && !almost_equal(thread->acc.As<Number>()->Value(), 0.0, 20)) {
+                        thread->ip += thread->ip->offset;
+                        continue;
+                    }
+                    if (thread->acc.Is<Bool>() && thread->acc.As<Bool>()->Value()) {
+                        thread->ip += thread->ip->offset;
+                        continue;
+                    }
+                    if (thread->acc.Is<String>() && thread->acc.As<String>()->GetLength() > 0) {
                         thread->ip += thread->ip->offset;
                         continue;
                     }
                     break;
                 }
                 case Opcode::JumpIfFalse: {
+                    if (thread->acc.Is<Number>() && almost_equal(thread->acc.As<Number>()->Value(), 0.0, 20)) {
+                        thread->ip += thread->ip->offset;
+                        continue;
+                    }
+                    if (thread->acc.Is<Bool>() && !thread->acc.As<Bool>()->Value()) {
+                        thread->ip += thread->ip->offset;
+                        continue;
+                    }
+                    if (thread->acc.Is<String>() && thread->acc.As<String>()->GetLength() == 0) {
+                        thread->ip += thread->ip->offset;
+                        continue;
+                    }
                     if (thread->acc.As<Number>()->Value() == 0.0) {
                         thread->ip += thread->ip->offset;
                         continue;

@@ -78,7 +78,7 @@ private:
     }
 
     void Visit(ast::ElseStatementPart& part) override {
-        throw; // not supported
+        part.body->Accept(*this);
     }
 
     void Visit(ast::ArgumentDefinitionStatementPart& part) override {
@@ -133,6 +133,30 @@ private:
             }
             case Token::DIV: {
                 GetContext()->GetBytecodeGenerator()->EmitInstruction<bytecode::Opcode::Div>(right.index);
+                break;
+            }
+            case Token::EQUALS: {
+                GetContext()->GetBytecodeGenerator()->EmitInstruction<bytecode::Opcode::CheckEqual>(right.index);
+                break;
+            }
+            case Token::NOT_EQUALS: {
+                GetContext()->GetBytecodeGenerator()->EmitInstruction<bytecode::Opcode::CheckNotEqual>(right.index);
+                break;
+            }
+            case Token::GREATER: {
+                GetContext()->GetBytecodeGenerator()->EmitInstruction<bytecode::Opcode::CheckGreater>(right.index);
+                break;
+            }
+            case Token::GREATER_EQUALS: {
+                GetContext()->GetBytecodeGenerator()->EmitInstruction<bytecode::Opcode::CheckGreaterOrEqual>(right.index);
+                break;
+            }
+            case Token::LESS: {
+                GetContext()->GetBytecodeGenerator()->EmitInstruction<bytecode::Opcode::CheckLess>(right.index);
+                break;
+            }
+            case Token::LESS_EQUALS: {
+                GetContext()->GetBytecodeGenerator()->EmitInstruction<bytecode::Opcode::CheckLessOrEqual>(right.index);
                 break;
             }
             default:
@@ -270,11 +294,32 @@ private:
     }
 
     void Visit(ast::IfElseStatement& statement) override {
-        throw; // not supported
+        statement.condition->Accept(*this);
+
+        auto if_false_label = GetContext()->GetBytecodeGenerator()->EmitJump<bytecode::Opcode::JumpIfFalse>(0);
+
+        statement.body->Accept(*this);
+
+        if (statement.else_branch) {
+            auto else_skipper_label = GetContext()->GetBytecodeGenerator()->EmitJump<bytecode::Opcode::Jump>(0);
+            GetContext()->GetBytecodeGenerator()->SetJumpToNextLabel(if_false_label);
+
+            statement.else_branch->Accept(*this);
+
+            GetContext()->GetBytecodeGenerator()->SetJumpToNextLabel(else_skipper_label);
+        }
+        else {
+            GetContext()->GetBytecodeGenerator()->SetJumpToNextLabel(if_false_label);
+        }
     }
 
     void Visit(ast::WhileStatement& statement) override {
-        throw; // not supported
+        bytecode::Label first_while_instruction = GetContext()->GetBytecodeGenerator()->GetLabel();
+        statement.condition->Accept(*this);
+        auto if_false_label = GetContext()->GetBytecodeGenerator()->EmitJump<bytecode::Opcode::JumpIfFalse>(0);
+        statement.body->Accept(*this);
+        GetContext()->GetBytecodeGenerator()->EmitJump<bytecode::Opcode::Jump>(first_while_instruction);
+        GetContext()->GetBytecodeGenerator()->SetJumpToNextLabel(if_false_label);
     }
 
     void Visit(ast::ReturnStatement& statement) override {

@@ -34,37 +34,47 @@ struct ContextDescriptor {
 
 #define OPCODES                             \
                                             \
-O(LoadRegister,     Register)               \
-O(StoreRegister,    Register)               \
-                                            \
-O(Add,              Register)               \
-O(Sub,              Register)               \
-O(Mul,              Register)               \
-O(Div,              Register)               \
-                                            \
-O(DeclareContext,   ContextDescriptor)      \
-O(LoadContext,      ContextDescriptor)      \
-O(StoreContext,     ContextDescriptor)      \
-                                            \
-O(LoadConstant,     ConstantIndex)          \
-                                            \
-O(Call,             RegistersRange)         \
-                                            \
-O(Jump,             Offset)                 \
-O(JumpIfTrue,       Offset)                 \
-O(JumpIfFalse,      Offset)                 \
-                                            \
-O(PushContext,      ImmediateInt32)         \
-                                            \
-O(LoadNumber,       ImmediateDouble)        \
-                                            \
-O(PopContext,       NoOperand)              \
-O(CreateClosure,    NoOperand)              \
-O(Return,           NoOperand)              \
-                                            \
-O(LoadNull,         NoOperand)              \
-O(LoadTrue,         NoOperand)              \
-O(LoadFalse,        NoOperand)              \
+O(NoOperation,         NoOperand)              \
+                                               \
+O(LoadRegister,        Register)               \
+O(StoreRegister,       Register)               \
+                                               \
+O(Add,                 Register)               \
+O(Sub,                 Register)               \
+O(Mul,                 Register)               \
+O(Div,                 Register)               \
+                                               \
+O(DeclareContext,      ContextDescriptor)      \
+O(LoadContext,         ContextDescriptor)      \
+O(StoreContext,        ContextDescriptor)      \
+                                               \
+O(LoadConstant,        ConstantIndex)          \
+                                               \
+O(Call,                RegistersRange)         \
+                                               \
+O(Jump,                Offset)                 \
+O(JumpIfTrue,          Offset)                 \
+O(JumpIfFalse,         Offset)                 \
+                                               \
+O(CheckEqual,          Register)               \
+O(CheckNotEqual,       Register)               \
+O(CheckLess,           Register)               \
+O(CheckGreater,        Register)               \
+O(CheckLessOrEqual,    Register)               \
+O(CheckGreaterOrEqual, Register)               \
+O(CheckTypeEqual,      Register)               \
+                                               \
+O(PushContext,         ImmediateInt32)         \
+                                               \
+O(LoadNumber,          ImmediateDouble)        \
+                                               \
+O(PopContext,          NoOperand)              \
+O(CreateClosure,       NoOperand)              \
+O(Return,              NoOperand)              \
+                                               \
+O(LoadNull,            NoOperand)              \
+O(LoadTrue,            NoOperand)              \
+O(LoadFalse,           NoOperand)              \
 
 
 enum class Opcode : uint8_t {
@@ -165,6 +175,10 @@ public:
         return chunk.bytecode.size() - 1;
     }
 
+    void SetJumpToNextLabel(JumpLabel jump_label) {
+        chunk.bytecode[jump_label].offset = chunk.bytecode.size() - jump_label;
+    }
+
     void UpdateJump(JumpLabel jump_label, Label to) {
         chunk.bytecode[jump_label].offset = to - jump_label;
     }
@@ -180,6 +194,10 @@ public:
 
     void SetArgumentsCount(size_t count) {
         chunk.arguments_count = count;
+    }
+
+    size_t GetLastEmmittedInstructionAddress() const {
+        return chunk.bytecode.size() - 1;
     }
 
     BytecodeChunk Flush() {

@@ -65,7 +65,7 @@ private:
     }
 
     void Visit(ast::ElseStatementPart& part) override {
-        throw; // not supported
+        part.body->Accept(*this);
     }
 
     void Visit(ast::ArgumentDefinitionStatementPart& part) override {
@@ -192,11 +192,16 @@ private:
     }
 
     void Visit(ast::IfElseStatement& statement) override {
-        throw; // not supported
+        statement.condition->Accept(*this);
+        statement.body->Accept(*this);
+        if (statement.else_branch) {
+            statement.else_branch->Accept(*this);
+        }
     }
 
     void Visit(ast::WhileStatement& statement) override {
-        throw; // not supported
+        statement.condition->Accept(*this);
+        statement.body->Accept(*this);
     }
 
     void Visit(ast::ReturnStatement& statement) override {
