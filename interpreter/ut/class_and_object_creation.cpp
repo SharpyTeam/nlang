@@ -1,8 +1,8 @@
 #include <catch2/catch.hpp>
 
-#include <interpreter/heap.hpp>
+#include <common/heap/heap.hpp>
 #include <interpreter/object.hpp>
-#include <interpreter/value.hpp>
+#include <common/values/value.hpp>
 
 TEST_CASE("class and object creation") {
     using namespace nlang;

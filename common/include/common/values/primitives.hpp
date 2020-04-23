@@ -1,32 +1,9 @@
 #pragma once
 
-#include "handle.hpp"
-
-#include <utils/nan_boxed_primitive.hpp>
-#include <utils/macro.hpp>
-#include <utils/traits.hpp>
-
-#include <cstdint>
-#include <limits>
-#include <type_traits>
-
+#include <common/handles/handle.hpp>
+#include <common/values/value.hpp>
 
 namespace nlang {
-
-// Base class for all objects
-class Value {
-public:
-    Value(const Value&) = delete;
-    Value(Value&&) = delete;
-    Value& operator=(const Value&) = delete;
-    Value& operator=(Value&&) = delete;
-
-protected:
-    Value() {}
-};
-
-
-class StackValue : public NanBoxedPrimitive, public Value {};
 
 
 class Null : public StackValue {
@@ -100,12 +77,6 @@ NLANG_FORCE_INLINE Handle<Number> Number::New(double value) {
 NLANG_FORCE_INLINE Handle<Int32> Int32::New(int32_t value) {
     return Handle<Int32>(Int32(value));
 }
-
-
-class HeapValue : public Value {
-public:
-    virtual ~HeapValue() = default;
-};
 
 
 }

@@ -1,7 +1,7 @@
 #pragma once
 
 #include <utils/holder.hpp>
-#include <common/ast.hpp>
+#include <common/ast/ast.hpp>
 
 namespace nlang {
 

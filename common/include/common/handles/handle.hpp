@@ -1,5 +1,7 @@
 #pragma once
 
+#include <common/values/value.hpp>
+
 #include <utils/macro.hpp>
 #include <utils/nan_boxed_primitive.hpp>
 #include <utils/traits.hpp>
@@ -15,12 +17,6 @@ namespace nlang {
 
 using ValueTypeInfo = std::type_index;
 
-template<typename T, typename Enable = void>
-class Handle;
-
-class Value;
-class StackValue;
-class HeapValue;
 
 class Null;
 class Bool;
@@ -29,19 +25,25 @@ class Int32;
 
 
 template<typename T>
-class Handle<T, std::enable_if_t<std::is_base_of_v<Value, T>>> {
+class Handle {
 public:
     friend class Null;
     friend class Bool;
     friend class Number;
     friend class Int32;
 
-    template<typename U, typename Enable>
+    template<typename U>
     friend class Handle;
 
     friend class Heap;
 
-    using BackingPrimitive = std::conditional_t<std::is_base_of_v<HeapValue, T>, FakeNanBoxedPrimitive, NanBoxedPrimitive>;
+    using BackingPrimitive = std::conditional_t<
+            std::is_same_v<Value, T> ||
+            std::is_same_v<Null, T> ||
+            std::is_same_v<Bool, T> ||
+            std::is_same_v<Number, T> ||
+            std::is_same_v<Int32, T>,
+            NanBoxedPrimitive, FakeNanBoxedPrimitive>;
 
     NLANG_FORCE_INLINE Handle() {}
 
@@ -101,7 +103,7 @@ public:
                     if (!value.IsPointer()) return false;
                 }
                 HeapValue* v = GetHeapPointerOfType<U>();
-                return dynamic_cast<U *>(v);
+                return dynamic_cast<U*>(v);
             }
         } else {
             return false;

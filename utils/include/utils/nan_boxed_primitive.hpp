@@ -46,23 +46,23 @@ public:
     NLANG_FORCE_INLINE NanBoxedPrimitive& operator=(const FakeNanBoxedPrimitive&);
 
     NLANG_FORCE_INLINE bool IsNull() const {
-        return (value & type_mask) == null_signature;
+        return value == null_signature;
     }
 
     NLANG_FORCE_INLINE bool IsBool() const {
-        return (value & bool_mask) == bool_signature;
+        return (value & ~bool_value_mask) == bool_signature;
     }
 
     NLANG_FORCE_INLINE bool IsFalse() const {
-        return (value & type_mask) == bool_false_signature;
+        return value == bool_false_signature;
     }
 
     NLANG_FORCE_INLINE bool IsTrue() const {
-        return (value & type_mask) == bool_true_signature;
+        return value == bool_true_signature;
     }
 
     NLANG_FORCE_INLINE bool IsNumber() const {
-        return (value & signaling_nan_mask) != signaling_nan_signature;
+        return (value & nan_mask) != nan_signature;
     }
 
     NLANG_FORCE_INLINE bool IsInt32() const {
@@ -73,9 +73,12 @@ public:
         return (value & type_mask) == pointer_signature;
     }
 
+    NLANG_FORCE_INLINE bool IsNullPointer() const {
+        return value == null_pointer_signature;
+    }
 
     NLANG_FORCE_INLINE bool GetBool() const {
-        return (value & type_mask) == bool_true_signature;
+        return value == bool_true_signature;
     }
 
     NLANG_FORCE_INLINE double GetNumber() const {
@@ -127,29 +130,27 @@ private:
 private:
     uint64_t value;
 
-    // bits [50; 48]
-    // 000 pointer
-    // 001 fast int
-    // 010 null
-    // x11 bool
-    // 100 reserved
-    // 101 reserved
-    // 110 reserved
-    static constexpr uint64_t signaling_nan_mask =      0x7FF8000000000000;
-    static constexpr uint64_t signaling_nan_signature = 0x7FF0000000000000;
+    // bits [50; 49]
+    // 00 pointer
+    // 01 int32
+    // 10 null
+    // 11 bool
+    static constexpr uint64_t nan_mask =                0x7FFC000000000000;
+    static constexpr uint64_t nan_signature =           0x7FFC000000000000;
 
-    static constexpr uint64_t type_mask =               signaling_nan_mask      | ((uint64_t)0b111 << (uint64_t)48);
+    static constexpr uint64_t type_mask =               nan_mask | ((uint64_t)0b11 << (uint64_t)48);
 
     static constexpr uint64_t mask_48_bit =             ((uint64_t)1 << (uint64_t)48) - (uint64_t)1;
-    static constexpr uint64_t pointer_signature =       signaling_nan_signature | ((uint64_t)0b000 << (uint64_t)48);
-    static constexpr uint64_t null_signature =          signaling_nan_signature | ((uint64_t)0b010 << (uint64_t)48);
-    static constexpr uint64_t int32_signature =         signaling_nan_signature | ((uint64_t)0b001 << (uint64_t)48);
+    static constexpr uint64_t pointer_signature =       nan_signature | ((uint64_t)0b00 << (uint64_t)48);
+    static constexpr uint64_t int32_signature =         nan_signature | ((uint64_t)0b01 << (uint64_t)48);
+    static constexpr uint64_t null_signature =          nan_signature | ((uint64_t)0b10 << (uint64_t)48);
+    static constexpr uint64_t bool_signature =          nan_signature | ((uint64_t)0b11 << (uint64_t)48);
 
-    static constexpr uint64_t bool_mask =               signaling_nan_mask      | ((uint64_t)0b011 << (uint64_t)48);
+    static constexpr uint64_t bool_value_mask =         ((uint64_t)0b1 << (uint64_t)0);
+    static constexpr uint64_t bool_false_signature =    bool_signature | ((uint64_t)0b0 << (uint64_t)0);
+    static constexpr uint64_t bool_true_signature =     bool_signature | ((uint64_t)0b1 << (uint64_t)0);
 
-    static constexpr uint64_t bool_signature =          signaling_nan_signature | ((uint64_t)0b011 << (uint64_t)48);
-    static constexpr uint64_t bool_false_signature =    signaling_nan_signature | ((uint64_t)0b011 << (uint64_t)48);
-    static constexpr uint64_t bool_true_signature =     signaling_nan_signature | ((uint64_t)0b111 << (uint64_t)48);
+    static inline uint64_t null_pointer_signature =     pointer_signature | (reinterpret_cast<uint64_t>(nullptr) & mask_48_bit);
 };
 
 

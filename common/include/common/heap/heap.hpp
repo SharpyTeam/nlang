@@ -1,7 +1,7 @@
 #pragma once
 
-#include "value.hpp"
-#include "handle.hpp"
+#include <common/values/value.hpp>
+#include <common/handles/handle.hpp>
 
 #include <utils/slot_storage.hpp>
 #include <utils/macro.hpp>

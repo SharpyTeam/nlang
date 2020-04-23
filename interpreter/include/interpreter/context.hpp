@@ -1,81 +1,75 @@
 #pragma once
 
-#include "handle.hpp"
-#include "value.hpp"
-#include "heap.hpp"
+#include <common/handles/handle.hpp>
+#include <common/values/primitives.hpp>
+#include <common/heap/heap.hpp>
+#include <common/objects/string.hpp>
 
 #include <stdexcept>
 #include <vector>
 
 namespace nlang {
 
-struct ContextItemDescriptor {
-    uint32_t context_index;
-    uint32_t item_index;
-};
-
 class Context : public HeapValue {
 public:
-    friend struct ContextClass;
+    struct ContextDescriptor {
+        uint32_t index;
+        uint32_t depth;
+    };
 
     Context() = default;
     virtual ~Context() = default;
 
-    void SetItem(ContextItemDescriptor descriptor, Handle<Value> item) {
-        if (!descriptor.context_index) {
-            auto& i = items[descriptor.item_index];
-            if (!item) {
-                throw std::runtime_error("usage before definition");
-            }
-            i = item;
-            return;
+    void Store(ContextDescriptor descriptor, Handle<Value> value) {
+        Context* context = this;
+        while (descriptor.depth--) {
+            context = &*context->parent;
         }
-        --descriptor.context_index;
-        parent.As<Context>()->SetItem(descriptor, item);
+        if (!context->values[descriptor.index]) {
+            throw;
+        }
+        context->values[descriptor.index] = value;
     }
 
-    Handle<Value> GetItem(ContextItemDescriptor descriptor) const {
-        if (!descriptor.context_index) {
-            auto& item = items[descriptor.item_index];
-            if (!item) {
-                throw std::runtime_error("usage before definition");
-            }
-            return item;
+    Handle<Value> Load(ContextDescriptor descriptor) {
+        Context* context = this;
+        while (descriptor.depth--) {
+            context = &*context->parent;
         }
-        --descriptor.context_index;
-        return parent.As<Context>()->GetItem(descriptor);
+        if (!context->values[descriptor.index]) {
+            throw;
+        }
+        return context->values[descriptor.index];
     }
 
-    void DefineItem(ContextItemDescriptor descriptor) {
-        if (!descriptor.context_index) {
-            items[descriptor.item_index] = Null::New();
-            return;
+    void Declare(ContextDescriptor descriptor) {
+        Context* context = this;
+        while (descriptor.depth--) {
+            context = &*context->parent;
         }
-        --descriptor.context_index;
-        parent.As<Context>()->DefineItem(descriptor);
+        if (context->values[descriptor.index]) {
+            throw;
+        }
+        context->values[descriptor.index] = Null::New();
     }
 
-    static Handle<Context> New(Heap* heap) {
-        return heap->Store(new Context).As<Context>();
+    Handle<Context> GetParent() const {
+        return parent;
+    }
+
+    static Handle<Context> New(Heap* heap, Handle<Context> parent, size_t size) {
+        return heap->Store(new Context(parent, size)).As<Context>();
     }
 
 private:
-    Handle<HeapValue> parent;
-    std::vector<Handle<Value>> items;
+    Context(Handle<Context> parent, size_t size)
+        : parent(parent)
+        , values(size)
+    {}
+
+    Handle<Context> parent;
+    std::vector<Handle<Value>> values;
 };
 
-struct ContextClass : public HeapValue {
-    size_t items_count = 0;
-    std::vector<Handle<HeapValue>> functions;
-
-    Handle<Context> Instantiate(Heap* heap, Handle<Context> parent_context);
-
-    static Handle<ContextClass> New(Heap* heap, size_t items_count = 0, std::vector<Handle<HeapValue>> functions = {}) {
-        auto handle = heap->Store(new ContextClass).As<ContextClass>();
-        handle->items_count = items_count;
-        handle->functions = std::move(functions);
-        return handle;
-    }
-};
 
 }

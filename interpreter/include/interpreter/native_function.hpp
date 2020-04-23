@@ -2,9 +2,9 @@
 
 #include "function.hpp"
 #include "interpreter.hpp"
-#include "heap.hpp"
-#include "handle.hpp"
-#include "value.hpp"
+#include "common/heap/heap.hpp"
+#include "common/handles/handle.hpp"
+#include "common/values/value.hpp"
 
 #include <functional>
 
@@ -16,12 +16,11 @@ public:
         return 0;
     }
 
-    size_t GetRegisterArgumentsCount() const override {
+    size_t GetArgumentsCount() const override {
         return 0;
     }
 
     void DoInvoke(Thread* thread, size_t args_count, const Handle<Value>* args) override {
-        thread->ip = nullptr;
         thread->acc = function(thread, thread->sp->context, args_count, args);
         thread->PopFrame();
     }

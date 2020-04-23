@@ -3,7 +3,7 @@
 #include "scanner.hpp"
 
 #include <utils/holder.hpp>
-#include <common/ast.hpp>
+#include <common/ast/ast.hpp>
 
 #include <memory>
 #include <vector>
@@ -103,6 +103,9 @@ public:
 
     Holder<ast::IStatement> ParseStatement() {
         switch (scanner->NextTokenLookahead().token) {
+            case Token::FN:
+                return ParseFunctionDefinitionStatement();
+
             case Token::LET:
                 return ParseVariableDefinitionStatement();
 
@@ -152,6 +155,46 @@ public:
         return MakeHolder<ast::BlockStatement>(std::move(left_brace), std::move(statements), std::move(right_brace));
     }
 
+    Holder<ast::FunctionDefinitionStatement> ParseFunctionDefinitionStatement() {
+        std::vector<Holder<ast::ArgumentDefinitionStatementPart>> args;
+
+        auto fn = scanner->NextTokenAssert(Token::FN);
+        Holder<ast::IdentifierLiteral> name;
+        name = MakeHolder<ast::IdentifierLiteral>(TokenInstance(scanner->NextTokenAssert(Token::IDENTIFIER)));
+        auto left_par = scanner->NextTokenAssert(Token::LEFT_PAR);
+        TokenInstance right_par;
+        bool default_value_required = false;
+        while (true) {
+            if (scanner->NextTokenLookahead().token == Token::RIGHT_PAR) {
+                right_par = scanner->NextToken();
+                break;
+            }
+
+            auto arg = ParseArgumentDefinitionStatementPart();
+            arg->index = args.size();
+
+            if (arg->default_value) {
+                default_value_required = true;
+            } else if (default_value_required) {
+                throw std::runtime_error("Expected default value");
+            }
+
+            args.emplace_back(std::move(arg));
+
+            if (scanner->NextTokenLookahead().token == Token::COMMA) {
+                scanner->NextToken();
+                if (scanner->NextTokenLookahead().token == Token::RIGHT_PAR) {
+                    throw std::runtime_error("Expected arg, found par");
+                }
+            }
+        }
+
+        auto type_hint = TryParseTypeHint();
+
+        return MakeHolder<ast::FunctionDefinitionStatement>(std::move(fn), std::move(name), std::move(left_par), std::move(args), std::move(right_par),
+            std::move(type_hint), ParseBlockStatement());
+    }
+
     Holder<ast::FunctionDefinitionExpression> ParseFunctionDefinitionExpression() {
         std::vector<Holder<ast::ArgumentDefinitionStatementPart>> args;
 
@@ -170,6 +213,7 @@ public:
             }
 
             auto arg = ParseArgumentDefinitionStatementPart();
+            arg->index = args.size();
 
             if (arg->default_value) {
                 default_value_required = true;
@@ -225,7 +269,7 @@ public:
                 return MakeHolder<ast::LiteralExpression>(MakeHolder<ast::BoolLiteral>(std::move(token)));
 
             default:
-                throw std::runtime_error("Unexpected token \"" + token.text + "\" at [" + std::to_string(token.row) + ":" + std::to_string(token.column) + "]");
+                throw std::runtime_error("Unexpected token at [" + std::to_string(token.row) + ":" + std::to_string(token.column) + "]");
         }
     }
 

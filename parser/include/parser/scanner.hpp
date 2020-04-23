@@ -1,6 +1,7 @@
 #pragma once
 
-#include "token_stream.hpp"
+#include <parser/token_stream.hpp>
+#include <parser/stream_cache.hpp>
 
 #include <utils/holder.hpp>
 #include <common/token.hpp>

@@ -1,9 +1,12 @@
 #pragma once
 
-#include "value.hpp"
-#include "heap.hpp"
+#include <common/handles/handle.hpp>
+#include <common/values/primitives.hpp>
+#include <common/heap/heap.hpp>
 
 #include <utils/macro.hpp>
+
+#include <unicode/unistr.h>
 
 #include <cstring>
 #include <tuple>
@@ -14,20 +17,12 @@ namespace nlang {
 
 class String : public HeapValue {
 public:
-    // Static methods
-
-    template<typename ...StrArgs>
-    static Handle <String> New(Heap& heap, const StrArgs& ...strings) {
-        std::u32string s;
-        if constexpr ((std::is_base_of_v<String, StrArgs> && ...)) {
-            s = Concat(strings...);
-        } else {
-            s = ConvertAndConcat(strings...);
-        }
-        return heap.Store(new String(s)).As<String>();
-    }
-
     String() = delete;
+    String& operator=(const String&) = delete;
+    String& operator=(String&&) = delete;
+
+    virtual ~String() override = default;
+
 
     [[nodiscard]] size_t GetHash() const {
         return hash;
@@ -37,23 +32,13 @@ public:
         return data.length();
     }
 
-    [[nodiscard]] const std::u32string& GetRawString() const {
+    [[nodiscard]] const icu::UnicodeString& GetRawString() const {
         return data;
     }
 
-    [[nodiscard]] Handle <Int32> GetCharCodeAt(const size_t index) const {
-        return Int32::New(int32_t(data[index]));
+    [[nodiscard]] Handle<Int32> GetCharCodeAt(const size_t index) const {
+        return Int32::New((int32_t)data.char32At(index));
     }
-
-    [[nodiscard]] std::string AsStdString() const {
-        typedef deletable_facet<std::codecvt<char32_t, char, std::mbstate_t>> facet_u32;
-        std::wstring_convert<facet_u32, char32_t> conv;
-        return conv.to_bytes(data);
-    }
-
-    String& operator=(const String&) = delete;
-
-    String& operator=(String&&) = delete;
 
     bool operator==(const String& other) const {
         if (hash != other.hash)
@@ -68,46 +53,55 @@ public:
         return !(*this == other);
     }
 
-    virtual ~String() override = default;
+    template<typename ...StrArgs>
+    static Handle<String> New(Heap* heap, const StrArgs& ...strings) {
+        icu::UnicodeString s;
+        if constexpr ((std::is_base_of_v<String, StrArgs> && ...)) {
+            s = Concat(strings...);
+        } else {
+            s = ConvertAndConcat(strings...);
+        }
+        return heap->Store(new String(s)).As<String>();
+    }
+
+    static Handle<String> NewFromCharCode(Heap* heap, int32_t char_code) {
+        icu::UnicodeString s = icu::UnicodeString::fromUTF32(reinterpret_cast<const UChar32*>(&char_code), 1);
+        return heap->Store(new String(s)).As<String>();
+    }
 
 private:
-    const std::u32string data;
+    icu::UnicodeString data;
     size_t hash;
 
-    String(const std::u32string& string) : data(string),
-                                           hash(std::hash<std::u32string>{}(string)) {}
+    String(const icu::UnicodeString& string)
+        : data(string)
+        , hash(data.hashCode())
+    {}
 
-    String(std::u32string&& string) : data(std::move(string)),
-                                      hash(std::hash<std::u32string>{}(string)) {}
+    String(icu::UnicodeString&& string)
+        : data(std::move(string))
+        , hash(data.hashCode())
+    {}
 
     template<typename Str>
-    static std::u32string ConvertAndConcat(Str&& s) {
-        typedef deletable_facet<std::codecvt<char16_t, char, std::mbstate_t>> facet_u16;
-        typedef deletable_facet<std::codecvt<char32_t, char, std::mbstate_t>> facet_u32;
+    static icu::UnicodeString ConvertAndConcat(Str&& s) {
         using StrType = std::decay_t<Str>;
-        if constexpr (std::is_same_v<StrType, std::u32string>) {
+        if constexpr (std::is_same_v<StrType, icu::UnicodeString>) {
             return s;
+        } else if constexpr (std::is_same_v<StrType, std::u32string>) {
+            return icu::UnicodeString::fromUTF32(reinterpret_cast<const UChar32*>(s.data()), s.size());
         } else if constexpr (std::is_same_v<StrType, std::u16string>) {
-            std::wstring_convert<facet_u16, char16_t> u16_to_u8;
-            std::string utf8 = u16_to_u8.to_bytes(s);
-            std::wstring_convert<facet_u32, char32_t> u8_to_u32;
-            return u8_to_u32.from_bytes(utf8);
+            return icu::UnicodeString(s.data(), s.size());
         } else if constexpr (std::is_same_v<StrType, std::string>) {
-            std::wstring_convert<facet_u32, char32_t> u8_to_u32;
-            return u8_to_u32.from_bytes(s);
+            return icu::UnicodeString::fromUTF8(std::forward<Str>(s));
         } else if constexpr (std::is_same_v<StrType, String>) {
             return s.GetRawString();
         } else if constexpr (std::is_same_v<StrType, const char32_t*>) {
-            return std::u32string(s);
+            return icu::UnicodeString::fromUTF32(reinterpret_cast<const UChar32*>(s), std::char_traits<char32_t>::length(s));
         } else if constexpr (std::is_same_v<StrType, const char16_t*>) {
-            std::u16string u16s(s);
-            std::wstring_convert<facet_u16, char16_t> u16_to_u8;
-            std::string utf8 = u16_to_u8.to_bytes(s);
-            std::wstring_convert<facet_u32, char32_t> u8_to_u32;
-            return u8_to_u32.from_bytes(utf8);
+            return icu::UnicodeString(s, std::char_traits<char16_t>::length(s));
         } else if constexpr (std::is_same_v<StrType, const char*>) {
-            std::wstring_convert<facet_u32, char32_t> u8_to_u32;
-            return u8_to_u32.from_bytes(s);
+            return icu::UnicodeString::fromUTF8(s);
         } else {
             static_assert(dependent_false<StrType>::value,
                           "invalid template argument (string) type:"
@@ -116,20 +110,20 @@ private:
     }
 
     template<typename F, typename S, typename ...StrTail>
-    static std::u32string ConvertAndConcat(F&& f, S&& s, StrTail&& ...strings) {
+    static icu::UnicodeString ConvertAndConcat(F&& f, S&& s, StrTail&& ...strings) {
         return ConvertAndConcat<F>(std::forward<F>(f)) +
                ConvertAndConcat<S, StrTail...>(std::forward<S>(s), std::forward<StrTail>(strings)...);
     }
 
 private:
     template<typename Str>
-    static std::u32string Concat(Str&& s) {
+    static icu::UnicodeString Concat(Str&& s) {
         static_assert(std::is_base_of_v<Str, String>, "all arguments must be nlang::String classes");
         return s.GetRawString();
     }
 
     template<typename F, typename S, typename ...StrTail>
-    static std::u32string Concat(F&& f, S&& s, StrTail&& ...strings) {
+    static icu::UnicodeString Concat(F&& f, S&& s, StrTail&& ...strings) {
         return ConvertAndConcat<F>(std::forward<F>(f)) +
                ConvertAndConcat<S, StrTail...>(std::forward<S>(s), std::forward<StrTail>(strings)...);
     }

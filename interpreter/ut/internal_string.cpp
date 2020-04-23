@@ -1,7 +1,7 @@
 #include <catch2/catch.hpp>
-#include <interpreter/value.hpp>
-#include <interpreter/string.hpp>
-#include <interpreter/heap.hpp>
+#include <common/values/value.hpp>
+#include <common/objects/string.hpp>
+#include <common/heap/heap.hpp>
 
 TEST_CASE("string creation & manipulation") {
     using namespace nlang;

@@ -1,12 +1,12 @@
 #include <version/version.hpp>
 
 #include <parser/scanner.hpp>
-#include <parser/char_stream.hpp>
+#include <parser/parser.hpp>
 
-#include <interpreter/interpreter.hpp>
-#include <interpreter/native_function.hpp>
-#include <interpreter/bytecode_function.hpp>
-#include <interpreter/function.hpp>
+#include <common/objects/string.hpp>
+
+#include <compiler/semantic_analyser.hpp>
+#include <compiler/compiler.hpp>
 
 #include <iostream>
 #include <string>
@@ -15,10 +15,13 @@
 
 void print(const std::string &input) {
     using namespace nlang;
-    auto scanner = Scanner::New(TokenStream::New(StringCharStream::New(input)));
+    Heap heap;
+    auto scanner = Scanner::New(TokenStream::New(&heap, String::New(&heap, input)));
 
     for (auto& token = scanner->NextToken(); token.token != nlang::Token::THE_EOF; token = scanner->NextToken()) {
-        std::cout << "'" << token.text << "'" << " [" << std::string(nlang::TokenUtils::GetTokenName(token.token)) << ", " << static_cast<int>(token.token) << "]:"
+        std::string s;
+        token.text->GetRawString().toUTF8String(s);
+        std::cout << "'" << s << "'" << " [" << std::string(nlang::TokenUtils::GetTokenName(token.token)) << ", " << static_cast<int>(token.token) << "]:"
             << token.row << ":" << token.column << std::endl;
     }
 }
@@ -29,30 +32,33 @@ int main(int argc, char *argv[]) {
     using namespace nlang;
 
     Heap heap;
-    Handle<Function> print_f = NativeFunction::New(&heap, [&](Thread* thread, Handle<Context>, size_t args_count, const Handle<Value>* args) {
-        std::cout << args[0].As<Number>()->Value() << std::endl;
-        return Null::New();
-    });
+    auto parser = Parser::New(Scanner::New(TokenStream::New(&heap, String::New(&heap,
+R"(
+fn foo(d) {
+    let a = d * 2
+    fn bar(d) {
+        return b + d
+    }
+    let b = a - 1
+    return bar
+}
+foo(13)(5)
+)"))));
 
-    Instruction call { Opcode::Call, { 0 } };
-    call.operand.registers_range = { 0, 1 };
-    Instruction load { Opcode::ConToAcc, { 0 }};
-    load.operand.context_descriptor = { 0, 0 };
+    auto ast = parser->ParseModule();
 
-    Handle<Closure> bc = Closure::New(&heap, BytecodeFunction::New(&heap, 1, 2, ContextClass::New(&heap, 1, { print_f }), {
-        { Opcode::RegToAcc, { -2 } },
-        { Opcode::Mul, { -1 } },
-        { Opcode::AccToReg, { 0 } },
-        load,
-        call,
-        { Opcode::RegToAcc, { -2 } },
-        { Opcode::Div, { -1 } },
-        { Opcode::Ret, {} }
-    }));
+    SemanticAnalyser semantic_analyzer;
+    semantic_analyzer.Process(*ast);
 
-    std::vector<Handle<Value>> args { Number::New(3), Number::New(4) };
-    Thread t(&heap, bc, args.size(), args.data());
-    std::cout << t.Join().As<Number>()->Value() << std::endl;
+    Compiler compiler;
+    auto module = compiler.Compile(&heap, *ast);
+
+    std::cout << bytecode::BytecodeDisassembler::Disassemble(module.As<BytecodeFunction>()->bytecode_chunk) << std::endl << std::endl;
+    std::cout << bytecode::BytecodeDisassembler::Disassemble(module.As<BytecodeFunction>()->bytecode_chunk.constant_pool[0].As<BytecodeFunction>()->bytecode_chunk) << std::endl << std::endl;
+    std::cout << bytecode::BytecodeDisassembler::Disassemble(module.As<BytecodeFunction>()->bytecode_chunk.constant_pool[0].As<BytecodeFunction>()->bytecode_chunk.constant_pool[0].As<BytecodeFunction>()->bytecode_chunk) << std::endl << std::endl;
+
+    Thread thread(&heap, Closure::New(&heap, Handle<Context>(), module), 0, nullptr);
+    std::cout << thread.Join().As<Number>()->Value() << std::endl;
 
     std::cout << "nlang " NLANG_VERSION " (" NLANG_BUILD_GIT_REVISION ", " NLANG_BUILD_PROCESSOR ",  " __DATE__ " " __TIME__  ")" << std::endl;
     std::cout << "[" << ((std::strcmp(NLANG_BUILD_COMPILER_ID, "GNU") == 0) ? "GCC" : NLANG_BUILD_COMPILER_ID) << " " NLANG_BUILD_COMPILER_VERSION << "]" << std::endl;

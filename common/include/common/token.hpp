@@ -1,5 +1,8 @@
 #pragma once
 
+#include <common/handles/handle.hpp>
+#include <common/objects/string.hpp>
+
 #include <utils/macro.hpp>
 
 #include <unordered_map>
@@ -93,22 +96,22 @@ struct TokenInstance {
     size_t length;
     size_t row;
     size_t column;
-    std::string text;
+    Handle<String> text;
 };
 
 class TokenUtils {
 public:
-    static const std::string &GetTokenName(Token token) {
+    static const std::string& GetTokenName(Token token) {
         return token_to_name.at(token);
     }
 
-    static const std::string &GetTokenText(Token token) {
+    static const std::string& GetTokenText(Token token) {
         const std::string& text = token_to_text.at(token);
         NLANG_ASSERT(!text.empty());
         return text;
     }
 
-    static Token GetTokenByText(const std::string &text) {
+    static Token GetTokenByText(const std::string& text) {
         NLANG_ASSERT(!text.empty());
         return text_to_token.at(text);
     }

@@ -1,14 +1,16 @@
 #pragma once
 
-#include "utils/holder.hpp"
-#include "token.hpp"
+#include <common/token.hpp>
 
 #include <utils/macro.hpp>
+#include <utils/holder.hpp>
+#include <utils/shared_ptr.hpp>
 
 #include <string>
 #include <memory>
 #include <utility>
 #include <cctype>
+#include <vector>
 
 namespace nlang::ast {
 
@@ -47,6 +49,7 @@ class MemberAccessExpression;
 class ClassDefinitionExpression;
 
 // statements
+class FunctionDefinitionStatement;
 class VariableDefinitionStatement;
 class ExpressionStatement;
 class BlockStatement;
@@ -92,6 +95,7 @@ public:
 
     virtual void Visit(ClassDefinitionExpression&) = 0;
 
+    virtual void Visit(FunctionDefinitionStatement&) = 0;
     virtual void Visit(VariableDefinitionStatement&) = 0;
     virtual void Visit(ExpressionStatement&) = 0;
     virtual void Visit(BlockStatement&) = 0;
@@ -116,6 +120,13 @@ class INode {
 public:
     VISITOR_ACCEPT
 
+    class IMeta {
+    public:
+        virtual ~IMeta() = 0;
+    };
+
+    SharedPtr<IMeta> meta;
+
     INode(const INode&) = delete;
     INode(INode&&) = delete;
     INode& operator=(const INode&) = delete;
@@ -127,6 +138,7 @@ protected:
     INode() {};
 };
 
+INode::IMeta::~IMeta() = default;
 INode::~INode() = default;
 
 
@@ -195,8 +207,11 @@ public:
 
     explicit NumberLiteral(TokenInstance&& token)
         : token(std::move(token))
-        , number(std::stod(this->token.text))
-    {}
+    {
+        std::string s;
+        token.text->GetRawString().toUTF8String(s);
+        number = std::stod(s);
+    }
 };
 
 
@@ -205,7 +220,7 @@ public:
     VISITOR_ACCEPT
 
     TokenInstance token;
-    std::string string;
+    Handle<String> string;
 
     explicit StringLiteral(TokenInstance&& token)
         : token(std::move(token))
@@ -221,7 +236,7 @@ public:
     VISITOR_ACCEPT
 
     TokenInstance token;
-    std::string& identifier;
+    Handle<String> identifier;
 
     explicit IdentifierLiteral(TokenInstance&& token)
         : token(std::move(token))
@@ -360,6 +375,7 @@ public:
     Holder<IdentifierLiteral> name;
     Holder<TypeHint> type_hint;
     Holder<DefaultValue> default_value;
+    size_t index = 0;
 
     explicit ArgumentDefinitionStatementPart(
         Holder<IdentifierLiteral>&& name,
@@ -422,6 +438,38 @@ public:
     Holder<IStatement> body;
 
     FunctionDefinitionExpression(
+        TokenInstance&& fn,
+        Holder<IdentifierLiteral>&& name,
+        TokenInstance&& left_par,
+        std::vector<Holder<ArgumentDefinitionStatementPart>>&& arguments,
+        TokenInstance&& right_par,
+        Holder<TypeHint>&& type_hint,
+        Holder<IStatement>&& body)
+
+        : fn(std::move(fn))
+        , name(std::move(name))
+        , left_par(std::move(left_par))
+        , arguments(std::move(arguments))
+        , right_par(std::move(right_par))
+        , type_hint(std::move(type_hint))
+        , body(std::move(body))
+    {}
+};
+
+
+class FunctionDefinitionStatement : public IStatement {
+public:
+    VISITOR_ACCEPT
+
+    TokenInstance fn;
+    Holder<IdentifierLiteral> name;
+    TokenInstance left_par;
+    std::vector<Holder<ArgumentDefinitionStatementPart>> arguments;
+    TokenInstance right_par;
+    Holder<TypeHint> type_hint;
+    Holder<IStatement> body;
+
+    FunctionDefinitionStatement(
         TokenInstance&& fn,
         Holder<IdentifierLiteral>&& name,
         TokenInstance&& left_par,
@@ -658,9 +706,9 @@ class Module : public INode {
 public:
     VISITOR_ACCEPT
 
-    std::vector<Holder<IStatement>>&& statements;
+    std::vector<Holder<IStatement>> statements;
 
-    explicit Module(std::vector<Holder < IStatement>>&& statements)
+    explicit Module(std::vector<Holder<IStatement>>&& statements)
         : statements(std::move(statements))
     {}
 };
@@ -725,7 +773,9 @@ private:
     };
 
     void Visit(StringLiteral& e) override {
-        text += "'" + e.string + "'";
+        std::string s;
+        e.string->GetRawString().toUTF8String(s);
+        text += "'" + s + "'";
     }
 
     void Visit(IdentifierLiteral& e) override {
@@ -839,6 +889,26 @@ private:
 
     void Visit(ClassDefinitionExpression&) override {
         // TODO
+    }
+
+    void Visit(FunctionDefinitionStatement& s) override {
+        text += "fn ";
+        if (s.name) {
+            s.name->Accept(*this);
+        }
+        text += "(";
+        for (size_t i = 0; i < s.arguments.size(); ++i) {
+            s.arguments[i]->Accept(*this);
+            if (i + 1 != s.arguments.size()) {
+                text += ", ";
+            }
+        }
+        text += ")";
+        if (s.type_hint) {
+            s.type_hint->Accept(*this);
+        }
+        text += " ";
+        s.body->Accept(*this);
     }
 
     void Visit(VariableDefinitionStatement& s) override {

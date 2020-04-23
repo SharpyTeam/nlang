@@ -8,11 +8,7 @@ set(NLANG_INTERPRETER_HEADERS
         include/interpreter/interpreter.hpp
         include/interpreter/class.hpp
         include/interpreter/function.hpp
-        include/interpreter/handle.hpp
-        include/interpreter/heap.hpp
         include/interpreter/object.hpp
-        include/interpreter/string.hpp
-        include/interpreter/value.hpp
         include/interpreter/context.hpp
         include/interpreter/bytecode_executor.hpp
         include/interpreter/native_function.hpp

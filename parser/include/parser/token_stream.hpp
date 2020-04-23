@@ -1,11 +1,14 @@
 #pragma once
 
-#include "char_stream.hpp"
-#include "stream_cache.hpp"
+#include <common/token.hpp>
+#include <common/heap/heap.hpp>
+#include <common/handles/handle.hpp>
+#include <common/objects/string.hpp>
 
 #include <utils/macro.hpp>
-#include <common/token.hpp>
 #include <utils/holder.hpp>
+
+#include <unicode/regex.h>
 
 #include <iterator>
 #include <memory>
@@ -24,116 +27,90 @@ public:
     TokenStream& operator=(TokenStream&&) = delete;
 
     bool HasNext() {
-        return !reached_end;
+        return pos != (size_t)-1;
     }
 
     TokenInstance Next() {
-        NLANG_ASSERT(!reached_end);
+        NLANG_ASSERT(HasNext());
 
-        static constexpr const std::regex_constants::syntax_option_type regex_flags =
-            std::regex_constants::optimize | std::regex_constants::ECMAScript;
-
-        static const std::vector<std::pair<std::regex, Token>> regex_tokens {
-            { std::regex(R"(^[ \t\r]+)", regex_flags),                 Token::SPACE },
-            { std::regex(R"(^\/\/.*?(\n|$))", regex_flags),                 Token::COMMENT },
-            { std::regex(R"(^\/\*.*?\*\/)", regex_flags),               Token::COMMENT },
-            { std::regex(R"(^((\+\+|\-\-|\+=|-=|\*=|\/=|\%=|==|!=|>=|<=|<<|>>)|\(|\)|\{|\}|\[|\]|;|:|,|\.|=|\*|\/|\+|\-|!|>|<|\~|&|\||\^))",
-                         regex_flags),                                        Token::OPERATOR_OR_PUNCTUATION },
-            { std::regex(R"(^([^\x00-\x7F]|[a-zA-Z_])([^\x00-\x7F]|[a-zA-Z0-9_])*)", regex_flags), Token::IDENTIFIER },
-            { std::regex(R"(^"[^"\\]*(?:\\.[^"\\]*)*")", regex_flags),  Token::STRING },
-            { std::regex(R"(^'[^'\\]*(?:\\.[^'\\]*)*')", regex_flags),  Token::STRING },
-            { std::regex(R"(^[0-9]+(\.[0-9]+)?\b)", regex_flags),       Token::NUMBER },
-            { std::regex(R"(^\n)", regex_flags),                        Token::NEWLINE }
-        };
-
-        size_t invalid_pos = 0;
-        std::string invalid_buf;
-
-        auto it = cache.begin();
-
-        while (it != cache.end()) {
-            for (auto &[regex, token] : regex_tokens) {
-                std::match_results<StreamCache<ICharStream>::StreamCacheIterator> match;
-                if (std::regex_search(it, cache.end(), match, regex, std::regex_constants::match_continuous)) {
-                    if (!invalid_buf.empty()) {
-                        std::string ib;
-                        std::swap(ib, invalid_buf);
-                        it.CutCacheToThis();
-                        return TokenInstance { Token::INVALID, invalid_pos, invalid_buf.length(), row, col - invalid_buf.length(), ib };
-                    }
-
-                    auto str = match.str();
+        while (pos != source->GetRawString().length()) {
+            for (auto& [regex, token] : regex_tokens) {
+                regex->reset(source_view);
+                if (regex->find(error_code)) {
+                    icu::UnicodeString str = regex->group(error_code);
 
                     Token actual_token = token;
                     if (token == Token::OPERATOR_OR_PUNCTUATION || token == Token::IDENTIFIER) {
                         try {
-                            actual_token = TokenUtils::GetTokenByText(str);
+                            std::string s;
+                            str.toUTF8String(s);
+                            actual_token = TokenUtils::GetTokenByText(s);
                         } catch (std::out_of_range&) {}
                     }
 
                     const size_t saved_row = row;
                     const size_t saved_column = col;
 
-                    for (char i : str) {
+                    for (size_t i = 0; i < str.length(); ++i) {
                         ++col;
-                        if (i == '\n') {
+                        if (str.char32At(i) == '\n') {
                             row++;
                             col = 1;
                         }
                     }
 
-                    size_t pos_in_string = it.GetPosition();
-                    std::advance(it, str.length());
-                    it.CutCacheToThis();
+                    const size_t pos_in_string = pos;
+                    pos += str.length();
+                    source_view = source->GetRawString().tempSubString(pos);
                     size_t len = str.length();
                     if (actual_token == Token::STRING) {
-                        str.erase(0, 1);
-                        str.resize(str.size() - 1);
-                        // TODO peprocess string
+                        str = icu::UnicodeString(str, 1, str.length() - 2);
                     }
-                    return TokenInstance { actual_token, pos_in_string, len, saved_row, saved_column, str };
+                    return TokenInstance { actual_token, pos_in_string, len, saved_row, saved_column, String::New(heap, str) };
                 }
             }
-
-            if (invalid_buf.empty()) {
-                invalid_pos = it.GetPosition();
-            }
-            invalid_buf += *it;
-            ++col;
-            ++it;
         }
 
-        if (!invalid_buf.empty()) {
-            std::string ib;
-            std::swap(ib, invalid_buf);
-            it.CutCacheToThis();
-            return TokenInstance { Token::INVALID, invalid_pos, ib.length(), row, col - invalid_buf.length(), ib };
-        }
-
-        it.CutCacheToThis();
-        reached_end = true;
-        return TokenInstance { Token::THE_EOF, it.GetPosition(), 0, row, col, "" };
+        pos = -1;
+        return TokenInstance { Token::THE_EOF, pos, 0, row, col, Handle<String>() };
     }
 
-    static Holder<TokenStream> New(Holder<ICharStream>&& char_stream) {
-        return Holder<TokenStream>(new TokenStream(std::move(char_stream)));
+    static Holder<TokenStream> New(Heap* heap, Handle<String> source) {
+        return Holder<TokenStream>(new TokenStream(heap, source));
     }
 
 private:
-    TokenStream(Holder<ICharStream>&& char_stream)
-        : cache(std::move(char_stream))
+    TokenStream(Heap* heap, Handle<String> source)
+        : heap(heap)
+        , source(source)
+        , source_view(source->GetRawString().tempSubString())
+        , pos(0)
         , row(1)
         , col(1)
-        , reached_end(false)
     {
-
+        regex_tokens.emplace_back(MakeHolder<icu::RegexMatcher>(R"(^[ \t\r]+)", regex_flags, error_code), Token::SPACE);
+        regex_tokens.emplace_back(MakeHolder<icu::RegexMatcher>(R"(^\/\/.*?(\n|$))", regex_flags, error_code), Token::COMMENT);
+        regex_tokens.emplace_back(MakeHolder<icu::RegexMatcher>(R"(^\/\*.*?\*\/)", regex_flags, error_code), Token::COMMENT);
+        regex_tokens.emplace_back(MakeHolder<icu::RegexMatcher>(R"(^((\+\+|\-\-|\+=|-=|\*=|\/=|\%=|==|!=|>=|<=|<<|>>)|\(|\)|\{|\}|\[|\]|;|:|,|\.|=|\*|\/|\+|\-|!|>|<|\~|&|\||\^))", regex_flags, error_code), Token::OPERATOR_OR_PUNCTUATION);
+        regex_tokens.emplace_back(MakeHolder<icu::RegexMatcher>(R"(^([^\x00-\x7F]|[a-zA-Z_])([^\x00-\x7F]|[a-zA-Z0-9_])*)", regex_flags, error_code), Token::IDENTIFIER);
+        regex_tokens.emplace_back(MakeHolder<icu::RegexMatcher>(R"(^"[^"\\]*(?:\\.[^"\\]*)*")", regex_flags, error_code), Token::STRING);
+        regex_tokens.emplace_back(MakeHolder<icu::RegexMatcher>(R"(^'[^'\\]*(?:\\.[^'\\]*)*')", regex_flags, error_code), Token::STRING);
+        regex_tokens.emplace_back(MakeHolder<icu::RegexMatcher>(R"(^[0-9]+(\.[0-9]+)?\b)", regex_flags, error_code), Token::NUMBER);
+        regex_tokens.emplace_back(MakeHolder<icu::RegexMatcher>(R"(^\n)", regex_flags, error_code), Token::NEWLINE);
+        regex_tokens.emplace_back(MakeHolder<icu::RegexMatcher>(R"(^.)", regex_flags, error_code), Token::INVALID);
     }
 
 private:
-    StreamCache<ICharStream> cache;
+    Heap* heap;
+    Handle<String> source;
+    icu::UnicodeString source_view;
+    size_t pos;
     size_t row;
     size_t col;
-    bool reached_end;
+    UErrorCode error_code = U_ZERO_ERROR;
+    std::vector<std::pair<Holder<icu::RegexMatcher>, Token>> regex_tokens;
+
+    static constexpr uint32_t regex_flags = 0;
 };
 
 }

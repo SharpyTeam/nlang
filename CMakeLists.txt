@@ -27,13 +27,16 @@ endif ()
 
 
 # Packages
+if (APPLE)
+    list(APPEND CMAKE_PREFIX_PATH /usr/local/opt/icu4c)
+endif ()
+find_package(ICU REQUIRED i18n uc)
 list(APPEND CMAKE_PREFIX_PATH deps/backward-cpp)
 find_package(Backward)
 find_package(Threads REQUIRED)
 find_package(Protobuf REQUIRED)
 find_package(Git)
 find_package(Catch2)
-
 
 # Compiler flags
 if (CMAKE_CXX_COMPILER_ID MATCHES "Clang" OR CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
@@ -111,8 +114,9 @@ set(NLANG_HEADERS
         )
 
 add_executable(nlang ${NLANG_HEADERS} ${NLANG_SOURCES})
+target_include_directories(nlang PUBLIC ${CMAKE_BINARY_DIR})
 target_link_libraries(nlang nlang_utils)
 target_link_libraries(nlang nlang_common)
 target_link_libraries(nlang nlang_parser)
 target_link_libraries(nlang nlang_compiler)
-target_link_libraries(nlang nlang_interpreter)
+#target_link_libraries(nlang nlang_interpreter)

@@ -1,8 +1,8 @@
 #pragma once
 
-#include "value.hpp"
-#include "heap.hpp"
-#include "string.hpp"
+#include "common/values/value.hpp"
+#include "common/heap/heap.hpp"
+#include "common/objects/string.hpp"
 #include "function.hpp"
 
 #include <unordered_map>

@@ -1,9 +1,9 @@
 #pragma once
 
-#include "value.hpp"
-#include "handle.hpp"
+#include "common/values/value.hpp"
+#include "common/handles/handle.hpp"
 #include "function.hpp"
-#include "heap.hpp"
+#include "common/heap/heap.hpp"
 #include "context.hpp"
 
 #include <common/bytecode.hpp>
@@ -20,7 +20,7 @@ struct StackFrame {
     Handle<Function> function;
     Handle<Value>* arguments = nullptr;
     Handle<Value>* registers = nullptr;
-    Instruction* ip = nullptr;
+    bytecode::Instruction* ip = nullptr;
 
     StackFrame* next = nullptr;
     StackFrame* prev = nullptr;
@@ -32,7 +32,7 @@ struct StackFrame {
         : context(context)
         , function(function)
         , arguments(reinterpret_cast<Handle<Value>*>(this + 1))
-        , registers(arguments + function->GetRegisterArgumentsCount())
+        , registers(arguments + function->GetArgumentsCount())
         , next(reinterpret_cast<StackFrame*>(registers + function->GetRegistersCount()))
         , prev(prev)
     {
@@ -66,6 +66,7 @@ public:
             sp->ip = ip;
         }
         sp = new (sp ? sp->next : static_cast<StackFrame*>(mem)) StackFrame(sp, context, function);
+        ip = nullptr;
     }
 
     void PopFrame() {
@@ -81,7 +82,7 @@ public:
 
 public:
     Heap* heap;
-    Instruction* ip = nullptr;
+    bytecode::Instruction* ip = nullptr;
     StackFrame* sp = nullptr;
     Handle<Value> acc;
 
