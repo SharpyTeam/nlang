@@ -36,6 +36,11 @@ public:
         return _class->GetMethodCount();
     }
 
+    void ForEachReference(std::function<void(Handle<Value>)> handler) override {
+        handler(_class);
+        std::for_each(fields.begin(), fields.end(), handler);
+    }
+
     // TODO: checking if the object is instance of specific class
 
     Object() = delete;

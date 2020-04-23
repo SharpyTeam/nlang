@@ -13,15 +13,24 @@
 
 namespace nlang {
 
+class HeapValueHandler {
+public:
+    virtual void operator()(SlotPage<HeapValue>* page, SlotPage<HeapValue>::Slot* slot) = 0;
+};
+
 class Heap {
 public:
     Handle<HeapValue> Store(HeapValue* value) {
-        auto slot = storage.Store(value);
+        auto* slot = storage.Store(value);
         return Handle<HeapValue>(Handle<HeapValue>::BackingPrimitive(static_cast<void*>(slot)));
     }
 
+    void ForEachValue(std::function<void(SlotPage<HeapValue>*, SlotPage<HeapValue>::Slot*)> function) {
+        storage.ForEachSlot(function);
+    }
+
     virtual ~Heap() {
-        storage.ForEachSlot([=](SlotPage<HeapValue>* page, SlotPage<HeapValue>::Slot* slot) {
+        ForEachValue([](SlotPage<HeapValue>* page, SlotPage<HeapValue>::Slot* slot) {
             delete slot->Get();
         });
     }
@@ -29,5 +38,6 @@ public:
 public:
     SlotStorage<HeapValue> storage;
 };
+
 
 }

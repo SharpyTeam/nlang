@@ -1,5 +1,9 @@
 #include <version/version.hpp>
 
+#include <common/bytecode.hpp>
+
+#include <interpreter/thread.hpp>
+
 #include <parser/scanner.hpp>
 #include <parser/parser.hpp>
 
@@ -11,7 +15,6 @@
 #include <iostream>
 #include <string>
 #include <cstring>
-#include <common/bytecode.hpp>
 
 void print(const std::string &input) {
     using namespace nlang;

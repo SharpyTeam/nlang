@@ -140,6 +140,21 @@ public:
         return !(*this == other);
     }
 
+    void ForEachReference(std::function<void(Handle<Value>)> handler) override {
+        handler(name);
+        std::for_each(prototype_chain.begin(), prototype_chain.end(), handler);
+        std::for_each(methods.begin(), methods.end(), handler);
+        std::for_each(overloads_mapping.begin(), overloads_mapping.end(), handler);
+
+        for (auto kv : field_name_to_index) {
+            handler(kv.first);
+        }
+
+        for (auto kv : method_name_to_index) {
+            handler(kv.first);
+        }
+    }
+
     Class() = delete;
     Class(const Class&) = delete;
     Class(Class&&) = delete;

@@ -29,6 +29,9 @@ public:
         return heap->Store(new NativeFunction(ContextClass::New(heap), std::move(function))).As<NativeFunction>();
     }
 
+    // No references => does nothing.
+    void ForEachReference(std::function<void(Handle<Value>)> handler) override {}
+
 private:
     explicit NativeFunction(Handle<ContextClass> context_class, std::function<Handle<Value>(Thread*, Handle<Context>, size_t, const Handle<Value>*)>&& function)
         : Function(context_class)

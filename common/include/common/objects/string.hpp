@@ -115,6 +115,8 @@ private:
                ConvertAndConcat<S, StrTail...>(std::forward<S>(s), std::forward<StrTail>(strings)...);
     }
 
+    void ForEachReference(std::function<void(Handle<Value>)> handler) override {}
+
 private:
     template<typename Str>
     static icu::UnicodeString Concat(Str&& s) {

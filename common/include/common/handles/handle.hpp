@@ -83,6 +83,10 @@ public:
         return !IsEmpty();
     }
 
+    NLANG_FORCE_INLINE SlotStorage<HeapValue>::Slot* GetSlot() const {
+        return static_cast<typename SlotStorage<HeapValue>::Slot*>(value.GetPointer());
+    }
+
     template<typename U>
     NLANG_FORCE_INLINE bool Is() const {
         if constexpr (!std::is_base_of_v<Value, U>) {

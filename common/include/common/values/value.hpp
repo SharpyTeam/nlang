@@ -7,6 +7,7 @@
 #include <cstdint>
 #include <limits>
 #include <type_traits>
+#include <functional>
 
 
 namespace nlang {
@@ -26,11 +27,15 @@ protected:
 
 class StackValue : public NanBoxedPrimitive, public Value {};
 
+template<typename T>
+class Handle;
 
 class HeapValue : public Value {
 public:
+    virtual void ForEachReference(std::function<void(Handle<Value>)> handler) = 0;
     virtual ~HeapValue() = default;
 };
+
 
 
 }

@@ -9,7 +9,7 @@ TEST_CASE("class and object creation") {
 
     Heap heap;
 
-    auto class_name = String::New(heap, "test");
+    auto class_name = String::New(&heap, "test");
 
     auto class_handle = Class::New(heap, class_name);
     REQUIRE(class_handle.Is<HeapValue>());
@@ -19,7 +19,7 @@ TEST_CASE("class and object creation") {
     REQUIRE(class_handle->GetMethodCount() == 0);
 
 
-    class_handle->AddField(String::New(heap, "the_field"));
+    class_handle->AddField(String::New(&heap, "the_field"));
     REQUIRE(class_handle->GetFieldCount() == 1);
 
     auto object_handle = Object::New(heap, class_handle);

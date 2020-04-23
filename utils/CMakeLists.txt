@@ -11,7 +11,8 @@ set(NLANG_UTILS_HEADERS
         include/utils/forward_list_view.hpp
         include/utils/slot_storage.hpp
         include/utils/holder.hpp
-        include/utils/shared_ptr.hpp)
+        include/utils/shared_ptr.hpp
+        include/utils/platform_dependent.hpp)
 
 add_subdirectory(ut)
 

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "interpreter.hpp"
+#include <interpreter/thread.hpp>
 #include <interpreter/bytecode_function.hpp>
 
 #include <common/bytecode.hpp>

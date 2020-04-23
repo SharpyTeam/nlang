@@ -26,6 +26,10 @@ public:
         return heap->Store(new BytecodeFunction(std::move(bytecode_chunk))).As<BytecodeFunction>();
     }
 
+    void ForEachReference(std::function<void(Handle<Value>)> handler) override {
+
+    }
+
 private:
     explicit BytecodeFunction(bytecode::BytecodeChunk&& bytecode_chunk)
         : bytecode_chunk(bytecode_chunk)

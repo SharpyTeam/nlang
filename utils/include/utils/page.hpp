@@ -175,7 +175,7 @@ protected:
 
 
 inline std::pair<Page::PageIterator, Page::PageIterator> Page::AllocateRange(size_t pages_count)  {
-    void* raw_data;
+    void* raw_data = nullptr;
     size_t final_size = size() * pages_count;
 #if defined(NLANG_PLATFORM_LINUX) || defined(NLANG_PLATFORM_MACOS)
     raw_data = mmap(nullptr, final_size, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);

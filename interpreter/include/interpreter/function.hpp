@@ -24,6 +24,8 @@ public:
     virtual void DoInvoke(Thread* thread, size_t args_count, const Handle<Value>* args) = 0;
 
     static void Invoke(Thread* thread, Handle<Context> context, Handle<Function> function, size_t args_count, const Handle<Value>* args);
+
+    virtual void ForEachReference(std::function<void(Handle<Value>)> handler) override = 0;
 };
 
 
@@ -37,6 +39,15 @@ public:
 
     static Handle<Closure> New(Heap* heap, Handle<Context> context, Handle<Function> function) {
         return heap->Store(new Closure(context, function)).As<Closure>();
+    }
+
+    static Handle<Closure> New(Heap* heap, Handle<Function> function) {
+        return New(heap, Handle<Context>(), function);
+    }
+
+    void ForEachReference(std::function<void(Handle<Value>)> handler) {
+        handler(context);
+        handler(function);
     }
 
 private:

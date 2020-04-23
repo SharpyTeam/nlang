@@ -1,12 +1,14 @@
 #include <catch2/catch.hpp>
 
 #include <iostream>
-#include <parser/char_stream.hpp>
+#include <parser/token_stream.hpp>
 #include <parser/scanner.hpp>
 #include <parser/parser.hpp>
 
 TEST_CASE("parser test") {
     using namespace nlang;
+
+    Heap heap;
 
     const std::string source =
 R"(fn print_my_name_and_predict_age(first_name: string, last_name: string = 'Smith') : number {
@@ -29,7 +31,7 @@ R"(fn print_my_name_and_predict_age(first_name: string, last_name: string = 'Smi
     return static_age
 })";
 
-    auto parser = Parser::New(Scanner::New(TokenStream::New(StringCharStream::New(source))));
+    auto parser = Parser::New(Scanner::New(TokenStream::New(&heap, String::New(&heap, source))));
     auto ast = parser->ParseFunctionDefinitionExpression();
 
     REQUIRE(ast::ASTStringifier().Stringify(*ast) ==

@@ -57,6 +57,11 @@ public:
         return parent;
     }
 
+    virtual void ForEachReference(std::function<void(Handle<Value>)> handler) override {
+        handler(parent);
+        std::for_each(values.begin(), values.end(), handler);
+    }
+
     static Handle<Context> New(Heap* heap, Handle<Context> parent, size_t size) {
         return heap->Store(new Context(parent, size)).As<Context>();
     }
