@@ -302,14 +302,13 @@ private:
 
         if (statement.else_branch) {
             auto else_skipper_label = GetContext()->GetBytecodeGenerator()->EmitJump<bytecode::Opcode::Jump>(0);
-            GetContext()->GetBytecodeGenerator()->SetJumpToNextLabel(if_false_label);
+            GetContext()->GetBytecodeGenerator()->UpdateJumpToHere(if_false_label);
 
             statement.else_branch->Accept(*this);
 
-            GetContext()->GetBytecodeGenerator()->SetJumpToNextLabel(else_skipper_label);
-        }
-        else {
-            GetContext()->GetBytecodeGenerator()->SetJumpToNextLabel(if_false_label);
+            GetContext()->GetBytecodeGenerator()->UpdateJumpToHere(else_skipper_label);
+        } else {
+            GetContext()->GetBytecodeGenerator()->UpdateJumpToHere(if_false_label);
         }
     }
 
@@ -319,7 +318,7 @@ private:
         auto if_false_label = GetContext()->GetBytecodeGenerator()->EmitJump<bytecode::Opcode::JumpIfFalse>(0);
         statement.body->Accept(*this);
         GetContext()->GetBytecodeGenerator()->EmitJump<bytecode::Opcode::Jump>(first_while_instruction);
-        GetContext()->GetBytecodeGenerator()->SetJumpToNextLabel(if_false_label);
+        GetContext()->GetBytecodeGenerator()->UpdateJumpToHere(if_false_label);
     }
 
     void Visit(ast::ReturnStatement& statement) override {

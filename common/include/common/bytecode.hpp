@@ -175,8 +175,8 @@ public:
         return chunk.bytecode.size() - 1;
     }
 
-    void SetJumpToNextLabel(JumpLabel jump_label) {
-        chunk.bytecode[jump_label].offset = chunk.bytecode.size() - jump_label;
+    void UpdateJumpToHere(JumpLabel jump_label) {
+        UpdateJump(jump_label, GetLabel());
     }
 
     void UpdateJump(JumpLabel jump_label, Label to) {
