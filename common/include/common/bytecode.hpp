@@ -32,8 +32,8 @@ struct ContextDescriptor {
 };
 
 
-#define OPCODES                             \
-                                            \
+#define OPCODES                                \
+                                               \
 O(NoOperation,         NoOperand)              \
                                                \
 O(LoadRegister,        Register)               \

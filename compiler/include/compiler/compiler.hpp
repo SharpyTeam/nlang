@@ -286,11 +286,17 @@ private:
     }
 
     void Visit(ast::BlockStatement& statement) override {
-        PushWeakContext(statement);
+        bool needs_weak_context = GetContext()->GetCount(Scope::StorageType::Context);
+
+        if (needs_weak_context)
+            PushWeakContext(statement);
+
         for (auto& s : statement.statements) {
             s->Accept(*this);
         }
-        PopContext();
+
+        if (needs_weak_context)
+            PopContext();
     }
 
     void Visit(ast::IfElseStatement& statement) override {
