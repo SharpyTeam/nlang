@@ -37,15 +37,15 @@ int main(int argc, char *argv[]) {
     Heap heap;
     auto parser = Parser::New(Scanner::New(TokenStream::New(&heap, String::New(&heap,
 R"(
-fn foo(d) {
-    let a = d * 2
-    fn bar(d) {
-        return b + d
+fn fibonacci(n) {
+    if (n == 1) {
+        return 0
+    } else if (n == 2) {
+        return 1
     }
-    let b = a - 1
-    return bar
+    return fibonacci(n - 1) + fibonacci(n - 2)
 }
-foo(13)(5)
+fibonacci(40)
 )"))));
 
     auto ast = parser->ParseModule();
@@ -56,13 +56,13 @@ foo(13)(5)
     Compiler compiler;
     auto module = compiler.Compile(&heap, *ast);
 
-    std::cout << bytecode::BytecodeDisassembler::Disassemble(module.As<BytecodeFunction>()->bytecode_chunk) << std::endl << std::endl;
-    std::cout << bytecode::BytecodeDisassembler::Disassemble(module.As<BytecodeFunction>()->bytecode_chunk.constant_pool[0].As<BytecodeFunction>()->bytecode_chunk) << std::endl << std::endl;
-    std::cout << bytecode::BytecodeDisassembler::Disassemble(module.As<BytecodeFunction>()->bytecode_chunk.constant_pool[0].As<BytecodeFunction>()->bytecode_chunk.constant_pool[0].As<BytecodeFunction>()->bytecode_chunk) << std::endl << std::endl;
+    //std::cout << bytecode::BytecodeDisassembler::Disassemble(module.As<BytecodeFunction>()->bytecode_chunk) << std::endl << std::endl;
+    //std::cout << bytecode::BytecodeDisassembler::Disassemble(module.As<BytecodeFunction>()->bytecode_chunk.constant_pool[0].As<BytecodeFunction>()->bytecode_chunk) << std::endl << std::endl;
+    //std::cout << bytecode::BytecodeDisassembler::Disassemble(module.As<BytecodeFunction>()->bytecode_chunk.constant_pool[0].As<BytecodeFunction>()->bytecode_chunk.constant_pool[0].As<BytecodeFunction>()->bytecode_chunk) << std::endl << std::endl;
 
     Thread thread(&heap, Closure::New(&heap, Handle<Context>(), module), 0, nullptr);
     std::cout << thread.Join().As<Number>()->Value() << std::endl;
-
+    return 0;
     std::cout << "nlang " NLANG_VERSION " (" NLANG_BUILD_GIT_REVISION ", " NLANG_BUILD_PROCESSOR ",  " __DATE__ " " __TIME__  ")" << std::endl;
     std::cout << "[" << ((std::strcmp(NLANG_BUILD_COMPILER_ID, "GNU") == 0) ? "GCC" : NLANG_BUILD_COMPILER_ID) << " " NLANG_BUILD_COMPILER_VERSION << "]" << std::endl;
 

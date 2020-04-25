@@ -102,34 +102,30 @@ public:
                     continue;
                 }
                 case Opcode::JumpIfTrue: {
-                    if (thread->acc.Is<Number>() && !almost_equal(thread->acc.As<Number>()->Value(), 0.0, 20)) {
-                        thread->ip += thread->ip->offset;
-                        continue;
-                    }
                     if (thread->acc.Is<Bool>() && thread->acc.As<Bool>()->Value()) {
                         thread->ip += thread->ip->offset;
                         continue;
                     }
-                    if (thread->acc.Is<String>() && thread->acc.As<String>()->GetLength() > 0) {
+                    if (thread->acc.Is<Number>() && !almost_equal(thread->acc.As<Number>()->Value(), 0.0, 20)) {
+                        thread->ip += thread->ip->offset;
+                        continue;
+                    }
+                    if (thread->acc.Is<String>() && thread->acc.As<String>()->GetLength() != 0) {
                         thread->ip += thread->ip->offset;
                         continue;
                     }
                     break;
                 }
                 case Opcode::JumpIfFalse: {
-                    if (thread->acc.Is<Number>() && almost_equal(thread->acc.As<Number>()->Value(), 0.0, 20)) {
-                        thread->ip += thread->ip->offset;
-                        continue;
-                    }
                     if (thread->acc.Is<Bool>() && !thread->acc.As<Bool>()->Value()) {
                         thread->ip += thread->ip->offset;
                         continue;
                     }
-                    if (thread->acc.Is<String>() && thread->acc.As<String>()->GetLength() == 0) {
+                    if (thread->acc.Is<Number>() && almost_equal(thread->acc.As<Number>()->Value(), 0.0, 20)) {
                         thread->ip += thread->ip->offset;
                         continue;
                     }
-                    if (thread->acc.As<Number>()->Value() == 0.0) {
+                    if (thread->acc.Is<String>() && thread->acc.As<String>()->GetLength() == 0) {
                         thread->ip += thread->ip->offset;
                         continue;
                     }

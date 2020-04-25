@@ -110,6 +110,23 @@ private:
     }
 
     void Visit(ast::BinaryExpression& expression) override {
+        if (expression.op.token == Token::ASSIGN) {
+            expression.right->Accept(*this);
+            auto literal = static_cast<ast::IdentifierLiteral*>(static_cast<ast::LiteralExpression*>(expression.left.get())->literal.get());
+            auto location = GetContext()->GetLocation(literal->identifier);
+            if (location.storage_type == Scope::StorageType::Register) {
+                if (!GetContext()->GetRegistersShape()->IsDeclared(literal->identifier)) {
+                    throw;
+                }
+                GetContext()->GetBytecodeGenerator()->EmitInstruction<bytecode::Opcode::StoreRegister>(location.register_index);
+            } else if (location.storage_type == Scope::StorageType::Context) {
+                GetContext()->GetBytecodeGenerator()->EmitInstruction<bytecode::Opcode::StoreContext>({ location.context_descriptor.index, location.context_descriptor.depth });
+            } else {
+                throw;
+            }
+            return;
+        }
+
         expression.left->Accept(*this);
         auto left = GetContext()->GetRegistersShape()->LockRegisters(1);
         GetContext()->GetBytecodeGenerator()->EmitInstruction<bytecode::Opcode::StoreRegister>(left.index);
@@ -286,17 +303,13 @@ private:
     }
 
     void Visit(ast::BlockStatement& statement) override {
-        bool needs_weak_context = GetContext()->GetCount(Scope::StorageType::Context);
-
-        if (needs_weak_context)
-            PushWeakContext(statement);
+        PushWeakContext(statement);
 
         for (auto& s : statement.statements) {
             s->Accept(*this);
         }
 
-        if (needs_weak_context)
-            PopContext();
+        PopContext();
     }
 
     void Visit(ast::IfElseStatement& statement) override {
@@ -368,7 +381,9 @@ private:
     NLANG_FORCE_INLINE void PushContextImpl(ast::INode& node) {
         NLANG_ASSERT(node.meta);
         scope_stack.push_front(SharedCast<Scope>(node.meta));
-        GetContext()->GetBytecodeGenerator()->EmitInstruction<bytecode::Opcode::PushContext>(GetContext()->GetCount(Scope::StorageType::Context));
+        if (scope_stack.size() == 1 || GetContext()->GetCount(Scope::StorageType::Context)) {
+            GetContext()->GetBytecodeGenerator()->EmitInstruction<bytecode::Opcode::PushContext>(GetContext()->GetCount(Scope::StorageType::Context));
+        }
     }
 
     void PushContext(ast::INode& node) {
@@ -380,7 +395,9 @@ private:
     }
 
     void PopContext() {
-        GetContext()->GetBytecodeGenerator()->EmitInstruction<bytecode::Opcode::PopContext>();
+        if (scope_stack.size() == 1 || GetContext()->GetCount(Scope::StorageType::Context)) {
+            GetContext()->GetBytecodeGenerator()->EmitInstruction<bytecode::Opcode::PopContext>();
+        }
         scope_stack.pop_front();
     }
 

@@ -209,32 +209,25 @@ public:
         };
 
         Location location;
-        if (auto it = values.find(name); it != values.end()) {
-            location.storage_type = it->second;
-            if (location.storage_type == StorageType::Register) {
-                location.register_index = registers_shape->GetIndex(name);
-            } else {
-                location.context_descriptor = { (uint32_t)get_real_context_index(values, it), 0 };
-            }
-            return location;
-        }
-        uint32_t depth = 1;
-        Scope* current_parent = parent;
-        while (current_parent) {
-            if (auto it = current_parent->values.find(name); it != current_parent->values.end()) {
+        uint32_t depth = 0;
+        const Scope* current = this;
+        while (current) {
+            if (auto it = current->values.find(name); it != current->values.end()) {
                 location.storage_type = it->second;
                 if (it->second == StorageType::Register) {
-                    location.register_index = registers_shape->GetIndex(name);
-                    if (current_parent->registers_shape != registers_shape) {
+                    if (current->registers_shape != registers_shape) {
                         throw;
                     }
+                    location.register_index = registers_shape->GetIndex(name);
                 } else {
-                    location.context_descriptor = { (uint32_t)get_real_context_index(current_parent->values, it), depth };
+                    location.context_descriptor = { (uint32_t)get_real_context_index(current->values, it), depth };
                 }
                 return location;
             }
-            current_parent = current_parent->parent;
-            ++depth;
+            if (current->GetCount(StorageType::Context)) {
+                ++depth;
+            }
+            current = current->parent;
         }
 
         throw; // not found
