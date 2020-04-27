@@ -1,6 +1,6 @@
 #include <catch2/catch.hpp>
 
-#include <utils/slot_storage.hpp>
+#include <utils/containers/slot_storage.hpp>
 
 #include <vector>
 

@@ -108,15 +108,19 @@ endif ()
 
 # nlang executable
 set(NLANG_SOURCES
-        main.cpp)
+        main.cpp
+)
 
 set(NLANG_HEADERS
-        )
+
+)
 
 add_executable(nlang ${NLANG_HEADERS} ${NLANG_SOURCES})
 target_include_directories(nlang PUBLIC ${CMAKE_BINARY_DIR})
-target_link_libraries(nlang nlang_utils)
-target_link_libraries(nlang nlang_common)
-target_link_libraries(nlang nlang_parser)
-target_link_libraries(nlang nlang_compiler)
-#target_link_libraries(nlang nlang_interpreter)
+target_link_libraries(nlang PUBLIC
+        nlang_utils
+        nlang_common
+        nlang_parser
+        nlang_compiler
+        nlang_interpreter
+)

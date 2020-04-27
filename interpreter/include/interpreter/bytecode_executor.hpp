@@ -1,10 +1,9 @@
 #pragma once
 
-#include "interpreter.hpp"
 #include <interpreter/thread.hpp>
 #include <interpreter/bytecode_function.hpp>
 
-#include <common/bytecode.hpp>
+#include <compiler/bytecode.hpp>
 
 namespace nlang {
 
@@ -48,11 +47,11 @@ public:
                     break;
                 }
                 case Opcode::CheckEqual: {
-                    thread->acc = Bool::New(almost_equal(thread->acc.As<Number>()->Value(), thread->sp->registers[thread->ip->reg].As<Number>()->Value(), 20));
+                    thread->acc = Bool::New(thread->acc.As<Number>()->Value() == thread->sp->registers[thread->ip->reg].As<Number>()->Value());
                     break;
                 }
                 case Opcode::CheckNotEqual: {
-                    thread->acc = Bool::New(!almost_equal(thread->acc.As<Number>()->Value(), thread->sp->registers[thread->ip->reg].As<Number>()->Value(), 20));
+                    thread->acc = Bool::New(thread->acc.As<Number>()->Value() != thread->sp->registers[thread->ip->reg].As<Number>()->Value());
                     break;
                 }
                 case Opcode::CheckGreater: {
@@ -61,9 +60,8 @@ public:
                 }
                 case Opcode::CheckGreaterOrEqual: {
                     thread->acc = Bool::New(
-                            almost_equal(thread->acc.As<Number>()->Value(), thread->sp->registers[thread->ip->reg].As<Number>()->Value(), 20) ||
-                                  thread->acc.As<Number>()->Value() > thread->sp->registers[thread->ip->reg].As<Number>()->Value()
-                            );
+                        thread->acc.As<Number>()->Value() == thread->sp->registers[thread->ip->reg].As<Number>()->Value() ||
+                        thread->acc.As<Number>()->Value() > thread->sp->registers[thread->ip->reg].As<Number>()->Value());
                     break;
                 }
                 case Opcode::CheckLess: {
@@ -72,8 +70,8 @@ public:
                 }
                 case Opcode::CheckLessOrEqual: {
                     thread->acc = Bool::New(
-                            almost_equal(thread->acc.As<Number>()->Value(), thread->sp->registers[thread->ip->reg].As<Number>()->Value(), 20) ||
-                            thread->acc.As<Number>()->Value() < thread->sp->registers[thread->ip->reg].As<Number>()->Value()
+                        thread->acc.As<Number>()->Value() == thread->sp->registers[thread->ip->reg].As<Number>()->Value() ||
+                        thread->acc.As<Number>()->Value() < thread->sp->registers[thread->ip->reg].As<Number>()->Value()
                     );
                     break;
                 }
@@ -106,7 +104,7 @@ public:
                         thread->ip += thread->ip->offset;
                         continue;
                     }
-                    if (thread->acc.Is<Number>() && !almost_equal(thread->acc.As<Number>()->Value(), 0.0, 20)) {
+                    if (thread->acc.Is<Number>() && thread->acc.As<Number>()->Value() != 0.0) {
                         thread->ip += thread->ip->offset;
                         continue;
                     }
@@ -121,7 +119,7 @@ public:
                         thread->ip += thread->ip->offset;
                         continue;
                     }
-                    if (thread->acc.Is<Number>() && almost_equal(thread->acc.As<Number>()->Value(), 0.0, 20)) {
+                    if (thread->acc.Is<Number>() && thread->acc.As<Number>()->Value() == 0.0) {
                         thread->ip += thread->ip->offset;
                         continue;
                     }

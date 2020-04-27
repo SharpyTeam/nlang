@@ -10,7 +10,7 @@
 
 #ifdef NLANG_DEBUG
 
-#include "backtrace.hpp"
+#include <utils/debug/backtrace.hpp>
 
 #include <cstdlib>
 

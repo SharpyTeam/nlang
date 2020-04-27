@@ -1,13 +1,14 @@
 #include <version/version.hpp>
 
-#include <common/bytecode.hpp>
+#include <compiler/bytecode.hpp>
 
 #include <interpreter/thread.hpp>
+#include <interpreter/native_function.hpp>
 
 #include <parser/scanner.hpp>
 #include <parser/parser.hpp>
 
-#include <common/objects/string.hpp>
+#include <interpreter/objects/string.hpp>
 
 #include <compiler/semantic_analyser.hpp>
 #include <compiler/compiler.hpp>
@@ -16,15 +17,13 @@
 #include <string>
 #include <cstring>
 
-void print(const std::string &input) {
+void print(const nlang::UString &input) {
     using namespace nlang;
     Heap heap;
-    auto scanner = Scanner::New(TokenStream::New(&heap, String::New(&heap, input)));
+    auto scanner = Scanner::New(TokenStream::New(input));
 
     for (auto& token = scanner->NextToken(); token.token != nlang::Token::THE_EOF; token = scanner->NextToken()) {
-        std::string s;
-        token.text->GetRawString().toUTF8String(s);
-        std::cout << "'" << s << "'" << " [" << std::string(nlang::TokenUtils::GetTokenName(token.token)) << ", " << static_cast<int>(token.token) << "]:"
+        std::cout << "'" << token.text << "'" << " [" << nlang::TokenUtils::GetTokenName(token.token) << ", " << static_cast<int>(token.token) << "]:"
             << token.row << ":" << token.column << std::endl;
     }
 }
@@ -35,7 +34,7 @@ int main(int argc, char *argv[]) {
     using namespace nlang;
 
     Heap heap;
-    auto parser = Parser::New(Scanner::New(TokenStream::New(&heap, String::New(&heap,
+    auto parser = Parser::New(Scanner::New(TokenStream::New(UString(
 R"(
 fn fibonacci(n) {
     if (n == 1) {
@@ -45,7 +44,7 @@ fn fibonacci(n) {
     }
     return fibonacci(n - 1) + fibonacci(n - 2)
 }
-fibonacci(40)
+fibonacci(10)
 )"))));
 
     auto ast = parser->ParseModule();
@@ -55,6 +54,9 @@ fibonacci(40)
 
     Compiler compiler;
     auto module = compiler.Compile(&heap, *ast);
+
+    ast::ASTStringifier a;
+    std::cout << a.Stringify(*ast) << std::endl;
 
     //std::cout << bytecode::BytecodeDisassembler::Disassemble(module.As<BytecodeFunction>()->bytecode_chunk) << std::endl << std::endl;
     //std::cout << bytecode::BytecodeDisassembler::Disassemble(module.As<BytecodeFunction>()->bytecode_chunk.constant_pool[0].As<BytecodeFunction>()->bytecode_chunk) << std::endl << std::endl;

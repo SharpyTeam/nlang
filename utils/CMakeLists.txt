@@ -1,24 +1,43 @@
 set(NLANG_UTILS_SOURCES
-        src/backtrace.cpp)
+        src/backtrace.cpp
+        src/page.cpp
+        src/thread_pool.cpp
+)
 
 set(NLANG_UTILS_HEADERS
         include/utils/macro.hpp
-        include/utils/nan_boxed_primitive.hpp
         include/utils/traits.hpp
-        include/utils/backtrace.hpp
-        include/utils/thread_pool.hpp
-        include/utils/page.hpp
-        include/utils/forward_list_view.hpp
-        include/utils/slot_storage.hpp
-        include/utils/holder.hpp
-        include/utils/shared_ptr.hpp
-        include/utils/platform_dependent.hpp)
+
+        include/utils/alloc.hpp
+        include/utils/alloc/page.hpp
+        include/utils/alloc/aligned_alloc.hpp
+
+        include/utils/containers.hpp
+        include/utils/containers/forward_list_view.hpp
+        include/utils/containers/nan_boxed_primitive.hpp
+        include/utils/containers/slot_storage.hpp
+
+        include/utils/debug.hpp
+        include/utils/debug/backtrace.hpp
+
+        include/utils/pointers.hpp
+        include/utils/pointers/intrusive_ptr.hpp
+        include/utils/pointers/shared_ptr.hpp
+        include/utils/pointers/unique_ptr.hpp
+
+        include/utils/strings.hpp
+        include/utils/strings/ustring.hpp
+
+        include/utils/threading.hpp
+        include/utils/threading/thread_pool.hpp
+)
 
 add_subdirectory(ut)
 
 add_library(nlang_utils ${NLANG_UTILS_HEADERS} ${NLANG_UTILS_SOURCES})
 target_include_directories(nlang_utils PUBLIC include)
+target_link_libraries(nlang_utils PUBLIC ICU::i18n ICU::uc)
 
 if (CMAKE_BUILD_TYPE MATCHES Debug)
-    target_link_libraries(nlang_utils Backward::Backward)
+    target_link_libraries(nlang_utils PRIVATE Backward::Backward)
 endif ()

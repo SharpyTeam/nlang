@@ -1,9 +1,10 @@
 #pragma once
 
-#include "common/values/value.hpp"
-#include "common/handles/handle.hpp"
-#include "context.hpp"
-#include "common/heap/heap.hpp"
+#include <interpreter/context.hpp>
+
+#include <interpreter/value.hpp>
+#include <interpreter/handle.hpp>
+#include <interpreter/heap.hpp>
 
 #include <cstdint>
 #include <vector>
@@ -18,12 +19,12 @@ public:
     Function() = default;
     virtual ~Function() override = default;
 
-    virtual size_t GetRegistersCount() const = 0;
-    virtual size_t GetArgumentsCount() const = 0;
+    virtual int32_t GetRegistersCount() const = 0;
+    virtual int32_t GetArgumentsCount() const = 0;
 
-    virtual void DoInvoke(Thread* thread, size_t args_count, const Handle<Value>* args) = 0;
+    virtual void DoInvoke(Thread* thread, int32_t args_count, const Handle<Value>* args) = 0;
 
-    static void Invoke(Thread* thread, Handle<Context> context, Handle<Function> function, size_t args_count, const Handle<Value>* args);
+    static void Invoke(Thread* thread, Handle<Context> context, Handle<Function> function, int32_t args_count, const Handle<Value>* args);
 
     virtual void ForEachReference(std::function<void(Handle<Value>)> handler) override = 0;
 };
@@ -31,9 +32,9 @@ public:
 
 class Closure : public HeapValue {
 public:
-    Handle<Value> Call(Thread* thread, size_t args_count, const Handle<Value>* args);
+    Handle<Value> Call(Thread* thread, int32_t args_count, const Handle<Value>* args);
 
-    void Invoke(Thread* thread, size_t args_count, const Handle<Value>* args) {
+    void Invoke(Thread* thread, int32_t args_count, const Handle<Value>* args) {
         Function::Invoke(thread, context, function, args_count, args);
     }
 

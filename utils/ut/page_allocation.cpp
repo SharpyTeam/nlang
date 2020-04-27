@@ -1,6 +1,6 @@
 #include <catch2/catch.hpp>
 
-#include <utils/page.hpp>
+#include <utils/alloc/page.hpp>
 
 TEST_CASE("page allocation, usage and deallocation") {
     using namespace nlang;

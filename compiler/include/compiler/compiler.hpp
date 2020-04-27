@@ -1,11 +1,11 @@
 #pragma once
 
-#include <common/ast/ast.hpp>
+#include <common/ast.hpp>
 #include <compiler/scope.hpp>
 
 #include <interpreter/bytecode_function.hpp>
 
-#include <utils/shared_ptr.hpp>
+#include <utils/pointers/shared_ptr.hpp>
 #include <utils/macro.hpp>
 
 #include <deque>
@@ -35,35 +35,35 @@ private:
     }
 
     void Visit(ast::NullLiteral& literal) override {
-        GetContext()->GetBytecodeGenerator()->EmitInstruction<bytecode::Opcode::LoadNull>();
+        GetScope()->GetBytecodeGenerator()->EmitInstruction<bytecode::Opcode::LoadNull>();
     }
 
     void Visit(ast::BoolLiteral& literal) override {
         if (literal.flag) {
-            GetContext()->GetBytecodeGenerator()->EmitInstruction<bytecode::Opcode::LoadTrue>();
+            GetScope()->GetBytecodeGenerator()->EmitInstruction<bytecode::Opcode::LoadTrue>();
         } else {
-            GetContext()->GetBytecodeGenerator()->EmitInstruction<bytecode::Opcode::LoadFalse>();
+            GetScope()->GetBytecodeGenerator()->EmitInstruction<bytecode::Opcode::LoadFalse>();
         }
     }
 
     void Visit(ast::NumberLiteral& literal) override {
-        GetContext()->GetBytecodeGenerator()->EmitInstruction<bytecode::Opcode::LoadNumber>(literal.number);
+        GetScope()->GetBytecodeGenerator()->EmitInstruction<bytecode::Opcode::LoadNumber>(literal.number);
     }
 
     void Visit(ast::StringLiteral& literal) override {
-        auto index = GetContext()->GetBytecodeGenerator()->StoreConstant(String::New(heap, literal.string->GetRawString()));
-        GetContext()->GetBytecodeGenerator()->EmitInstruction<bytecode::Opcode::LoadConstant>(index);
+        auto index = GetScope()->GetBytecodeGenerator()->StoreConstant(String::New(heap, literal.string));
+        GetScope()->GetBytecodeGenerator()->EmitInstruction<bytecode::Opcode::LoadConstant>(index);
     }
 
     void Visit(ast::IdentifierLiteral& literal) override {
-        auto location = GetContext()->GetLocation(literal.identifier);
+        auto location = GetScope()->GetLocation(literal.identifier);
         if (location.storage_type == Scope::StorageType::Register) {
-            if (!GetContext()->GetRegistersShape()->IsDeclared(literal.identifier)) {
+            if (!GetScope()->GetRegistersShape()->IsDeclared(literal.identifier)) {
                 throw;
             }
-            GetContext()->GetBytecodeGenerator()->EmitInstruction<bytecode::Opcode::LoadRegister>(location.register_index);
+            GetScope()->GetBytecodeGenerator()->EmitInstruction<bytecode::Opcode::LoadRegister>(location.reg);
         } else if (location.storage_type == Scope::StorageType::Context) {
-            GetContext()->GetBytecodeGenerator()->EmitInstruction<bytecode::Opcode::LoadContext>({ location.context_descriptor.index, location.context_descriptor.depth });
+            GetScope()->GetBytecodeGenerator()->EmitInstruction<bytecode::Opcode::LoadContext>(location.context_descriptor);
         } else {
             throw;
         }
@@ -82,12 +82,12 @@ private:
     }
 
     void Visit(ast::ArgumentDefinitionStatementPart& part) override {
-        auto location = GetContext()->GetLocation(part.name->identifier);
+        auto location = GetScope()->GetLocation(part.name->identifier);
         if (location.storage_type == Scope::StorageType::Context) {
-            GetContext()->GetBytecodeGenerator()->EmitInstruction<bytecode::Opcode::LoadRegister>(-(uint32_t)part.index - 1);
-            GetContext()->GetBytecodeGenerator()->EmitInstruction<bytecode::Opcode::StoreContext>({ location.context_descriptor.index, location.context_descriptor.depth });
+            GetScope()->GetBytecodeGenerator()->EmitInstruction<bytecode::Opcode::LoadRegister>(-part.index - 1);
+            GetScope()->GetBytecodeGenerator()->EmitInstruction<bytecode::Opcode::StoreContext>(location.context_descriptor);
         } else if (location.storage_type == Scope::StorageType::Register) {
-            GetContext()->GetRegistersShape()->Declare(part.name->identifier);
+            GetScope()->GetRegistersShape()->Declare(part.name->identifier);
         } else {
             throw;
         }
@@ -113,14 +113,14 @@ private:
         if (expression.op.token == Token::ASSIGN) {
             expression.right->Accept(*this);
             auto literal = static_cast<ast::IdentifierLiteral*>(static_cast<ast::LiteralExpression*>(expression.left.get())->literal.get());
-            auto location = GetContext()->GetLocation(literal->identifier);
+            auto location = GetScope()->GetLocation(literal->identifier);
             if (location.storage_type == Scope::StorageType::Register) {
-                if (!GetContext()->GetRegistersShape()->IsDeclared(literal->identifier)) {
+                if (!GetScope()->GetRegistersShape()->IsDeclared(literal->identifier)) {
                     throw;
                 }
-                GetContext()->GetBytecodeGenerator()->EmitInstruction<bytecode::Opcode::StoreRegister>(location.register_index);
+                GetScope()->GetBytecodeGenerator()->EmitInstruction<bytecode::Opcode::StoreRegister>(location.reg);
             } else if (location.storage_type == Scope::StorageType::Context) {
-                GetContext()->GetBytecodeGenerator()->EmitInstruction<bytecode::Opcode::StoreContext>({ location.context_descriptor.index, location.context_descriptor.depth });
+                GetScope()->GetBytecodeGenerator()->EmitInstruction<bytecode::Opcode::StoreContext>(location.context_descriptor);
             } else {
                 throw;
             }
@@ -128,58 +128,58 @@ private:
         }
 
         expression.left->Accept(*this);
-        auto left = GetContext()->GetRegistersShape()->LockRegisters(1);
-        GetContext()->GetBytecodeGenerator()->EmitInstruction<bytecode::Opcode::StoreRegister>(left.index);
+        auto left = GetScope()->GetRegistersShape()->LockRegisters(1);
+        GetScope()->GetBytecodeGenerator()->EmitInstruction<bytecode::Opcode::StoreRegister>(left.first);
         expression.right->Accept(*this);
-        auto right = GetContext()->GetRegistersShape()->LockRegisters(1);
-        GetContext()->GetBytecodeGenerator()->EmitInstruction<bytecode::Opcode::StoreRegister>(right.index);
-        GetContext()->GetBytecodeGenerator()->EmitInstruction<bytecode::Opcode::LoadRegister>(left.index);
-        GetContext()->GetRegistersShape()->ReleaseRegisters(left);
+        auto right = GetScope()->GetRegistersShape()->LockRegisters(1);
+        GetScope()->GetBytecodeGenerator()->EmitInstruction<bytecode::Opcode::StoreRegister>(right.first);
+        GetScope()->GetBytecodeGenerator()->EmitInstruction<bytecode::Opcode::LoadRegister>(left.first);
+        GetScope()->GetRegistersShape()->ReleaseRegisters(left);
         switch (expression.op.token) {
             case Token::ADD: {
-                GetContext()->GetBytecodeGenerator()->EmitInstruction<bytecode::Opcode::Add>(right.index);
+                GetScope()->GetBytecodeGenerator()->EmitInstruction<bytecode::Opcode::Add>(right.first);
                 break;
             }
             case Token::SUB: {
-                GetContext()->GetBytecodeGenerator()->EmitInstruction<bytecode::Opcode::Sub>(right.index);
+                GetScope()->GetBytecodeGenerator()->EmitInstruction<bytecode::Opcode::Sub>(right.first);
                 break;
             }
             case Token::MUL: {
-                GetContext()->GetBytecodeGenerator()->EmitInstruction<bytecode::Opcode::Mul>(right.index);
+                GetScope()->GetBytecodeGenerator()->EmitInstruction<bytecode::Opcode::Mul>(right.first);
                 break;
             }
             case Token::DIV: {
-                GetContext()->GetBytecodeGenerator()->EmitInstruction<bytecode::Opcode::Div>(right.index);
+                GetScope()->GetBytecodeGenerator()->EmitInstruction<bytecode::Opcode::Div>(right.first);
                 break;
             }
             case Token::EQUALS: {
-                GetContext()->GetBytecodeGenerator()->EmitInstruction<bytecode::Opcode::CheckEqual>(right.index);
+                GetScope()->GetBytecodeGenerator()->EmitInstruction<bytecode::Opcode::CheckEqual>(right.first);
                 break;
             }
             case Token::NOT_EQUALS: {
-                GetContext()->GetBytecodeGenerator()->EmitInstruction<bytecode::Opcode::CheckNotEqual>(right.index);
+                GetScope()->GetBytecodeGenerator()->EmitInstruction<bytecode::Opcode::CheckNotEqual>(right.first);
                 break;
             }
             case Token::GREATER: {
-                GetContext()->GetBytecodeGenerator()->EmitInstruction<bytecode::Opcode::CheckGreater>(right.index);
+                GetScope()->GetBytecodeGenerator()->EmitInstruction<bytecode::Opcode::CheckGreater>(right.first);
                 break;
             }
             case Token::GREATER_EQUALS: {
-                GetContext()->GetBytecodeGenerator()->EmitInstruction<bytecode::Opcode::CheckGreaterOrEqual>(right.index);
+                GetScope()->GetBytecodeGenerator()->EmitInstruction<bytecode::Opcode::CheckGreaterOrEqual>(right.first);
                 break;
             }
             case Token::LESS: {
-                GetContext()->GetBytecodeGenerator()->EmitInstruction<bytecode::Opcode::CheckLess>(right.index);
+                GetScope()->GetBytecodeGenerator()->EmitInstruction<bytecode::Opcode::CheckLess>(right.first);
                 break;
             }
             case Token::LESS_EQUALS: {
-                GetContext()->GetBytecodeGenerator()->EmitInstruction<bytecode::Opcode::CheckLessOrEqual>(right.index);
+                GetScope()->GetBytecodeGenerator()->EmitInstruction<bytecode::Opcode::CheckLessOrEqual>(right.first);
                 break;
             }
             default:
                 throw;
         }
-        GetContext()->GetRegistersShape()->ReleaseRegisters(right);
+        GetScope()->GetRegistersShape()->ReleaseRegisters(right);
     }
 
     void Visit(ast::OperatorDefinitionExpression& expression) override {
@@ -188,11 +188,11 @@ private:
 
     void Visit(ast::FunctionDefinitionExpression& expression) override {
         throw;
-        /*PushContext(expression);
+        /*PushScope(expression);
 
         if (current_pass_type == PassType::Declare) {
             if (expression.name) {
-                GetContext()->DeclareLocal(expression.name->identifier);
+                GetScope()->DeclareLocal(expression.name->identifier);
             }
         }
 
@@ -206,22 +206,22 @@ private:
 
         expression.body->Accept(*this);
 
-        PopContext();*/
+        PopScope();*/
     }
 
     void Visit(ast::FunctionCallExpression& expression) override {
         expression.expression->Accept(*this);
-        auto f = GetContext()->GetRegistersShape()->LockRegisters(1);
-        GetContext()->GetBytecodeGenerator()->EmitInstruction<bytecode::Opcode::StoreRegister>(f.index);
-        auto args = GetContext()->GetRegistersShape()->LockRegisters(expression.arguments.size());
-        for (size_t i = 0; i < expression.arguments.size(); ++i) {
+        auto f = GetScope()->GetRegistersShape()->LockRegisters(1);
+        GetScope()->GetBytecodeGenerator()->EmitInstruction<bytecode::Opcode::StoreRegister>(f.first);
+        auto args = GetScope()->GetRegistersShape()->LockRegisters(expression.arguments.size());
+        for (int32_t i = 0; i < expression.arguments.size(); ++i) {
             expression.arguments[i]->Accept(*this);
-            GetContext()->GetBytecodeGenerator()->EmitInstruction<bytecode::Opcode::StoreRegister>(args.index + i);
+            GetScope()->GetBytecodeGenerator()->EmitInstruction<bytecode::Opcode::StoreRegister>(args.first + i);
         }
-        GetContext()->GetBytecodeGenerator()->EmitInstruction<bytecode::Opcode::LoadRegister>(f.index);
-        GetContext()->GetRegistersShape()->ReleaseRegisters(f);
-        GetContext()->GetBytecodeGenerator()->EmitInstruction<bytecode::Opcode::Call>({ args.index, args.count });
-        GetContext()->GetRegistersShape()->ReleaseRegisters(args);
+        GetScope()->GetBytecodeGenerator()->EmitInstruction<bytecode::Opcode::LoadRegister>(f.first);
+        GetScope()->GetRegistersShape()->ReleaseRegisters(f);
+        GetScope()->GetBytecodeGenerator()->EmitInstruction<bytecode::Opcode::Call>(args);
+        GetScope()->GetRegistersShape()->ReleaseRegisters(args);
     }
 
     void Visit(ast::SubscriptExpression& expression) override {
@@ -237,7 +237,7 @@ private:
     }
 
     void Visit(ast::FunctionDefinitionStatement& statement) override {
-        PushContext(statement);
+        PushScope(statement);
 
         for (auto& arg : statement.arguments) {
             arg->Accept(*this);
@@ -249,26 +249,26 @@ private:
 
         statement.body->Accept(*this);
 
-        GetContext()->GetBytecodeGenerator()->EmitInstruction<bytecode::Opcode::LoadNull>();
-        GetContext()->GetBytecodeGenerator()->EmitInstruction<bytecode::Opcode::Return>();
-        GetContext()->GetBytecodeGenerator()->SetArgumentsCount(statement.arguments.size());
-        GetContext()->GetBytecodeGenerator()->SetRegistersCount(GetContext()->GetRegistersShape()->GetRegistersCount());
-        auto context = GetContext();
-        PopContext();
+        GetScope()->GetBytecodeGenerator()->EmitInstruction<bytecode::Opcode::LoadNull>();
+        GetScope()->GetBytecodeGenerator()->EmitInstruction<bytecode::Opcode::Return>();
+        GetScope()->GetBytecodeGenerator()->SetArgumentsCount(statement.arguments.size());
+        GetScope()->GetBytecodeGenerator()->SetRegistersCount(GetScope()->GetRegistersShape()->GetRegistersCount());
+        auto context = GetScope();
+        PopScope();
 
         auto f = BytecodeFunction::New(heap, context->GetBytecodeGenerator()->Flush());
-        auto f_index = GetContext()->GetBytecodeGenerator()->StoreConstant(f);
+        auto f_index = GetScope()->GetBytecodeGenerator()->StoreConstant(f);
 
-        GetContext()->GetBytecodeGenerator()->EmitInstruction<bytecode::Opcode::LoadConstant>(f_index);
-        GetContext()->GetBytecodeGenerator()->EmitInstruction<bytecode::Opcode::CreateClosure>();
+        GetScope()->GetBytecodeGenerator()->EmitInstruction<bytecode::Opcode::LoadConstant>(f_index);
+        GetScope()->GetBytecodeGenerator()->EmitInstruction<bytecode::Opcode::CreateClosure>();
 
-        auto location = GetContext()->GetLocation(statement.name->identifier);
+        auto location = GetScope()->GetLocation(statement.name->identifier);
         if (location.storage_type == Scope::StorageType::Register) {
-            GetContext()->GetRegistersShape()->Declare(statement.name->identifier);
-            GetContext()->GetBytecodeGenerator()->EmitInstruction<bytecode::Opcode::StoreRegister>(location.register_index);
+            GetScope()->GetRegistersShape()->Declare(statement.name->identifier);
+            GetScope()->GetBytecodeGenerator()->EmitInstruction<bytecode::Opcode::StoreRegister>(location.reg);
         } else if (location.storage_type == Scope::StorageType::Context) {
-            GetContext()->GetBytecodeGenerator()->EmitInstruction<bytecode::Opcode::DeclareContext>({ location.context_descriptor.index, location.context_descriptor.depth });
-            GetContext()->GetBytecodeGenerator()->EmitInstruction<bytecode::Opcode::StoreContext>({ location.context_descriptor.index, location.context_descriptor.depth });
+            GetScope()->GetBytecodeGenerator()->EmitInstruction<bytecode::Opcode::DeclareContext>({ location.context_descriptor.index, location.context_descriptor.depth });
+            GetScope()->GetBytecodeGenerator()->EmitInstruction<bytecode::Opcode::StoreContext>({ location.context_descriptor.index, location.context_descriptor.depth });
         } else {
             throw;
         }
@@ -282,16 +282,16 @@ private:
             statement.default_value->Accept(*this);
         }
 
-        auto location = GetContext()->GetLocation(statement.name->identifier);
+        auto location = GetScope()->GetLocation(statement.name->identifier);
         if (location.storage_type == Scope::StorageType::Register) {
-            GetContext()->GetRegistersShape()->Declare(statement.name->identifier);
+            GetScope()->GetRegistersShape()->Declare(statement.name->identifier);
             if (statement.default_value) {
-                GetContext()->GetBytecodeGenerator()->EmitInstruction<bytecode::Opcode::StoreRegister>(location.register_index);
+                GetScope()->GetBytecodeGenerator()->EmitInstruction<bytecode::Opcode::StoreRegister>(location.reg);
             }
         } else if (location.storage_type == Scope::StorageType::Context) {
-            GetContext()->GetBytecodeGenerator()->EmitInstruction<bytecode::Opcode::DeclareContext>({ location.context_descriptor.index, location.context_descriptor.depth });
+            GetScope()->GetBytecodeGenerator()->EmitInstruction<bytecode::Opcode::DeclareContext>({ location.context_descriptor.index, location.context_descriptor.depth });
             if (statement.default_value) {
-                GetContext()->GetBytecodeGenerator()->EmitInstruction<bytecode::Opcode::StoreContext>({ location.context_descriptor.index, location.context_descriptor.depth });
+                GetScope()->GetBytecodeGenerator()->EmitInstruction<bytecode::Opcode::StoreContext>({ location.context_descriptor.index, location.context_descriptor.depth });
             }
         } else {
             throw;
@@ -303,50 +303,50 @@ private:
     }
 
     void Visit(ast::BlockStatement& statement) override {
-        PushWeakContext(statement);
+        PushWeakScope(statement);
 
         for (auto& s : statement.statements) {
             s->Accept(*this);
         }
 
-        PopContext();
+        PopScope();
     }
 
     void Visit(ast::IfElseStatement& statement) override {
         statement.condition->Accept(*this);
 
-        auto if_false_label = GetContext()->GetBytecodeGenerator()->EmitJump<bytecode::Opcode::JumpIfFalse>(0);
+        auto if_false_label = GetScope()->GetBytecodeGenerator()->EmitJump<bytecode::Opcode::JumpIfFalse>(0);
 
         statement.body->Accept(*this);
 
         if (statement.else_branch) {
-            auto else_skipper_label = GetContext()->GetBytecodeGenerator()->EmitJump<bytecode::Opcode::Jump>(0);
-            GetContext()->GetBytecodeGenerator()->UpdateJumpToHere(if_false_label);
+            auto else_skipper_label = GetScope()->GetBytecodeGenerator()->EmitJump<bytecode::Opcode::Jump>(0);
+            GetScope()->GetBytecodeGenerator()->UpdateJumpToHere(if_false_label);
 
             statement.else_branch->Accept(*this);
 
-            GetContext()->GetBytecodeGenerator()->UpdateJumpToHere(else_skipper_label);
+            GetScope()->GetBytecodeGenerator()->UpdateJumpToHere(else_skipper_label);
         } else {
-            GetContext()->GetBytecodeGenerator()->UpdateJumpToHere(if_false_label);
+            GetScope()->GetBytecodeGenerator()->UpdateJumpToHere(if_false_label);
         }
     }
 
     void Visit(ast::WhileStatement& statement) override {
-        bytecode::Label first_while_instruction = GetContext()->GetBytecodeGenerator()->GetLabel();
+        bytecode::Label first_while_instruction = GetScope()->GetBytecodeGenerator()->GetLabel();
         statement.condition->Accept(*this);
-        auto if_false_label = GetContext()->GetBytecodeGenerator()->EmitJump<bytecode::Opcode::JumpIfFalse>(0);
+        auto if_false_label = GetScope()->GetBytecodeGenerator()->EmitJump<bytecode::Opcode::JumpIfFalse>(0);
         statement.body->Accept(*this);
-        GetContext()->GetBytecodeGenerator()->EmitJump<bytecode::Opcode::Jump>(first_while_instruction);
-        GetContext()->GetBytecodeGenerator()->UpdateJumpToHere(if_false_label);
+        GetScope()->GetBytecodeGenerator()->EmitJump<bytecode::Opcode::Jump>(first_while_instruction);
+        GetScope()->GetBytecodeGenerator()->UpdateJumpToHere(if_false_label);
     }
 
     void Visit(ast::ReturnStatement& statement) override {
         if (statement.expression) {
             statement.expression->Accept(*this);
         } else {
-            GetContext()->GetBytecodeGenerator()->EmitInstruction<bytecode::Opcode::LoadNull>();
+            GetScope()->GetBytecodeGenerator()->EmitInstruction<bytecode::Opcode::LoadNull>();
         }
-        GetContext()->GetBytecodeGenerator()->EmitInstruction<bytecode::Opcode::Return>();
+        GetScope()->GetBytecodeGenerator()->EmitInstruction<bytecode::Opcode::Return>();
     }
 
     void Visit(ast::BreakStatement& statement) override {
@@ -362,52 +362,52 @@ private:
 
     void Visit(ast::Module& module) override {
         NLANG_ASSERT(scope_stack.empty());
-        PushContext(module);
+        PushScope(module);
         for (auto& s : module.statements) {
             s->Accept(*this);
         }
 
-        GetContext()->GetBytecodeGenerator()->EmitInstruction<bytecode::Opcode::Return>();
-        GetContext()->GetBytecodeGenerator()->SetArgumentsCount(0);
-        GetContext()->GetBytecodeGenerator()->SetRegistersCount(GetContext()->GetRegistersShape()->GetRegistersCount());
-        auto context = GetContext();
-        PopContext();
+        GetScope()->GetBytecodeGenerator()->EmitInstruction<bytecode::Opcode::Return>();
+        GetScope()->GetBytecodeGenerator()->SetArgumentsCount(0);
+        GetScope()->GetBytecodeGenerator()->SetRegistersCount(GetScope()->GetRegistersShape()->GetRegistersCount());
+        auto context = GetScope();
+        PopScope();
 
         result = BytecodeFunction::New(heap, context->GetBytecodeGenerator()->Flush());
     }
 
 private:
     template<bool weak>
-    NLANG_FORCE_INLINE void PushContextImpl(ast::INode& node) {
+    NLANG_FORCE_INLINE void PushScopeImpl(ast::INode& node) {
         NLANG_ASSERT(node.meta);
-        scope_stack.push_front(SharedCast<Scope>(node.meta));
-        if (scope_stack.size() == 1 || GetContext()->GetCount(Scope::StorageType::Context)) {
-            GetContext()->GetBytecodeGenerator()->EmitInstruction<bytecode::Opcode::PushContext>(GetContext()->GetCount(Scope::StorageType::Context));
+        scope_stack.push_front(StaticPointerCast<Scope>(node.meta));
+        if (scope_stack.size() == 1 || GetScope()->GetCount(Scope::StorageType::Context)) {
+            GetScope()->GetBytecodeGenerator()->EmitInstruction<bytecode::Opcode::PushContext>(GetScope()->GetCount(Scope::StorageType::Context));
         }
     }
 
-    void PushContext(ast::INode& node) {
-        PushContextImpl<false>(node);
+    void PushScope(ast::INode& node) {
+        PushScopeImpl<false>(node);
     }
 
-    void PushWeakContext(ast::INode& node) {
-        PushContextImpl<true>(node);
+    void PushWeakScope(ast::INode& node) {
+        PushScopeImpl<true>(node);
     }
 
-    void PopContext() {
-        if (scope_stack.size() == 1 || GetContext()->GetCount(Scope::StorageType::Context)) {
-            GetContext()->GetBytecodeGenerator()->EmitInstruction<bytecode::Opcode::PopContext>();
+    void PopScope() {
+        if (scope_stack.size() == 1 || GetScope()->GetCount(Scope::StorageType::Context)) {
+            GetScope()->GetBytecodeGenerator()->EmitInstruction<bytecode::Opcode::PopContext>();
         }
         scope_stack.pop_front();
     }
 
-    SharedPtr<Scope> GetContext(size_t depth = 0) {
+    IntrusivePtr<Scope> GetScope(int32_t depth = 0) {
         return scope_stack[depth];
     }
 
     Handle<Function> result;
     Heap* heap;
-    std::deque<SharedPtr<Scope>> scope_stack;
+    std::deque<IntrusivePtr<Scope>> scope_stack;
 };
 
 }

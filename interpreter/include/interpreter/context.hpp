@@ -1,9 +1,11 @@
 #pragma once
 
-#include <common/handles/handle.hpp>
-#include <common/values/primitives.hpp>
-#include <common/heap/heap.hpp>
-#include <common/objects/string.hpp>
+#include <interpreter/handle.hpp>
+#include <interpreter/objects/primitives.hpp>
+#include <interpreter/heap.hpp>
+#include <interpreter/objects/string.hpp>
+
+#include <compiler/bytecode.hpp>
 
 #include <stdexcept>
 #include <vector>
@@ -12,15 +14,10 @@ namespace nlang {
 
 class Context : public HeapValue {
 public:
-    struct ContextDescriptor {
-        uint32_t index;
-        uint32_t depth;
-    };
-
     Context() = default;
     virtual ~Context() = default;
 
-    void Store(ContextDescriptor descriptor, Handle<Value> value) {
+    void Store(bytecode::ContextDescriptor descriptor, Handle<Value> value) {
         Context* context = this;
         while (descriptor.depth--) {
             context = &*context->parent;
@@ -31,7 +28,7 @@ public:
         context->values[descriptor.index] = value;
     }
 
-    Handle<Value> Load(ContextDescriptor descriptor) {
+    Handle<Value> Load(bytecode::ContextDescriptor descriptor) {
         Context* context = this;
         while (descriptor.depth--) {
             context = &*context->parent;
@@ -42,7 +39,7 @@ public:
         return context->values[descriptor.index];
     }
 
-    void Declare(ContextDescriptor descriptor) {
+    void Declare(bytecode::ContextDescriptor descriptor) {
         Context* context = this;
         while (descriptor.depth--) {
             context = &*context->parent;
@@ -62,12 +59,12 @@ public:
         std::for_each(values.begin(), values.end(), handler);
     }
 
-    static Handle<Context> New(Heap* heap, Handle<Context> parent, size_t size) {
+    static Handle<Context> New(Heap* heap, Handle<Context> parent, int32_t size) {
         return heap->Store(new Context(parent, size)).As<Context>();
     }
 
 private:
-    Context(Handle<Context> parent, size_t size)
+    Context(Handle<Context> parent, int32_t size)
         : parent(parent)
         , values(size)
     {}

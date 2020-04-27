@@ -1,9 +1,10 @@
 #pragma once
 
-#include "common/values/value.hpp"
-#include "common/heap/heap.hpp"
-#include "common/objects/string.hpp"
-#include "function.hpp"
+#include <interpreter/function.hpp>
+
+#include <interpreter/value.hpp>
+#include <interpreter/heap.hpp>
+#include <interpreter/objects/string.hpp>
 
 #include <unordered_map>
 #include <array>

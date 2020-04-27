@@ -1,12 +1,9 @@
 #pragma once
 
-#include <common/handles/handle.hpp>
-#include <common/objects/string.hpp>
-
 #include <utils/macro.hpp>
+#include <utils/strings.hpp>
 
 #include <unordered_map>
-#include <string>
 
 namespace nlang {
 
@@ -92,44 +89,44 @@ enum class Token : uint8_t {
 
 struct TokenInstance {
     Token token;
-    size_t pos;
-    size_t length;
-    size_t row;
-    size_t column;
-    Handle<String> text;
+    int32_t pos;
+    int32_t length;
+    int32_t row;
+    int32_t column;
+    UString text;
 };
 
 class TokenUtils {
 public:
-    static const std::string& GetTokenName(Token token) {
+    static const UString& GetTokenName(Token token) {
         return token_to_name.at(token);
     }
 
-    static const std::string& GetTokenText(Token token) {
-        const std::string& text = token_to_text.at(token);
-        NLANG_ASSERT(!text.empty());
+    static const UString& GetTokenText(Token token) {
+        const UString& text = token_to_text.at(token);
+        NLANG_ASSERT(text);
         return text;
     }
 
-    static Token GetTokenByText(const std::string& text) {
-        NLANG_ASSERT(!text.empty());
+    static Token GetTokenByText(const UString& text) {
+        NLANG_ASSERT(text);
         return text_to_token.at(text);
     }
 
 private:
-    inline static const std::unordered_map<Token, std::string> token_to_name {
+    inline static const std::unordered_map<Token, UString> token_to_name {
 #define T(token, value) { Token::token, #token },
         TOKENS_LIST
 #undef T
     };
 
-    inline static const std::unordered_map<Token, std::string> token_to_text {
+    inline static const std::unordered_map<Token, UString> token_to_text {
 #define T(token, value) { Token::token, value },
         TOKENS_LIST
 #undef T
     };
 
-    inline static const std::unordered_map<std::string, Token> text_to_token {
+    inline static const std::unordered_map<UString, Token> text_to_token {
 #define T(token, value) { value, Token::token },
         TOKENS_LIST
 #undef T

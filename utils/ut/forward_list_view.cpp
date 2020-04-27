@@ -1,10 +1,10 @@
 #include <catch2/catch.hpp>
 
-#include <utils/forward_list_view.hpp>
+#include <utils/containers/forward_list_view.hpp>
 
 namespace {
 
-struct Node : public nlang::ForwardListView<Node>::NodeHeader {
+struct Node : public nlang::IntrusiveForwardList<Node>::Hook {
     int value;
 
     Node(int value) : value(value) {}
@@ -18,8 +18,8 @@ struct Node : public nlang::ForwardListView<Node>::NodeHeader {
     }
 };
 
-std::pair<nlang::ForwardListView<Node>, std::vector<Node>> Construct(const std::vector<int>& values) {
-    nlang::ForwardListView<Node> list;
+std::pair<nlang::IntrusiveForwardList<Node>, std::vector<Node>> Construct(const std::vector<int>& values) {
+    nlang::IntrusiveForwardList<Node> list;
     std::vector<Node> holder;
     holder.reserve(values.size());
     for (auto it = values.rbegin(); it != values.rend(); ++it) {
@@ -29,7 +29,7 @@ std::pair<nlang::ForwardListView<Node>, std::vector<Node>> Construct(const std::
     return std::pair(list, std::move(holder));
 }
 
-bool Compare(const nlang::ForwardListView<Node>& list, const std::vector<int>& values) {
+bool Compare(const nlang::IntrusiveForwardList<Node>& list, const std::vector<int>& values) {
     if (list.size() != values.size()) return false;
     auto it = values.begin();
     for (Node& node : list) {

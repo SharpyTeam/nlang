@@ -1,9 +1,10 @@
 #pragma once
 
-#include <common/ast/ast.hpp>
+#include <common/ast.hpp>
+
 #include <compiler/scope.hpp>
 
-#include <utils/shared_ptr.hpp>
+#include <utils/pointers.hpp>
 #include <utils/macro.hpp>
 
 #include <deque>
@@ -52,7 +53,7 @@ private:
 
     void Visit(ast::IdentifierLiteral& literal) override {
         if (current_pass_type == PassType::Resolve) {
-            GetContext()->Touch(literal.identifier);
+            GetScope()->Touch(literal.identifier);
         }
     }
 
@@ -70,7 +71,7 @@ private:
 
     void Visit(ast::ArgumentDefinitionStatementPart& part) override {
         if (current_pass_type == PassType::Declare) {
-            GetContext()->DeclareArgument(part.name->identifier, part.index);
+            GetScope()->DeclareArgument(part.name->identifier, part.index);
         }
         if (part.type_hint) {
             part.type_hint->Accept(*this);
@@ -149,10 +150,10 @@ private:
 
     void Visit(ast::FunctionDefinitionStatement& statement) override {
         if (current_pass_type == PassType::Declare) {
-            GetContext()->DeclareLocal(statement.name->identifier);
+            GetScope()->DeclareLocal(statement.name->identifier);
         }
 
-        PushContext(statement);
+        PushScope(statement);
 
         for (auto& arg : statement.arguments) {
             arg->Accept(*this);
@@ -164,12 +165,12 @@ private:
 
         statement.body->Accept(*this);
 
-        PopContext();
+        PopScope();
     }
 
     void Visit(ast::VariableDefinitionStatement& statement) override {
         if (current_pass_type == PassType::Declare) {
-            GetContext()->DeclareLocal(statement.name->identifier);
+            GetScope()->DeclareLocal(statement.name->identifier);
         }
         if (statement.type_hint) {
             statement.type_hint->Accept(*this);
@@ -184,11 +185,11 @@ private:
     }
 
     void Visit(ast::BlockStatement& statement) override {
-        PushWeakContext(statement);
+        PushWeakScope(statement);
         for (auto& s : statement.statements) {
             s->Accept(*this);
         }
-        PopContext();
+        PopScope();
     }
 
     void Visit(ast::IfElseStatement& statement) override {
@@ -223,39 +224,39 @@ private:
 
     void Visit(ast::Module& module) override {
         NLANG_ASSERT(scope_stack.empty());
-        PushContext(module);
+        PushScope(module);
         for (auto& s : module.statements) {
             s->Accept(*this);
         }
-        PopContext();
+        PopScope();
     }
 
 private:
     template<bool weak>
-    NLANG_FORCE_INLINE void PushContextImpl(ast::INode& node) {
+    NLANG_FORCE_INLINE void PushScopeImpl(ast::INode& node) {
         if (current_pass_type == PassType::Declare) {
             NLANG_ASSERT(!node.meta);
-            scope_stack.push_front(MakeShared<Scope>(scope_stack.empty() ? nullptr : scope_stack.front().get(), weak));
+            scope_stack.push_front(IntrusivePtr<Scope>(new Scope(scope_stack.empty() ? nullptr : scope_stack.front().get(), weak)));
             node.meta = scope_stack[0];
         } else {
             NLANG_ASSERT(node.meta);
-            scope_stack.push_front(SharedCast<Scope>(node.meta));
+            scope_stack.push_front(StaticPointerCast<Scope>(node.meta));
         }
     }
 
-    void PushContext(ast::INode& node) {
-        PushContextImpl<false>(node);
+    void PushScope(ast::INode& node) {
+        PushScopeImpl<false>(node);
     }
 
-    void PushWeakContext(ast::INode& node) {
-        PushContextImpl<true>(node);
+    void PushWeakScope(ast::INode& node) {
+        PushScopeImpl<true>(node);
     }
 
-    void PopContext() {
+    void PopScope() {
         scope_stack.pop_front();
     }
 
-    SharedPtr<Scope> GetContext(size_t depth = 0) {
+    IntrusivePtr<Scope> GetScope(int32_t depth = 0) {
         return scope_stack[depth];
     }
 
@@ -265,7 +266,7 @@ private:
     };
 
     PassType current_pass_type;
-    std::deque<SharedPtr<Scope>> scope_stack;
+    std::deque<IntrusivePtr<Scope>> scope_stack;
 };
 
 }

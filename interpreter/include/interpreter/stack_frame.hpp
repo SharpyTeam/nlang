@@ -1,13 +1,12 @@
 #pragma once
 
-#include "function.hpp"
-#include "context.hpp"
+#include <interpreter/function.hpp>
+#include <interpreter/context.hpp>
+#include <interpreter/value.hpp>
+#include <interpreter/handle.hpp>
+#include <interpreter/heap.hpp>
 
-#include <common/bytecode.hpp>
-#include <common/values/value.hpp>
-#include <common/handles/handle.hpp>
-#include <common/heap/heap.hpp>
-#include <utils/platform_dependent.hpp>
+#include <compiler/bytecode.hpp>
 
 #include <cstdint>
 #include <thread>

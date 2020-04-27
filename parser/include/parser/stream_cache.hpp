@@ -1,6 +1,6 @@
 #pragma once
 
-#include <utils/holder.hpp>
+#include <utils/pointers/unique_ptr.hpp>
 
 #include <iterator>
 #include <memory>
@@ -121,7 +121,7 @@ public:
         size_t pos;
     };
 
-    explicit StreamCache(Holder<S>&& stream)
+    explicit StreamCache(UniquePtr<S>&& stream)
         : stream(std::move(stream))
         , offset(0)
         , begin_(this, 0)
@@ -173,7 +173,7 @@ private:
     }
 
 private:
-    Holder<S> stream;
+    UniquePtr<S> stream;
     mutable std::deque<T> buffer;
     mutable size_t offset;
     StreamCacheIterator begin_;

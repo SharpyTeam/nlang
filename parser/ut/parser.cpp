@@ -1,6 +1,5 @@
 #include <catch2/catch.hpp>
 
-#include <iostream>
 #include <parser/token_stream.hpp>
 #include <parser/scanner.hpp>
 #include <parser/parser.hpp>

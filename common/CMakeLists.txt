@@ -3,23 +3,11 @@ set(NLANG_COMMON_SOURCES
 )
 
 set(NLANG_COMMON_HEADERS
-        include/common/environment.hpp
-        include/common/token.hpp
+        include/common/ast.hpp
         include/common/error_reporter.hpp
-        include/common/bytecode.hpp
-
-        include/common/ast/ast.hpp
-
-        include/common/handles/handle.hpp
-
-        include/common/values/value.hpp
-        include/common/values/primitives.hpp
-
-        include/common/heap/heap.hpp
-
-        include/common/objects/string.hpp
+        include/common/token.hpp
 )
 
 add_library(nlang_common ${NLANG_COMMON_HEADERS} ${NLANG_COMMON_SOURCES})
 target_include_directories(nlang_common PUBLIC include)
-target_link_libraries(nlang_common nlang_utils ICU::i18n ICU::uc)
+target_link_libraries(nlang_common PUBLIC nlang_utils)

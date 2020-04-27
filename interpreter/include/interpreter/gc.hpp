@@ -1,7 +1,8 @@
 #pragma once
 
-#include "interpreter.hpp"
-#include "stack_frame.hpp"
+#include <interpreter/stack_frame.hpp>
+
+#include <interpreter/heap.hpp>
 
 #include <cstddef>
 #include <functional>

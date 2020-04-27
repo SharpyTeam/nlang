@@ -1,6 +1,6 @@
 #include <catch2/catch.hpp>
 
-#include <utils/nan_boxed_primitive.hpp>
+#include <utils/containers/nan_boxed_primitive.hpp>
 #include <utils/traits.hpp>
 
 #include <type_traits>

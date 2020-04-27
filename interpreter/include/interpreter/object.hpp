@@ -1,8 +1,9 @@
 #pragma once
 
-#include "common/values/value.hpp"
-#include "class.hpp"
-#include "common/heap/heap.hpp"
+#include <interpreter/value.hpp>
+#include <interpreter/handle.hpp>
+
+#include <interpreter/class.hpp>
 
 namespace nlang {
 

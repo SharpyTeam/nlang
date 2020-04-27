@@ -1,15 +1,15 @@
 #pragma once
 
+#include <interpreter/function.hpp>
+#include <interpreter/context.hpp>
+#include <interpreter/stack_frame.hpp>
+#include <interpreter/value.hpp>
+#include <interpreter/handle.hpp>
+#include <interpreter/heap.hpp>
 
-#include "function.hpp"
-#include "context.hpp"
-#include "stack_frame.hpp"
+#include <compiler/bytecode.hpp>
 
-#include <common/bytecode.hpp>
-#include <common/values/value.hpp>
-#include <common/handles/handle.hpp>
-#include <common/heap/heap.hpp>
-#include <utils/platform_dependent.hpp>
+#include <utils/alloc.hpp>
 
 #include <vector>
 #include <cstdint>
@@ -20,15 +20,15 @@ namespace nlang {
 
 class Thread {
 public:
-    Thread(Heap* heap, Handle<Closure> closure, size_t args_count, const Handle<Value>* args) noexcept
-            : heap(heap)
-            , mem(do_aligned_alloc(alignof(StackFrame), 8 * 1024 * 1024))
+    Thread(Heap* heap, Handle<Closure> closure, int32_t args_count, const Handle<Value>* args) noexcept
+        : heap(heap)
+        , mem(AlignedAlloc(alignof(StackFrame), 8 * 1024 * 1024))
     {
         thread = std::thread(&Thread::Run, this, closure, std::vector<Handle<Value>>(args, args + args_count));
     }
 
     ~Thread() noexcept {
-        free(mem);
+        AlignedFree(mem);
     }
 
     Handle<Value> Join() {
@@ -52,6 +52,7 @@ public:
         }
     }
 
+private:
     void Run(Handle<Closure> closure, std::vector<Handle<Value>>&& args) {
         closure->Invoke(this, args.size(), args.data());
     }
