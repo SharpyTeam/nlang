@@ -1,6 +1,6 @@
 plugins {
     id 'java'
-    id 'org.jetbrains.intellij' version '0.4.15'
+    id 'org.jetbrains.intellij' version '0.4.18'
 }
 
 group 'org.example'
@@ -18,10 +18,32 @@ dependencies {
 
 // See https://github.com/JetBrains/gradle-intellij-plugin/
 intellij {
-    version '2019.3.1'
+    version '2020.1'
 }
+
 patchPluginXml {
     changeNotes """
       Add change notes here.<br>
       <em>most HTML tags may be used</em>"""
 }
+
+task cmakeConfigure(type: Exec) {
+    mkdir "$buildDir/cmake"
+    workingDir "$buildDir/cmake"
+    commandLine 'cmake', '-DDISABLE_UT=TRUE', '-DENABLE_JNI_TOOLS=TRUE', '-DCMAKE_BUILD_TYPE=Release', '../../../..', "-DCMAKE_INSTALL_PREFIX=$projectDir/src/main/resources/native"
+}
+
+task cmakeBuild(type: Exec) {
+    workingDir "$buildDir/cmake"
+    commandLine 'cmake', '--build', '.', '--target', 'nlang_jni'
+}
+
+task cmakeInstall(type: Exec) {
+    workingDir "$buildDir/cmake"
+    mkdir "$projectDir/src/main/resources/native"
+    commandLine 'cmake', '--install', '.'
+}
+
+buildPlugin.dependsOn cmakeInstall
+cmakeInstall.dependsOn cmakeBuild
+cmakeBuild.dependsOn cmakeConfigure

@@ -15,17 +15,15 @@ public class NLangLexer extends Lexer {
 
     private TreeMap<Integer, IElementType> tokens = new TreeMap<>();
     private int currentTokenPos;
-    private int bufferEnd;
 
     @Override
     public void start(@NotNull CharSequence buffer, int startOffset, int endOffset, int initialState) {
         charSequence = buffer;
-        bufferEnd = endOffset;
         currentTokenPos = startOffset;
 
-        tokens.subMap(startOffset, endOffset).clear();
+        tokens.clear();
         TreeMap<Integer, String> m = new TreeMap<>();
-        JNI.tokenize(charSequence, startOffset, endOffset, m);
+        JNI.tokenize(charSequence, 0, buffer.length(), m);
         for (Map.Entry<Integer, String> entry : m.entrySet()) {
             tokens.put(entry.getKey(), new NLangToken(entry.getValue()));
         }
@@ -39,7 +37,7 @@ public class NLangLexer extends Lexer {
     @Nullable
     @Override
     public IElementType getTokenType() {
-        return currentTokenPos < bufferEnd ? tokens.get(currentTokenPos) : null;
+        return currentTokenPos < charSequence.length() ? tokens.get(currentTokenPos) : null;
     }
 
     @Override
@@ -90,6 +88,6 @@ public class NLangLexer extends Lexer {
 
     @Override
     public int getBufferEnd() {
-        return bufferEnd;
+        return charSequence.length();
     }
 }

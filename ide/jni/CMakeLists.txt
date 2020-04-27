@@ -14,3 +14,7 @@ set(NLANG_JNI_HEADERS
 add_library(nlang_jni SHARED ${NLANG_JNI_HEADERS} ${NLANG_JNI_SOURCES})
 target_include_directories(nlang_jni PUBLIC ${JNI_INCLUDE_DIRS})
 target_link_libraries(nlang_jni PUBLIC nlang_parser)
+install(TARGETS nlang_jni
+        ARCHIVE DESTINATION lib
+        LIBRARY DESTINATION lib
+        RUNTIME DESTINATION lib)

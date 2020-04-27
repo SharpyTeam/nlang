@@ -10,8 +10,10 @@ set(NLANG_PARSER_HEADERS
         include/parser/token_stream.hpp
 )
 
-add_subdirectory(ut)
+if (NOT DISABLE_UT)
+    add_subdirectory(ut)
+endif ()
 
-add_library(nlang_parser ${NLANG_PARSER_HEADERS} ${NLANG_PARSER_SOURCES})
+add_library(nlang_parser STATIC ${NLANG_PARSER_HEADERS} ${NLANG_PARSER_SOURCES})
 target_include_directories(nlang_parser PUBLIC include)
 target_link_libraries(nlang_parser PUBLIC nlang_common nlang_utils)

@@ -32,9 +32,11 @@ set(NLANG_UTILS_HEADERS
         include/utils/threading/thread_pool.hpp
 )
 
-add_subdirectory(ut)
+if (NOT DISABLE_UT)
+    add_subdirectory(ut)
+endif ()
 
-add_library(nlang_utils ${NLANG_UTILS_HEADERS} ${NLANG_UTILS_SOURCES})
+add_library(nlang_utils STATIC ${NLANG_UTILS_HEADERS} ${NLANG_UTILS_SOURCES})
 target_include_directories(nlang_utils PUBLIC include)
 target_link_libraries(nlang_utils PUBLIC ICU::i18n ICU::uc)
 

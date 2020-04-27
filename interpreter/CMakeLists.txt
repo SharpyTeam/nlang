@@ -21,8 +21,10 @@ set(NLANG_INTERPRETER_HEADERS
         include/interpreter/value.hpp
 )
 
-add_subdirectory(ut)
+if (NOT DISABLE_UT)
+    add_subdirectory(ut)
+endif ()
 
-add_library(nlang_interpreter ${NLANG_INTERPRETER_HEADERS} ${NLANG_INTERPRETER_SOURCES})
+add_library(nlang_interpreter STATIC ${NLANG_INTERPRETER_HEADERS} ${NLANG_INTERPRETER_SOURCES})
 target_include_directories(nlang_interpreter PUBLIC include)
 target_link_libraries(nlang_interpreter PUBLIC nlang_compiler nlang_common nlang_utils Threads::Threads)
