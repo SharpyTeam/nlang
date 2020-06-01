@@ -8,6 +8,11 @@
 
 namespace nlang {
 
+/**
+ * A typed slot page.
+ *
+ * @tparam T
+ */
 template<typename T>
 class SlotPage : public IntrusiveForwardList<SlotPage<T>>::Hook {
 public:
@@ -150,7 +155,11 @@ private:
     size_t size_;
 };
 
-
+/**
+ * A slot storage.
+ * Stores typed slots with actual values.
+ * @tparam T
+ */
 template<typename T>
 class SlotStorage {
 public:

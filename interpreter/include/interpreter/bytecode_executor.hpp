@@ -7,8 +7,16 @@
 
 namespace nlang {
 
+/**
+ * Bytecode executor
+ * Actually executes the bytecode, acting as a virtual machine core
+ */
 class BytecodeExecutor {
 public:
+    /**
+     * Executes bytecode in given thread
+     * @param thread The thread
+     */
     static void Execute(Thread* thread) {
         using namespace bytecode;
         while (true) {

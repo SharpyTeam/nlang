@@ -13,7 +13,10 @@
 #include <cstdlib>
 
 namespace nlang {
-
+/**
+ * Represents a stack frame
+ * Contains context, arguments and registers for current call level
+ */
 struct StackFrame {
     Handle<Context> context;
     Handle<Function> function;

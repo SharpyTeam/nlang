@@ -7,6 +7,9 @@
 
 namespace nlang {
 
+/**
+ * Represents an instance of a class
+ */
 class Object : public HeapValue {
 public:
     static Handle<Object> New(Heap& heap, Handle<Class> the_class) {

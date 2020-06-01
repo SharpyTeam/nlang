@@ -9,6 +9,10 @@ namespace nlang {
 
 using Char = int32_t;
 
+/**
+ * An extension of ICU's UnicodeString
+ * Stores a low-level strings.
+ */
 class UString : public icu::UnicodeString {
 public:
     UString() = default;

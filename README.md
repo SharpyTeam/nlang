@@ -6,11 +6,9 @@
 
 # Documentation
 
-[Language Overview](https://github.com/SharpyTeam/nlang/tree/master/docs/language.md)
+[Tutorial](docs/tutorial.md)
 
-[Running Nlang Programs](https://github.com/SharpyTeam/nlang/tree/master/docs/running-nlang.md)
-
-[Developer Guide]()
+[Developer Guide](docs/developer-guide.md)
 
 For instructions on how to build the nlang interpreter, see the sections below.
 

@@ -11,6 +11,10 @@
 
 namespace nlang {
 
+/**
+ * Semantic analyzer
+ * Visits generated AST before compiler and processes declarations and definitions
+ */
 class SemanticAnalyser : public ast::IASTVisitor {
 public:
     void Process(ast::INode& node) {

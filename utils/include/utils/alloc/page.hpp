@@ -7,7 +7,10 @@
 
 namespace nlang {
 
-
+/**
+ * The page.
+ * Allocates respecting the borders of system pages to ensure higher access speed.
+ */
 class Page {
 public:
     class PageIterator {

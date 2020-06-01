@@ -1,3 +1,7 @@
+/**
+ * Useful functions for creating unique smart pointers
+ */
+
 #pragma once
 
 #include <utils/macro.hpp>

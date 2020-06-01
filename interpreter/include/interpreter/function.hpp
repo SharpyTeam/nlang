@@ -14,6 +14,9 @@ namespace nlang {
 
 class Thread;
 
+/**
+ * Basic class for language functions and native functions
+ */
 class Function : public HeapValue {
 public:
     Function() = default;
@@ -29,7 +32,9 @@ public:
     virtual void ForEachReference(std::function<void(Handle<Value>)> handler) override = 0;
 };
 
-
+/**
+ * Represents a closure
+ */
 class Closure : public HeapValue {
 public:
     Handle<Value> Call(Thread* thread, int32_t args_count, const Handle<Value>* args);

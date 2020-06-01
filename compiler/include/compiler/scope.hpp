@@ -13,7 +13,10 @@
 
 namespace nlang {
 
-
+/**
+ * Scope
+ * Handles scopes and variable accessibility
+ */
 class Scope : public ast::INode::IMeta {
 public:
     enum class StorageType {

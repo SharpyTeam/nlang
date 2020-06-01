@@ -17,7 +17,10 @@
 #include <cstdlib>
 
 namespace nlang {
-
+/**
+ * Represents a thread that can execute bytecode independently from other threads
+ * Has own heap, main entry (closure), bytecode and registers
+ */
 class Thread {
 public:
     Thread(Heap* heap, Handle<Closure> closure, int32_t args_count, const Handle<Value>* args) noexcept

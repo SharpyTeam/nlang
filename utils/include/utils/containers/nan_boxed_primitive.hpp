@@ -10,8 +10,18 @@
 
 namespace nlang {
 
+/**
+ * Represents a "fake" nan-boxed primitive.
+ * It is used on systems that doesn't allow nan-boxing
+ * (for example, on x32 where the sizeof(void*) is 4 bytes).
+ */
 class FakeNanBoxedPrimitive;
 
+
+/**
+ * Represents a nan-boxed primitive.
+ * It can store a pointer to heap or double, int, boolean or null.
+ */
 class NanBoxedPrimitive {
 public:
     static_assert((sizeof(void*) == 8) && std::numeric_limits<double>::is_iec559, "nan boxing is only supported on 64-bit platforms with IEEE754 doubles");

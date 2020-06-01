@@ -19,6 +19,10 @@ namespace nlang {
 
 class Heap;
 
+/**
+ * Token stream
+ * Actually parses the string, looking for tokens
+ */
 class TokenStream final {
 public:
     TokenStream(const TokenStream&) = delete;
@@ -26,13 +30,24 @@ public:
     TokenStream& operator=(const TokenStream&) = delete;
     TokenStream& operator=(TokenStream&&) = delete;
 
+    /**
+     * Checks if end was reached
+     * @return
+     */
     bool HasNext();
+    /**
+     * Tries to find next token in string
+     * @return Next token instance
+     */
     TokenInstance Next();
-
     static UniquePtr<TokenStream> New(UString&& source) {
         return UniquePtr<TokenStream>(new TokenStream(std::move(source)));
     }
-
+    /**
+     * Creates new token stream instance from source string
+     * @param source Source string
+     * @return Unique pointer to created token stream
+     */
     static UniquePtr<TokenStream> New(const UString& source) {
         return UniquePtr<TokenStream>(new TokenStream(source));
     }

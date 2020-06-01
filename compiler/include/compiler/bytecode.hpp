@@ -11,6 +11,9 @@
 #include <type_traits>
 #include <unordered_map>
 
+/**
+ * Namespace that contains things, connected with bytecode
+ */
 namespace nlang::bytecode {
 
 
@@ -23,12 +26,17 @@ using ImmediateInt32 = int32_t;
 using ImmediateDouble = double;
 using NoOperand = std::nullptr_t;
 
-
+/**
+ * Represents continuous register range
+ */
 struct RegistersRange {
     Register first;
     int32_t count;
 };
 
+/**
+ * Represents context
+ */
 struct ContextDescriptor {
     int32_t index;
     int32_t depth;
@@ -79,7 +87,9 @@ O(LoadNull,            NoOperand)              \
 O(LoadTrue,            NoOperand)              \
 O(LoadFalse,           NoOperand)              \
 
-
+/**
+ * Contains all opcode values, that are used by compiler and VM.
+ */
 enum class Opcode : uint8_t {
 #define O(opcode, OperandType) opcode,
 OPCODES
@@ -98,7 +108,10 @@ OPCODES
 #undef O
 
 
-
+/**
+ * Represents bytecode instruction.
+ * Contains instruction opcode and the operand.
+ */
 struct Instruction {
     Opcode opcode;
     union {
@@ -112,7 +125,9 @@ struct Instruction {
     };
 };
 
-
+/**
+ * Represents bytecode sequence with constant pool and agument & register use info.
+ */
 struct BytecodeChunk {
     int32_t arguments_count;
     int32_t registers_count;
@@ -120,7 +135,10 @@ struct BytecodeChunk {
     std::vector<Handle<Value>> constant_pool;
 };
 
-
+/**
+ * The bytecode generator.
+ * Emits instructions to the bytecode chunk.
+ */
 class BytecodeGenerator : public IntrusivePtrRefCounter {
 public:
     Label GetLabel() const {
@@ -214,8 +232,18 @@ private:
     BytecodeChunk chunk;
 };
 
+/**
+ * Bytecode Disassembler
+ * Contains functions that return text representation of bytecode chunks.
+ */
 class BytecodeDisassembler {
 public:
+    /**
+     * Disassembles bytecode chunk.
+     * The instructions, including their opcodes and operands are converted to their text representations.
+     * @param bytecode_chunk Bytecode chunk to disassemble
+     * @return String with disassembled bytecode
+     */
     static UString Disassemble(BytecodeChunk& bytecode_chunk) {
         UString result = "arguments: " + std::to_string(bytecode_chunk.arguments_count) + " registers: " + std::to_string(bytecode_chunk.registers_count) + "\n";
         for (auto& i : bytecode_chunk.bytecode) {
@@ -225,6 +253,11 @@ public:
     }
 
 private:
+    /**
+     * Selects function that will be used to get text representation of an operand
+     * @tparam Operand Operand type
+     * @return Lambda object with selected function
+     */
     template<typename Operand>
     static std::function<UString(Instruction)> GetPrinter() {
         if constexpr (std::is_same_v<Operand, Register>) {
@@ -246,7 +279,9 @@ private:
         }
         throw;
     }
-
+    /**
+     * Maps opcodes values from enum to its text representation
+     */
     static inline std::unordered_map<Opcode, UString> names {
 #define O(op, OpType) { Opcode::op, #op },
         OPCODES

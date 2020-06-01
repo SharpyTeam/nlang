@@ -16,6 +16,10 @@
 
 namespace nlang {
 
+/**
+ * Parser.
+ * Parses token sequences using recursive-descent algorithm, building the AST.
+ */
 class Parser {
 public:
 

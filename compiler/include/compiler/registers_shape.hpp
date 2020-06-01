@@ -12,7 +12,10 @@
 
 namespace nlang {
 
-
+/**
+ * Register shape
+ * Handles local variables creation and register used in each moment of compilation
+ */
 class RegistersShape : public IntrusivePtrRefCounter {
 public:
     RegistersShape() = default;

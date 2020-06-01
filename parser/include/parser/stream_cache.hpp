@@ -9,6 +9,11 @@
 
 namespace nlang {
 
+/**
+ * Stream cache
+ * Provide caching facilities to increase scanning speed
+ * @tparam S
+ */
 template<typename S>
 class StreamCache {
 public:

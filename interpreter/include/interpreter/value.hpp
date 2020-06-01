@@ -11,8 +11,9 @@
 
 
 namespace nlang {
-
-// Base class for all objects and primitives
+/**
+ * Base class for all objects and primitives
+ */
 class Value {
 public:
     Value(const Value&) = delete;
@@ -24,12 +25,17 @@ protected:
     Value() {}
 };
 
-
+/**
+ * Represents an immediate value, which is stored directly in 8-byte pointer
+ */
 class StackValue : public NanBoxedPrimitive, public Value {};
 
 template<typename T>
 class Handle;
 
+/**
+ * Represents a value that is stored in heap
+ */
 class HeapValue : public Value {
 public:
     virtual void ForEachReference(std::function<void(Handle<Value>)> handler) = 0;

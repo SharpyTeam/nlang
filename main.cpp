@@ -1,3 +1,8 @@
+/**
+ * Main interpreter file
+ */
+
+
 #include <version/version.hpp>
 
 #include <compiler/bytecode.hpp>
@@ -17,6 +22,10 @@
 #include <string>
 #include <cstring>
 
+/**
+ * Splits up the source code string into tokens and prints them
+ * @param input The input string with source code
+ */
 void print(const nlang::UString &input) {
     using namespace nlang;
     Heap heap;
@@ -28,8 +37,12 @@ void print(const nlang::UString &input) {
     }
 }
 
-
-
+/**
+ * The main entry function
+ * @param argc Number of command-line arguments
+ * @param argv Command-line arguments
+ * @return Nothing
+ */
 int main(int argc, char *argv[]) {
     using namespace nlang;
 
@@ -44,7 +57,7 @@ fn fibonacci(n) {
     }
     return fibonacci(n - 1) + fibonacci(n - 2)
 }
-fibonacci(40)
+fibonacci(10)
 )"))));
 
     auto ast = parser->ParseModule();

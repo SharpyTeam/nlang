@@ -9,11 +9,20 @@
 
 namespace nlang {
 
+/**
+ * Garbage Collector interface
+ */
 class IGC {
 public:
+    /**
+     * Called to possibly trigger the garbage collection
+     */
     virtual void Collect() = 0;
 };
 
+/**
+ * Basic single-pass mark-sweep-compact garbage collector
+ */
 class BasicGC : public IGC {
 public:
     using SlotMark = SlotPage<HeapValue>::Slot::Mark;
@@ -28,6 +37,9 @@ public:
     }
 
 protected:
+    /**
+     * Recursively marks all reachable objects
+     */
     virtual void Mark() {
         if (!vm_stack)
             return;
@@ -59,6 +71,9 @@ protected:
         }
     }
 
+    /**
+     * Deletes the unreachable (= unused) objects
+     */
     virtual void Sweep() {
         vm_heap->ForEachValue([](SlotPage<HeapValue>* page, SlotPage<HeapValue>::Slot* slot) {
             if (slot->GetMark() != SlotMark::BLACK) {
@@ -72,6 +87,9 @@ protected:
         });
     }
 
+    /**
+     * Defragments the heap to bring occupied slots closed to each other
+     */
     virtual void Compact() {
         vm_heap->storage.Defragment();
     }
@@ -80,6 +98,9 @@ protected:
     Heap* vm_heap;
 };
 
+/**
+ * Two-pass mark-sweep-compact GC
+ */
 class TwoPassGC : public BasicGC {
     enum class PassType : uint8_t {
         MARK = 0,

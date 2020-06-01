@@ -11,6 +11,11 @@
 
 namespace nlang {
 
+/**
+ * Native function
+ * Represents the function, reachable from user code but written directly in the interpreter in C++
+ * It does not use the registers or the arguments because it is executed not inside the VM
+ */
 class NativeFunction : public Function {
 public:
     int32_t GetRegistersCount() const override {

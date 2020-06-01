@@ -13,7 +13,11 @@
 #include <locale>
 
 namespace nlang {
-
+/**
+ * High-level string class.
+ * Inherited from low-level UString.
+ * Used to store nlang strings.
+ */
 class String : public HeapValue, public UString {
 public:
     String() = delete;
@@ -45,7 +49,12 @@ private:
     String(UString&& string)
         : UString(std::move(string))
     {}
-
+    /**
+     * Converts passed string to UString depending on the type
+     * @tparam Str Type of string
+     * @param s The string
+     * @return Converted string
+     */
     template<typename Str>
     static UString ConvertAndConcat(Str&& s) {
         using StrType = std::decay_t<Str>;
@@ -72,6 +81,16 @@ private:
         }
     }
 
+    /**
+     * Concatenates strings of different types, passed as variadic arguments
+     * @tparam F First string type
+     * @tparam S Second string type
+     * @tparam StrTail Remaining strings types
+     * @param f First string
+     * @param s Second string
+     * @param strings Remaining strings
+     * @return Converted and concatenated strings (as UString)
+     */
     template<typename F, typename S, typename ...StrTail>
     static UString ConvertAndConcat(F&& f, S&& s, StrTail&& ...strings) {
         return ConvertAndConcat<F>(std::forward<F>(f)) +
@@ -81,6 +100,12 @@ private:
     void ForEachReference(std::function<void(Handle<Value>)> handler) override {}
 
 private:
+    /**
+     * Used for converting the last string
+     * @tparam Str String type (must be nlang::String)
+     * @param s The string
+     * @return Corresponding UString
+     */
     template<typename Str>
     static UString Concat(Str&& s) {
         static_assert(std::is_base_of_v<Str, String>, "all arguments must be nlang::String classes");

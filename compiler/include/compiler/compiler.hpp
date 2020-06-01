@@ -12,8 +12,18 @@
 
 namespace nlang {
 
+/**
+ * The compiler.
+ * Compiles the AST to bytecode.
+ */
 class Compiler : public ast::IASTVisitor {
 public:
+    /**
+     * Compiles the passed AST vertex to bytecode and creates an internal function instance for it.
+     * @param heap_ Heap to use while compiling
+     * @param module AST tree vertex (module)
+     * @return Function, created from compiled AST
+     */
     Handle<Function> Compile(Heap* heap_, ast::Module& module) {
         heap = heap_;
         module.Accept(*this);

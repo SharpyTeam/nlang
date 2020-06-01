@@ -1,3 +1,7 @@
+/**
+ * Provide mappings to OS page allocation calls
+ */
+
 #pragma once
 
 #include <utils/macro.hpp>

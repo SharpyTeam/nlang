@@ -12,6 +12,10 @@
 
 namespace nlang {
 
+/**
+ * Thread pool.
+ * Execute tasks (functions) using workers, returning std::future
+ */
 class ThreadPool {
 public:
     ThreadPool(size_t threads = 0);

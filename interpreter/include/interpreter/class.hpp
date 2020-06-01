@@ -31,7 +31,9 @@ T(SUBST, subst, "subst")                             \
 T(INC, inc, "inc")                                   \
 T(DEC, dec, "dec")                                   \
 
-
+/**
+ * Represents a class
+ */
 class Class : public HeapValue {
 public:
     enum class Overloads : uint8_t {
@@ -40,10 +42,16 @@ public:
 #undef T
         OVERLOAD_COUNT
     };
-
+    /**
+     * Creates a class with specified name in given heap
+     * @param heap The heap
+     * @param class_name The name of new class
+     * @return Handle to created class
+     */
     static Handle<Class> New(Heap& heap, Handle<String> class_name) {
         return heap.Store(new Class(class_name)).As<Class>();
     }
+
 
     Handle<String> GetName() const {
         return name;

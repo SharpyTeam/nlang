@@ -6,6 +6,11 @@
 
 namespace nlang {
 
+/**
+ * Structure that organized objects of classes that are inherited from it into forward linked list.
+ * Uses no additional memory.
+ * @tparam T Type of list nodes
+ */
 template<typename T>
 class IntrusiveForwardList {
 public:

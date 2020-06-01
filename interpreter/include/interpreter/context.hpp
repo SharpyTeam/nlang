@@ -11,7 +11,9 @@
 #include <vector>
 
 namespace nlang {
-
+/**
+ * Represents the execution context
+ */
 class Context : public HeapValue {
 public:
     Context() = default;

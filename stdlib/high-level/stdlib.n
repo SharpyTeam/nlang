@@ -1,0 +1,63 @@
+class Matrix {
+    let data = null
+    let rows = null
+    let cols = null
+
+    constructor(rows, cols) {
+        data = []
+        .rows = rows
+        .cols = cols
+
+        for (let i in 0 to rows) {
+            row = []
+            for (let j in 0 to cols) {
+                row.push(0)
+            }
+            data.push(row)
+        }
+    }
+
+    op subscript_get(row, col) {
+        return data[row][col]
+    }
+
+    op subscript_set(value, row, col) {
+        data[row][col] = value
+    }
+
+    op mul(mat) {
+        let dst = Matrix(rows, cols)
+        for (let i in 0 to rows) {
+            for (let j in 0 to cols) {
+                for (let k in 0 to cols) {
+                    dst[i, j] += this[i, k] * mat[k, j]
+                }
+            }
+        }
+        data = dst.data
+    }
+
+    op str() {
+        let s = ''
+        for (let i in 0 to rows) {
+            for (let j in 0 to cols) {
+                s += this[i, j] + ' '
+            }
+            s += '\n'
+        }
+        return s
+    }
+
+    fn det() {
+        // TODO
+        return 0
+    }
+}
+
+let m1 = Matrix(3, 4); let m2 = Matrix(4, 3)
+m1[0, 1] = 5
+m2[0, 0] = 15
+
+let m3 = m1 * m2
+
+print(m3)

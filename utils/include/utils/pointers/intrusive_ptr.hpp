@@ -7,7 +7,10 @@
 
 namespace nlang {
 
-
+/**
+ * Intrusive pointer reference counter class.
+ * Use reference counting to delete the inherited objects when they are not referenced anywhere.
+ */
 class IntrusivePtrRefCounter {
 public:
     void ref() const noexcept {
@@ -38,7 +41,11 @@ private:
 
 inline IntrusivePtrRefCounter::~IntrusivePtrRefCounter() = default;
 
-
+/**
+ * Intrusive pointer class.
+ * Represents a shared reference to an object, inherited from reference counter class.
+ * @tparam T
+ */
 template<typename T>
 class IntrusivePtr final {
 public:

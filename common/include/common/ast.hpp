@@ -10,6 +10,9 @@
 #include <cctype>
 #include <vector>
 
+/**
+ * Namespace for AST classes
+ */
 namespace nlang::ast {
 
 // base
@@ -61,7 +64,9 @@ class ContinueStatement;
 // top level
 class Module;
 
-
+/**
+ * Interface for AST Visitor
+ */
 class IASTVisitor {
 public:
     virtual void Visit(INode&) = 0;
@@ -113,7 +118,9 @@ virtual void Accept(IASTVisitor& visitor) {     \
     visitor.Visit(*this);                       \
 }
 
-
+/**
+ * AST node class
+ */
 class INode : public IntrusivePtrRefCounter {
 public:
     VISITOR_ACCEPT

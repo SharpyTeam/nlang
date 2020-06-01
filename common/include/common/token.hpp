@@ -81,12 +81,19 @@ T(LESS_EQUALS, "<=")                \
                                     \
 T(INVALID, "")                      \
 
+/**
+ * Tokens values, that is produced by scanner and handed to the parser.
+ */
 enum class Token : uint8_t {
 #define T(token, value) token,
     TOKENS_LIST
 #undef T
 };
 
+/**
+ * Instance of a token, that was found by scanner.
+ * Contains information about the token and its position in the source code.
+ */
 struct TokenInstance {
     Token token;
     int32_t pos;
@@ -96,6 +103,9 @@ struct TokenInstance {
     UString text;
 };
 
+/**
+ * Useful token manipulations.
+ */
 class TokenUtils {
 public:
     static const UString& GetTokenName(Token token) {

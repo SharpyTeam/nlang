@@ -23,7 +23,10 @@ class Bool;
 class Number;
 class Int32;
 
-
+/**
+ * Represents a shared reference to a heap object, may store an immediate value instead of a pointer to heap value
+ * @tparam T
+ */
 template<typename T>
 class Handle {
 public:
@@ -87,6 +90,11 @@ public:
         return static_cast<typename SlotStorage<HeapValue>::Slot*>(value.GetPointer());
     }
 
+    /**
+     * Checks if the type of value, holded by handle, is convertible to specified type
+     * @tparam U The type to check
+     * @return True if the type of value is convertible to specified
+     */
     template<typename U>
     NLANG_FORCE_INLINE bool Is() const {
         if constexpr (!std::is_base_of_v<Value, U>) {
@@ -115,17 +123,31 @@ public:
     }
 
 
+    /**
+     * Converts the handle to handle to another type
+     * @tparam U New type, old type must be convertible to it
+     * @return
+     */
     template<typename U>
     NLANG_FORCE_INLINE Handle<U> As() const {
         return Handle<U>(value);
     }
 
 private:
+    /**
+     * Converts the underlying pointer to pointer to specified type and returns it
+     * @tparam U New pointer type
+     * @return Pointer with new type but to the same value
+     */
     template<typename U>
     NLANG_FORCE_INLINE U* GetHeapPointerOfType() const {
         return static_cast<U*>(static_cast<typename SlotStorage<HeapValue>::Slot*>(value.GetPointer())->Get());
     }
 
+    /**
+     * Returns the underlying raw pointer or value
+     * @return Raw value
+     */
     NLANG_FORCE_INLINE T* Get() const {
         NLANG_ASSERT(Is<T>());
 
