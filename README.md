@@ -40,6 +40,13 @@ If you want to use sanitizers (e.g. `asan` or `ubsan`), you need to make sure th
 If you are building on Windows, you can install [vcpkg](https://github.com/microsoft/vcpkg) to install the dependencies. 
 
 # Building
+**ONLY FOR WINDOWS**:
+
+```bat
+  ; Activate MS VS build environment
+  "C:\path\to\the\Microsoft Visual Studio\2019\Community\VC\Auxiliary\Build\vcvarsall.bat" x64
+```
+
 Create a directory for the build:
 ```bash
 mkdir build
@@ -57,17 +64,35 @@ To build the IntelliJ plugin you need to pass `-DENABLE_JNI_TOOLS=TRUE` argument
 To enable sanitizers you need to pass `-DENABLE_SANITIZERS=TRUE` argument in the command above.
  
 Run the build:
-```
+```bash
 cmake --build . --config $CONFIGURATION
 ```
 where `$CONFIGURATION` is that you used when running CMake before that.
 
 Run tests:
-```
+```bash
 ctest --output-on-failure
 ```
 
 You can find built nlang binary in the build directory.
+
+# Building IntelliJ plugin
+
+**NOTE**: You must build the project with `-DENABLE_JNI_TOOLS=TRUE` passed to CMake before building the plugin.
+
+Go to plugin directory:
+```bash
+cd ide/intellij
+```
+
+Execute `buildPlugin` Gradle task to build the plugin:
+```
+./gradlew buildPlugin
+```
+
+You will find the plugin zip file in `build/distributions` directory.
+
+To install the plugin, open any IntelliJ IDE (IntelliJ IDEA, CLion, PyCharm, ...), and follow the [instructions](https://www.jetbrains.com/help/idea/managing-plugins.html#install_plugin_from_disk).
 
 # License
 This project is licensed under the terms of the MIT license.
